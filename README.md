@@ -1,67 +1,126 @@
 # 🧞 Genie – Agentic AI Financial Assistant
 
-> An open-source financial copilot that turns raw financial data into **clear, actionable insights** using Agentic AI.
+> Turn raw financial data into **clear, actionable insights** using an open-source **Agentic AI financial copilot**.
 
-Genie is an **agentic AI financial assistant** designed to help users understand and improve their financial behavior.  
-Most finance apps only show transaction histories and charts but do not explain **what actions users should take next**.
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![AI](https://img.shields.io/badge/AI-Agentic%20AI-purple)
+![Open Source](https://img.shields.io/badge/Open%20Source-Yes-brightgreen)
 
-Genie analyzes financial data, detects spending patterns, forecasts cash flow, identifies unusual transactions, and generates personalized financial recommendations.
+Genie is an **open-source AI-powered financial assistant** that helps users understand their financial behavior and make better decisions.
+
+Most finance apps only show **transactions and charts**.
+
+Genie goes further by answering the real question:
+
+> **"What should I do with my money?"**
+
+Using **Agentic AI**, Genie analyzes financial data, identifies patterns, predicts future cash flow, and generates **clear recommendations**.
+
+Think of Genie as your **AI-powered financial copilot.**
 
 ---
 
-# 🚀 Key Features
+# ✨ Why Genie?
 
-- Financial transaction analysis
-- Spending pattern detection
-- Cash flow forecasting
-- Unusual transaction detection
-- Personalized financial recommendations
-- Automated financial insight reports
-- Interactive financial dashboard
+Financial data is everywhere:
+
+- bank transactions
+- subscriptions
+- payments
+- expenses
+- budgets
+
+But turning that data into **real financial insight** is still difficult.
+
+Genie solves this problem by building an **AI system that understands financial behavior and suggests actions.**
+
+Instead of dashboards that only show numbers, Genie provides:
+
+- insights
+- predictions
+- recommendations
+
+---
+
+# 🚀 Features
+
+🧠 **Financial Insights**  
+Automatically analyze spending and financial habits.
+
+📊 **Spending Pattern Detection**  
+Understand where your money is going.
+
+🔮 **Cash Flow Forecasting**  
+Predict future balances based on past transactions.
+
+🚨 **Anomaly Detection**  
+Identify unusual or suspicious spending.
+
+💡 **AI Financial Recommendations**  
+Get suggestions to improve budgeting and savings.
+
+📈 **Interactive Dashboard**  
+Visualize insights through charts and reports.
 
 ---
 
 # ⚙️ How Genie Works
 
 ## Input
-- Financial transaction data (CSV files or APIs)
-- User financial goals such as budgets or savings targets
-- User questions such as:
+
+Genie receives financial data such as:
+
+- Transaction history (CSV or APIs)
+- User financial goals (budget, savings targets)
+- Questions like:
   - *Where am I overspending?*
-  - *How can I save more?*
-
-## Processing
-Genie uses an **agentic AI workflow** to analyze financial data.
-
-The system:
-1. Understands the user request
-2. Processes transaction data
-3. Detects spending patterns and trends
-4. Identifies unusual financial activity
-5. Predicts future cash flow
-6. Generates actionable financial insights
-
-## Output
-- Spending insights
-- Budget improvement suggestions
-- Cash flow forecasts
-- Alerts for unusual spending
-- Personalized financial recommendations
-- Automated financial reports
+  - *How can I save more money?*
 
 ---
 
-# 🧠 What Contributors Will Learn
+## Processing
 
-Working on Genie will help contributors learn how to:
+Genie runs an **Agentic AI workflow** that:
 
-- Design **agentic AI systems**
-- Build **LLM-powered applications**
-- Work with financial datasets using **pandas**
-- Develop APIs using **FastAPI**
-- Build AI pipelines for insight generation
-- Create interactive dashboards
-- Contribute to real-world **open-source AI systems**
+1. Processes financial transaction data
+2. Detects spending patterns and trends
+3. Identifies unusual financial activity
+4. Forecasts future cash flow
+5. Generates recommendations using AI models and financial rules
+
+---
+
+## Output
+
+Genie produces insights such as:
+
+- spending summaries
+- savings recommendations
+- cash flow predictions
+- alerts for unusual spending
+- automated financial reports
+
+---
+
+# 🎯 Example Genie Output
+
+```
+Monthly Financial Insight Report
+
+Income: $4,000
+Expenses: $3,250
+Savings Rate: 18%
+
+Insights:
+• Food spending increased by 22% compared to last month
+• 3 unused subscriptions detected ($38/month)
+
+Recommendations:
+• Reduce food delivery spending by $120/month
+• Cancel unused subscriptions
+• Increase monthly savings to $900 to reach your yearly goal
+```
 
 ---
 
@@ -87,33 +146,33 @@ Recommendation Engine
 Financial Insights & Reports
 ```
 
-Supporting components:
+Supporting services:
 
-- PostgreSQL (data storage)
+- PostgreSQL (financial data storage)
 - Redis (caching)
-- Vector DB (optional knowledge retrieval)
+- Vector database (knowledge retrieval)
 
 ---
 
 # 🛠 Tech Stack
 
-**Backend**
-- FastAPI (Python)
+### Backend
+FastAPI (Python)
 
-**AI / LLM**
-- LangGraph or LangChain
-- HuggingFace / OpenAI-compatible models
+### AI / LLM
+LangGraph or LangChain  
+HuggingFace / OpenAI compatible models
 
-**Data & Storage**
-- PostgreSQL
-- FAISS or Pinecone (optional vector database)
+### Data
+PostgreSQL  
+FAISS / Pinecone (vector database)
 
-**Infrastructure**
-- Redis
-- Docker
+### Infrastructure
+Redis  
+Docker
 
-**Dashboard**
-- Streamlit or React
+### Dashboard
+Streamlit or React
 
 ---
 
@@ -127,14 +186,14 @@ genie/
 ├── analytics/      # Financial analysis logic
 ├── data/           # Sample datasets
 ├── services/       # Business logic
-├── dashboard/      # UI / Streamlit app
+├── dashboard/      # UI / Streamlit dashboard
 ├── tests/          # Unit tests
 └── docs/           # Documentation
 ```
 
 ---
 
-# 🧪 Sample Dataset Format
+# 🧪 Sample Dataset
 
 ```
 date,description,category,amount,type
@@ -148,66 +207,72 @@ date,description,category,amount,type
 
 ---
 
-# ⚡ Getting Started (Coming Soon)
+# 🗺 Roadmap
 
-Setup instructions will include:
+### Phase 1 — Core System
+- FastAPI backend
+- CSV transaction ingestion
+- Spending insights
 
-1. Clone the repository
-2. Install dependencies
-3. Configure environment variables
-4. Run the FastAPI server
-5. Launch the dashboard
+### Phase 2 — Financial Intelligence
+- Cash flow forecasting
+- anomaly detection
+- recommendation engine
+
+### Phase 3 — AI Layer
+- agentic workflow
+- LLM-powered insights
+- explainable recommendations
+
+### Phase 4 — Platform
+- dashboard
+- API integrations
+- report generation
 
 ---
 
 # 🤝 Contributing
 
-We welcome contributions from developers, students, and AI enthusiasts.
+We welcome contributors from the community.
 
-You can contribute by:
+Ways to contribute:
 
-- Improving financial analysis modules
-- Building AI insights
-- Adding dashboard features
-- Writing documentation
-- Fixing bugs
+- financial analytics modules
+- AI insights
+- dashboard features
+- documentation
+- testing
 
 Look for issues labeled:
 
-- `good first issue`
-- `help wanted`
+```
+good first issue
+help wanted
+```
 
 ---
 
 # 👨‍🏫 Mentor
 
-**Pratik Dhanave**
+Pratik Dhanave
 
 ---
 
-# ⏱ Duration
-
-175 – 350 hours
-
----
-
-# ⚡ Difficulty
-
-Medium – Hard
-
----
-
-# 💬 Communication
+# 💬 Community
 
 Slack / Discord  
 Channel: **#gsoc-genie**
 
 ---
 
-# 🔗 Repository
+# ⭐ Support the Project
 
-https://github.com/c2siorg/gennie
+If you find Genie interesting, please consider **starring the repository** ⭐
+
+It helps the project grow and reach more contributors.
 
 ---
 
-⭐ If you find this project interesting, please consider **starring the repository**!
+# 🔗 Repository
+
+https://github.com/c2siorg/gennie
