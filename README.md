@@ -1,4 +1,4 @@
-# 🧞 Genie – Agentic AI Financial Assistant
+# 🧞 Genie – Financial Operating System
 
 > Turn raw financial data into **clear, actionable insights** using an open-source **Agentic AI financial copilot**.
 
@@ -260,8 +260,8 @@ Pratik Dhanave
 
 # 💬 Community
 
-Slack / Discord  
-Channel: **#gsoc-genie**
+C2SI Slack  
+Channel: **#genie**
 
 ---
 
@@ -275,4 +275,4 @@ It helps the project grow and reach more contributors.
 
 # 🔗 Repository
 
-https://github.com/c2siorg/gennie
+https://github.com/c2siorg/genie
