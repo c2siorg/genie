@@ -31,7 +31,6 @@ def main():
     
     transactions = []
     for t in raw_transactions:
-        t["description"] = redact_pii(t["description"])
         transactions.append(t)
         
     print(f"Loaded and sanitized {len(transactions)} transactions.")
