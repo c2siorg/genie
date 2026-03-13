@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+sqlalchemy
+psycopg2-binary
+pgvector
+presidio-analyzer
+presidio-anonymizer
+python-dateutil
+torch
+sentence-transformers
