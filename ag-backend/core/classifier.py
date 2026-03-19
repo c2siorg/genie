@@ -11,7 +11,7 @@ def nlu_extract(user_input: str) -> str:
 def slm_classify(user_input: str) -> str:
     """Mock SLM: Statistical pattern recognition for somewhat complex requests."""
     print("   -> [SLM Tier] Attempting pattern classification...")
-    if "finance" in user_input or "spending" in user_input or "analyze" in user_input:
+    if "finance" in user_input or "spending" in user_input or "analyze" in user_input or "forecast" in user_input:
         return "local_supervisor"
     return None
 

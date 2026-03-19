@@ -55,8 +55,18 @@ conda activate genie
 pip install -r requirements.txt
 ```
 
-### Running the System
+### 1. Generate Synthetic Data
+Before running the workflow, generate a large dataset (~2040 rows) with injected anomalies for testing:
 ```bash
+python scripts/generate_transactions.py
+```
+This creates `data/transactions.csv`.
+
+### 2. Running the System
+Execute the full LangGraph workflow:
+```bash
+# Set your Gemini API key (optional, falls back to template if missing)
+export GOOGLE_API_KEY="your_api_key_here"
 python main.py data/transactions.csv
 ```
 
