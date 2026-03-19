@@ -24,8 +24,8 @@ The codebase is organized into seven distinct, separated layers.
 *   **Role:** The central nervous system of the application. It receives requests, maintains context, handles errors, and dictates traffic routing.
 *   **Files:**
     *   **`graph.py`**: Wires up the state graph using LangGraph, structurally defining the flow between core components.
-    *   **`orchestrator.py`**: The Semantic Kernel. Checks the registry for agent availability, intercepts unresolvable intents (triggering an 'IDK' human-handoff), and maintains global workflow lifecycle.
-    *   **`classifier.py`**: The "Semantic Router" utilizing a fallback pattern. It attempts cheap intent extraction (NLU Tier), falls back to statistical classification (SLM Tier), and relies on expensive reasoning (LLM Tier) only if confidence remains low.
+    *   **`orchestrator.py`**: The Semantic Kernel. Checks the registry for agent availability and maintains global workflow lifecycle.
+    *   **`classifier.py`**: The "Semantic Router" utilizing a fallback pattern. It attempts cheap intent extraction (NLU Tier), falls back to statistical classification (SLM Tier), and relies on robust reasoning (LLM Tier) if needed.
     *   **`registry.py`**: A mocked database acting as a dynamic catalog of all agents, maintaining their specific capabilities, endpoints, and health status for the orchestrator to query.
 
 ---

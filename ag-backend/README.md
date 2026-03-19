@@ -13,8 +13,8 @@ The system is rigorously isolated into seven functional boundaries to emulate a 
 ### 2. Orchestration Layer
 *   **Location:** `/core/`
 *   **Role:** The central nervous system. It strictly mediates all traffic. Agents *never* talk directly to each other or external networks without orchestrator permission.
-    *   **`orchestrator.py`**: The Semantic Kernel. Checks agent capabilities via the registry, manages workflow lifecycles, handles errors, and intercepts unresolvable intents (IDK fallback).
-    *   **`classifier.py`**: The Semantic Router. Implements tiered routing from cheapest to most expensive (NLU Regex -> SLM Pattern -> LLM Deep Reasoning -> IDK exception) to save token costs.
+    *   **`orchestrator.py`**: The Semantic Kernel. Checks agent capabilities via the registry, manages workflow lifecycles, and handles errors.
+    *   **`classifier.py`**: The Semantic Router. Implements tiered routing from cheapest to most expensive (NLU Regex -> SLM Pattern -> LLM Deep Reasoning) to save token costs.
     *   **`registry.py`**: The Agent Registry. A mocked Document DB caching all agent capabilities, endpoint routes, security protocols, and version histories.
     *   **`graph.py`**: The literal LangGraph topology wiring the state edges together safely.
 
@@ -100,7 +100,7 @@ graph TD
     %% Conditional Logic
     Classifier -- "target_layer == 'local_supervisor'" --> LocalSupervisor
     Classifier -- "target_layer == 'remote_agent'" --> RemoteAgent
-    Classifier -- "default / unresolveable" --> EndNode
+    Classifier -- "default" --> LocalSupervisor
     
     %% Return paths
     LocalSupervisor --> EndNode

@@ -30,10 +30,10 @@ def build_graph():
 
     # 4. Routing logic from Classifier
     def route_to_target_layer(state: SystemState):
-        target = state.get("target_layer", "IDK")
+        target = state.get("target_layer", "local_supervisor")
         if target in ["local_supervisor", "remote_agent"]:
             return target
-        return "END"
+        return "local_supervisor"
 
     workflow.add_conditional_edges(
         "classifier",
