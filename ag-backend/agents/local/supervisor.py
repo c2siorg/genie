@@ -1,68 +1,35 @@
-from storage.state import SystemState
-from integration.mcp_protocol import mcp_gateway
-from knowledge.vector_db import vector_search_tools
+# No unused import from core.registry
 from agents.local.spending_analysis import spending_analysis_node
 from agents.local.anomaly_detection import anomaly_detection_node
 from agents.local.cash_flow_forecasting import cash_flow_forecasting_node
-from agents.local.recommendation import recommendation_node
+from storage.state import SystemState
 from telemetry.observability import trace_execution
 
 @trace_execution
 def local_supervisor_node(state: SystemState) -> dict:
-    print("[Supervisor Agent] Decomposing task and delegating via secure channels...")
+    """
+    Local Supervisor node that orchestrates a fan-out to 2 experts.
+    (Anomaly Detection and Cash Flow Forecasting).
+    """
+    print("[Local Supervisor] Breaking down complex financial analysis task...")
     
-    # Context Engineering: Vector Search for tools before trying to use them
-    messages = state.get("messages", [])
-    query = ""
-    if messages:
-        last_msg = messages[-1]
-        query = last_msg.get("content", "") if isinstance(last_msg, dict) else last_msg.content
-        
-    relevant_tools = vector_search_tools(query)
+    # 1. First run the spending analysis since it's a prerequisite
+    spending_data = spending_analysis_node(state)
+    state.update(spending_data)
     
-    # Execution of external MCP tool representation via Gateway
-    if relevant_tools:
-        tool_to_use = relevant_tools[0] # taking first mock hit
-        tool_result = mcp_gateway(tool_to_use, {"id": 123}, "local_supervisor", "Bearer mock_token_123")
-    else:
-        tool_result = "No tools needed."
+    # 2. Fan-out to 2 experts only (Recommendation disabled)
+    print("   -> Initiating parallel fan-out to 2 agent models...")
     
-    print("-> [Message Bus] Initiating Parallel Fan-Out to Financial Agents...")
-    # Delegation to the specialized financial agents (Parallel Fan-Out concept)
-    updates = {}
-    updates.update(spending_analysis_node(state))
-    state.update(updates)
+    # Run Anomaly Detection
+    anomaly_data = anomaly_detection_node(state)
     
-    updates.update(anomaly_detection_node(state))
-    state.update(updates)
+    # Run Cash Flow Forecasting
+    forecast_data = cash_flow_forecasting_node(state)
     
-    updates.update(cash_flow_forecasting_node(state))
-    state.update(updates)
-    
-    print("   -> [Message Bus] Fan-Out complete. Initiating Chained Sequence to Recommendation...")
-    # Synthesis by Recommendation engine (Chained Sequence concept)
-    updates.update(recommendation_node(state))
-    state.update(updates)
-    
-    # Appending messages for history (STM format mapping deferred to main for simplicity)
-    content = f"Supervisor aggregated result utilizing financial agents securely: {tool_result}"
-    
-    # In a real system, the payload would be matching STM_Message meta format
-    from storage.state import STM_Message
-    import uuid
-    import datetime
-    
-    msg = STM_Message(
-        content=content,
-        meta={
-            "session_id": str(uuid.uuid4()),
-            "message_id": str(uuid.uuid4()),
-            "user_id": "usr_999",
-            "source": "local_supervisor",
-            "timestamp": datetime.datetime.now().isoformat()
-        }
-    )
-    
-    updated_messages = list(state.get("messages", [])) + [msg]
-    updates["messages"] = updated_messages
-    return updates
+    # Merging outputs into state
+    print("   -> Synthesis of expert agent outputs complete.")
+    return {
+        **spending_data,
+        **anomaly_data,
+        **forecast_data
+    }

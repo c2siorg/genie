@@ -1,13 +1,6 @@
 import hashlib
-import re
 import functools
 
-def redact_pii(data: str) -> str:
-    """Mock PII Redactor: Removes social security numbers, credit cards, etc."""
-    # Simple regex replacing typical sensitive patterns
-    redacted = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[REDACTED_SSN]', data)
-    redacted = re.sub(r'\b\d{4}-\d{4}-\d{4}-\d{4}\b', '[REDACTED_CC]', redacted)
-    return redacted
 
 def check_llm_safety_guardrails(prompt: str) -> None:
     """Mock LLM Safety Filter to block malicious prompt injections before routing."""

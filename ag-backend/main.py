@@ -4,8 +4,6 @@ import datetime
 import pandas as pd
 from storage.state import STM_Message
 from core.graph import build_graph
-from knowledge.vector_db import get_financial_rules, semantic_cache_check
-from telemetry.observability import redact_pii, check_llm_safety_guardrails
 
 def load_transactions(csv_path: str) -> list:
     try:
@@ -16,95 +14,95 @@ def load_transactions(csv_path: str) -> list:
         return []
 
 def main():
-    print("=== Financial Transaction Analyst ===")
+    print("\n" + "═" * 70)
+    print(" 🧠 GENIE AI — SMART FINANCIAL TRANSACTION ANALYST")
+    print("   Powered by Multi-Agent LangGraph Framework")
+    print("═" * 70 + "\n")
+
+    # 1. Load Data
+    csv_path = sys.argv[1] if len(sys.argv) > 1 else "data/transactions.csv"
+    print(f"📡 Loading transactions from: {csv_path}...")
+    transactions = load_transactions(csv_path)
     
-    if len(sys.argv) < 2:
-        print("Usage: python main.py <path_to_csv>")
-        sys.exit(1)
-        
-    csv_path = sys.argv[1]
-    
-    # 1. Load & Isolate Data
-    raw_transactions = load_transactions(csv_path)
-    if not raw_transactions:
+    if not transactions:
+        print("❌ No transactions loaded. Exiting.")
         return
+
+    print(f"✅ Loaded {len(transactions)} transactions.")
+
+    # 2. Build the Initial State
+    session_id = str(uuid.uuid4())
+    user_id = "user_123"
     
-    transactions = []
-    for t in raw_transactions:
-        t["description"] = redact_pii(t["description"])
-        transactions.append(t)
-        
-    print(f"Loaded and sanitized {len(transactions)} transactions.")
-    
-    # 2. Context Engineering (Semantic Cache & RAG)
-    user_query = "Please analyze my transactions and give Budgeting best practices"
-    
-    # Check strict LLM Safety Guardrails before processing the query
-    check_llm_safety_guardrails(user_query)
-    
-    cached_response = semantic_cache_check(user_query)
-    if cached_response:
-        rules = cached_response
-    else:
-        rules = get_financial_rules(user_query)
-        
-    # Create STM payload
-    msg = STM_Message(
-        content=f"{user_query}. Context: {rules}",
-        meta={
-            "session_id": str(uuid.uuid4()),
-            "message_id": str(uuid.uuid4()),
-            "user_id": "usr_999",
-            "source": "user_application",
-            "timestamp": datetime.datetime.now().isoformat()
-        }
-    )
-    
-    # 3. Initialize State
+    # Initialize the system state
     initial_state = {
-        "messages": [msg],
+        "user_id": user_id,
+        "session_id": session_id,
         "transactions": transactions,
-        "agent_states": {},
-        "active_registry": {},
         "spending_summary": "",
         "anomalies_detected": [],
-        "cash_flow_prediction": "",
+        "isolation_forest_anomalies": [],
+        "arima_forecast": "",
+        "prophet_forecast": "",
         "recommendations": [],
-        "current_intent": "analyze",
-        "target_layer": "",
+        "reasoning_output": "",
+        "messages": [
+            STM_Message(
+                id=str(uuid.uuid4()),
+                role="user",
+                content="Analyze my recent transactions for anomalies and forecast my cash flow.",
+                timestamp=datetime.datetime.now().isoformat()
+            )
+        ],
+        "target_layer": "local_supervisor", # Start by routing to the local supervisor
         "errors": []
     }
 
-    
-    # 4. Build and Run Graph
+    # 3. Compile and Run the Graph
+    print("⚙️  Compiling financial analysis graph...")
     app = build_graph()
-    
+
     # Execute the workflow
-    print("\n--- Starting Data Processing Workflow ---")
-    
-    # Get final state from the graph using invoke format
+    print("\n" + "─" * 70)
+    print("🚀 Starting AI Agent LangGraph Workflow")
+    print("   Nodes: Orchestrator → Classifier → Supervisor → ReasoningLLM")
+    print("   Agent Models: Anomaly Detection (IF + Rules) | Forecasting (ARIMA + Prophet)")
+    print("─" * 70 + "\n")
+
+    # Get final state from the graph
     final_state = app.invoke(initial_state)
-    
-    print("\n--- Workflow Complete ---")
-    
-    # 5. Output Insights
-    print("\nFinal Genie Insights:")
-    print("=" * 40)
-    print("\nSpending Summary:")
-    print(final_state.get("spending_summary", ""))
-    
-    print("\nAnomalies Identified:")
-    for a in final_state.get("anomalies_detected", []):
-        print(f" - {a}")
+
+    print("\n" + "─" * 70)
+    print("✅ Workflow Complete")
+    print("─" * 70)
+
+    # 5. Output the AI-Compiled Report
+    reasoning_output = final_state.get("reasoning_output", "")
+    if reasoning_output:
+        print("\n" + reasoning_output)
+    else:
+        # Fallback: show raw agent outputs
+        print("\n⚠️  No reasoning output generated. Showing raw agent data:\n")
+
+        print("💰 Spending Summary:")
+        print(final_state.get("spending_summary", ""))
+
+        print("\n🚨 Anomalies Detected:")
+        for anomaly in final_state.get("anomalies_detected", []):
+            print(f"  - {anomaly}")
         
-    print("\nCash Flow Forecast:")
-    print(final_state.get("cash_flow_prediction", ""))
-    
-    print("\nRecommendations:")
-    for r in final_state.get("recommendations", []):
-        print(f" - {r}")
-        
-    print("\n========================================")
+        for ml_anomaly in final_state.get("isolation_forest_anomalies", []):
+            print(f"  - [ML] {ml_anomaly}")
+
+        print("\n📈 Cash Flow Forecast (ARIMA):")
+        print(final_state.get("arima_forecast", "No ARIMA data."))
+
+        print("\n📊 Cash Flow Forecast (Prophet):")
+        print(final_state.get("prophet_forecast", "No Prophet data."))
+
+    print("\n" + "═" * 70)
+    print("  Report compiled at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    print("═" * 70 + "\n")
 
 if __name__ == "__main__":
     main()

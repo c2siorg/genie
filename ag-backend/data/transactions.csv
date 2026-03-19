@@ -1,0 +1,2046 @@
+date,description,amount,category
+2023-01-01,Macy's,63.24,Shopping
+2023-01-01,GrubHub,191.93,Food Delivery
+2023-01-02,Consulting Invoice,3415.95,Income
+2023-01-02,Spotify,412.79,Subscription
+2023-01-02,GrubHub,369.13,Food Delivery
+2023-01-02,Water Utility,176.07,Utilities
+2023-01-02,Internet Subscription,20.92,Utilities
+2023-01-03,Monthly Rent Payment,1813.7,Rent
+2023-01-03,Water Utility,265.11,Utilities
+2023-01-03,Apartment Lease,1423.92,Rent
+2023-01-03,Netflix,110.92,Subscription
+2023-01-05,Movie Theater,203.7,Entertainment
+2023-01-05,Trader Joes,313.12,Groceries
+2023-01-06,Safeway,135.59,Groceries
+2023-01-07,UberEats,323.86,Food Delivery
+2023-01-07,Stater Bros,170.22,Groceries
+2023-01-07,Apple TV+,298.23,Subscription
+2023-01-07,Internet Subscription,271.08,Utilities
+2023-01-08,Bowling Alley,228.42,Entertainment
+2023-01-08,Monthly Rent Payment,2140.06,Rent
+2023-01-09,Stater Bros,446.01,Groceries
+2023-01-10,Whole Foods,455.27,Groceries
+2023-01-10,Samsung Online,215.12,Electronics
+2023-01-10,Local Gym,59.03,Entertainment
+2023-01-11,Apple TV+,484.56,Subscription
+2023-01-11,City Parking,325.27,Transport
+2023-01-11,TechCorp Salary,4220.74,Income
+2023-01-12,Postmates,230.57,Food Delivery
+2023-01-13,Insurance Premium,233.8,Healthcare
+2023-01-13,Safeway,78.67,Groceries
+2023-01-13,Studio Rental,2231.73,Rent
+2023-01-13,Stater Bros,262.66,Groceries
+2023-01-13,Stater Bros,464.25,Groceries
+2023-01-14,Samsung Online,305.41,Electronics
+2023-01-14,Sushi Place,93.78,Dining
+2023-01-14,Postmates,454.35,Food Delivery
+2023-01-15,Dell Store,181.74,Electronics
+2023-01-16,Stock Dividend,3534.09,Income
+2023-01-16,UberEats,91.56,Food Delivery
+2023-01-16,Starbucks,117.65,Dining
+2023-01-17,City Parking,305.59,Transport
+2023-01-17,Electric Bill,233.25,Utilities
+2023-01-17,Internet Subscription,5.29,Utilities
+2023-01-18,TechCorp Salary,2130.95,Income
+2023-01-18,Doctor Visit,116.94,Healthcare
+2023-01-18,Best Buy,283.35,Shopping
+2023-01-19,Cell Phone Bill,223.48,Utilities
+2023-01-19,Doctor Visit,356.13,Healthcare
+2023-01-19,Spotify,425.65,Subscription
+2023-01-20,Netflix,231.09,Subscription
+2023-01-20,Apple TV+,355.16,Subscription
+2023-01-20,Walmart,235.91,Shopping
+2023-01-20,Walmart,487.99,Shopping
+2023-01-20,Apartment Lease,1145.99,Rent
+2023-01-21,Whole Foods,116.01,Groceries
+2023-01-21,Studio Rental,1091.21,Rent
+2023-01-22,Starbucks,477.24,Dining
+2023-01-22,Apple Store,369.74,Electronics
+2023-01-22,Water Utility,482.78,Utilities
+2023-01-24,Chipotle,194.74,Dining
+2023-01-24,Micro Center,158.65,Electronics
+2023-01-24,Pharmacy,488.1,Healthcare
+2023-01-25,Pharmacy,61.42,Healthcare
+2023-01-25,Starbucks,54.81,Dining
+2023-01-25,Olive Garden,375.21,Dining
+2023-01-26,Insurance Premium,323.24,Healthcare
+2023-01-26,Stock Dividend,4174.33,Income
+2023-01-26,Electric Bill,221.91,Utilities
+2023-01-26,Spotify,165.56,Subscription
+2023-01-26,Doctor Visit,53.86,Healthcare
+2023-01-27,UberEats,354.08,Food Delivery
+2023-01-27,Stater Bros,363.03,Groceries
+2023-01-28,Sushi Place,158.57,Dining
+2023-01-28,Freelance Payment,2956.17,Income
+2023-01-30,Best Buy,230.51,Shopping
+2023-01-30,Stock Dividend,6931.15,Income
+2023-01-30,Apple Store,255.88,Electronics
+2023-01-30,DoorDash,237.42,Food Delivery
+2023-01-31,Uber,392.82,Transport
+2023-01-31,Apple TV+,121.89,Subscription
+2023-01-31,Apple TV+,364.81,Subscription
+2023-02-01,Studio Rental,1723.84,Rent
+2023-02-02,Macy's,303.09,Shopping
+2023-02-02,Micro Center,86.59,Electronics
+2023-02-02,Postmates,6.21,Food Delivery
+2023-02-02,Disney+ Amazon Prime,411.39,Subscription
+2023-02-02,Disney+ Amazon Prime,404.21,Subscription
+2023-02-02,Electric Bill,235.05,Utilities
+2023-02-02,Samsung Online,397.87,Electronics
+2023-02-02,Walmart,207.15,Shopping
+2023-02-03,Dell Store,382.85,Electronics
+2023-02-03,Stater Bros,484.87,Groceries
+2023-02-03,Chipotle,252.29,Dining
+2023-02-03,Freelance Payment,5985.8,Income
+2023-02-03,Electric Bill,483.75,Utilities
+2023-02-03,TechCorp Salary,3975.38,Income
+2023-02-04,Local Gym,476.34,Entertainment
+2023-02-05,Starbucks,150.18,Dining
+2023-02-05,Amazon,421.3,Shopping
+2023-02-05,Movie Theater,275.32,Entertainment
+2023-02-06,Shell Gas Station,72.94,Transport
+2023-02-06,DoorDash,306.01,Food Delivery
+2023-02-06,Stock Dividend,6543.64,Income
+2023-02-07,Electric Bill,107.06,Utilities
+2023-02-07,UberEats,359.17,Food Delivery
+2023-02-07,Macy's,362.05,Shopping
+2023-02-08,Freelance Payment,4542.5,Income
+2023-02-08,Cell Phone Bill,459.06,Utilities
+2023-02-09,Starbucks,482.56,Dining
+2023-02-09,City Parking,286.29,Transport
+2023-02-09,Studio Rental,1933.7,Rent
+2023-02-10,Pharmacy,301.99,Healthcare
+2023-02-10,Dental Care,268.9,Healthcare
+2023-02-12,Stater Bros,437.48,Groceries
+2023-02-13,Micro Center,27.03,Electronics
+2023-02-13,Market Basket,183.0,Groceries
+2023-02-13,Postmates,414.98,Food Delivery
+2023-02-15,Target,270.65,Shopping
+2023-02-15,Micro Center,327.87,Electronics
+2023-02-15,Train Ticket,284.95,Transport
+2023-02-15,Bowling Alley,340.3,Entertainment
+2023-02-16,Electric Bill,240.94,Utilities
+2023-02-16,Target,250.81,Shopping
+2023-02-16,Cell Phone Bill,389.17,Utilities
+2023-02-18,Monthly Rent Payment,1009.0,Rent
+2023-02-18,Freelance Payment,6047.47,Income
+2023-02-18,Apartment Lease,1143.16,Rent
+2023-02-20,Stater Bros,49.49,Groceries
+2023-02-20,Chipotle,87.34,Dining
+2023-02-21,Doctor Visit,170.27,Healthcare
+2023-02-21,Target,488.24,Shopping
+2023-02-21,Safeway,35.85,Groceries
+2023-02-22,Electric Bill,90.21,Utilities
+2023-02-22,Local Gym,249.47,Entertainment
+2023-02-22,Dell Store,73.27,Electronics
+2023-02-23,Studio Rental,1439.87,Rent
+2023-02-23,Apple Store,260.18,Electronics
+2023-02-24,Trader Joes,239.31,Groceries
+2023-02-24,Water Utility,200.91,Utilities
+2023-02-24,Local Bistro,83.6,Dining
+2023-02-25,Netflix,198.89,Subscription
+2023-02-25,Macy's,368.64,Shopping
+2023-02-25,Monthly Rent Payment,1445.82,Rent
+2023-02-25,Consulting Invoice,5337.47,Income
+2023-02-26,Apple Store,138.82,Electronics
+2023-02-26,Target,112.23,Shopping
+2023-02-26,DoorDash,488.55,Food Delivery
+2023-02-26,Stock Dividend,6872.96,Income
+2023-03-01,Olive Garden,388.17,Dining
+2023-03-01,Freelance Payment,3239.95,Income
+2023-03-01,Doctor Visit,398.63,Healthcare
+2023-03-02,DoorDash,459.19,Food Delivery
+2023-03-02,Consulting Invoice,4092.89,Income
+2023-03-02,Trader Joes,339.57,Groceries
+2023-03-02,Sushi Place,484.84,Dining
+2023-03-02,Postmates,315.94,Food Delivery
+2023-03-03,Micro Center,224.86,Electronics
+2023-03-04,Suspicious Wire Transfer,5572.8,Shopping
+2023-03-04,Chipotle,387.01,Dining
+2023-03-04,Studio Rental,2199.86,Rent
+2023-03-04,Internet Subscription,384.37,Utilities
+2023-03-05,Netflix Premium Annual Plan,299.99,Subscription
+2023-03-05,Dell Store,357.3,Electronics
+2023-03-05,Local Gym,164.76,Entertainment
+2023-03-07,Best Buy,212.14,Shopping
+2023-03-07,Olive Garden,44.47,Dining
+2023-03-07,UberEats,293.33,Food Delivery
+2023-03-07,Netflix,148.07,Subscription
+2023-03-08,Insurance Premium,224.09,Healthcare
+2023-03-10,Shell Gas Station,397.88,Transport
+2023-03-10,Studio Rental,1584.09,Rent
+2023-03-10,Olive Garden,377.5,Dining
+2023-03-11,Target,422.31,Shopping
+2023-03-11,Apartment Lease,1332.11,Rent
+2023-03-11,Uber,469.98,Transport
+2023-03-11,Bowling Alley,446.26,Entertainment
+2023-03-12,Stock Dividend,2783.3,Income
+2023-03-12,Concert Venue,376.24,Entertainment
+2023-03-12,Disney+ Amazon Prime,167.29,Subscription
+2023-03-12,Local Bistro,234.79,Dining
+2023-03-13,Chipotle,241.94,Dining
+2023-03-13,Cell Phone Bill,189.8,Utilities
+2023-03-13,Whole Foods,70.54,Groceries
+2023-03-13,Safeway,164.79,Groceries
+2023-03-13,Dental Care,60.77,Healthcare
+2023-03-14,Postmates,470.91,Food Delivery
+2023-03-14,Dental Care,145.96,Healthcare
+2023-03-15,Dental Care,130.55,Healthcare
+2023-03-16,Netflix,131.66,Subscription
+2023-03-16,Apple Store,173.33,Electronics
+2023-03-16,Netflix,201.56,Subscription
+2023-03-16,Monthly Rent Payment,2403.6,Rent
+2023-03-17,Cell Phone Bill,391.18,Utilities
+2023-03-17,Amazon,155.83,Shopping
+2023-03-17,GrubHub,404.86,Food Delivery
+2023-03-17,Stater Bros,343.09,Groceries
+2023-03-17,Apple TV+,433.14,Subscription
+2023-03-18,Uber,394.09,Transport
+2023-03-19,Starbucks,391.34,Dining
+2023-03-19,TechCorp Salary,2499.79,Income
+2023-03-20,Dell Store,202.23,Electronics
+2023-03-20,Walmart,400.08,Shopping
+2023-03-21,Electric Bill,70.41,Utilities
+2023-03-21,Stater Bros,411.04,Groceries
+2023-03-21,Apple TV+,108.61,Subscription
+2023-03-21,Apple Store,223.95,Electronics
+2023-03-21,Target,179.72,Shopping
+2023-03-21,Market Basket,356.64,Groceries
+2023-03-22,Netflix,299.47,Subscription
+2023-03-22,Stater Bros,379.83,Groceries
+2023-03-22,Postmates,226.3,Food Delivery
+2023-03-23,Apple Store,85.78,Electronics
+2023-03-23,Netflix,162.29,Subscription
+2023-03-23,Amazon,248.42,Shopping
+2023-03-23,Electric Bill,86.89,Utilities
+2023-03-24,Target,244.55,Shopping
+2023-03-24,GrubHub,341.97,Food Delivery
+2023-03-24,Electric Bill,383.74,Utilities
+2023-03-25,Target,348.55,Shopping
+2023-03-26,Uber,139.76,Transport
+2023-03-26,Amazon,327.41,Shopping
+2023-03-27,Internet Subscription,179.46,Utilities
+2023-03-27,Macy's,290.02,Shopping
+2023-03-28,GrubHub,225.59,Food Delivery
+2023-03-28,Studio Rental,1650.76,Rent
+2023-03-28,Spotify,283.34,Subscription
+2023-03-28,Sushi Place,165.85,Dining
+2023-03-28,Studio Rental,1389.82,Rent
+2023-03-28,Monthly Rent Payment,1994.7,Rent
+2023-03-29,Netflix,196.24,Subscription
+2023-03-30,Shell Gas Station,225.17,Transport
+2023-03-30,Samsung Online,10.97,Electronics
+2023-03-30,Train Ticket,166.83,Transport
+2023-03-31,Consulting Invoice,5956.61,Income
+2023-04-02,DoorDash,180.65,Food Delivery
+2023-04-03,Stater Bros,169.03,Groceries
+2023-04-03,Samsung Online,188.0,Electronics
+2023-04-03,Best Buy,100.81,Shopping
+2023-04-04,City Parking,263.66,Transport
+2023-04-04,Starbucks,61.22,Dining
+2023-04-04,Spotify,33.99,Subscription
+2023-04-04,Concert Venue,418.77,Entertainment
+2023-04-05,Whole Foods,163.33,Groceries
+2023-04-06,Dental Care,332.09,Healthcare
+2023-04-06,Bowling Alley,242.08,Entertainment
+2023-04-06,Walmart,115.62,Shopping
+2023-04-06,Cell Phone Bill,53.4,Utilities
+2023-04-07,Freelance Payment,7433.14,Income
+2023-04-08,Walmart,293.28,Shopping
+2023-04-08,Trader Joes,424.68,Groceries
+2023-04-08,Bowling Alley,415.01,Entertainment
+2023-04-08,Freelance Payment,7654.37,Income
+2023-04-09,Local Gym,182.73,Entertainment
+2023-04-09,Concert Venue,280.36,Entertainment
+2023-04-10,Consulting Invoice,6343.74,Income
+2023-04-10,Safeway,62.1,Groceries
+2023-04-11,Disney+ Amazon Prime,121.01,Subscription
+2023-04-12,Doctor Visit,15.62,Healthcare
+2023-04-12,Suspicious Wire Transfer,12100.49,Shopping
+2023-04-12,City Parking,368.56,Transport
+2023-04-12,DoorDash,215.3,Food Delivery
+2023-04-12,Olive Garden,231.28,Dining
+2023-04-13,GrubHub,436.85,Food Delivery
+2023-04-13,Dell Store,419.5,Electronics
+2023-04-13,Local Gym,161.66,Entertainment
+2023-04-14,Netflix,257.67,Subscription
+2023-04-16,Freelance Payment,6134.26,Income
+2023-04-16,DoorDash,362.54,Food Delivery
+2023-04-16,Macy's,469.57,Shopping
+2023-04-17,Studio Rental,1456.81,Rent
+2023-04-17,Disney+ Amazon Prime,218.57,Subscription
+2023-04-17,DoorDash,62.53,Food Delivery
+2023-04-18,Chipotle,398.4,Dining
+2023-04-19,Consulting Invoice,7845.7,Income
+2023-04-20,Spotify,10.01,Subscription
+2023-04-21,Micro Center,108.05,Electronics
+2023-04-21,Bowling Alley,10.17,Entertainment
+2023-04-22,Internet Subscription,177.86,Utilities
+2023-04-22,Trader Joes,30.5,Groceries
+2023-04-22,Uber,50.47,Transport
+2023-04-23,Olive Garden,97.25,Dining
+2023-04-25,Postmates,274.01,Food Delivery
+2023-04-25,Movie Theater,141.33,Entertainment
+2023-04-25,Dental Care,277.72,Healthcare
+2023-04-25,Uber,236.54,Transport
+2023-04-26,Apple Store,292.49,Electronics
+2023-04-27,Movie Theater,457.66,Entertainment
+2023-04-27,Best Buy,466.33,Shopping
+2023-04-27,Studio Rental,2443.88,Rent
+2023-04-28,Monthly Rent Payment,2096.46,Rent
+2023-04-28,Disney+ Amazon Prime,84.85,Subscription
+2023-04-28,GrubHub,440.14,Food Delivery
+2023-04-28,Pharmacy,469.13,Healthcare
+2023-04-29,Electric Bill,245.33,Utilities
+2023-04-29,Cell Phone Bill,233.61,Utilities
+2023-04-29,Disney+ Amazon Prime,291.06,Subscription
+2023-04-29,Insurance Premium,340.99,Healthcare
+2023-04-30,Electric Bill,391.57,Utilities
+2023-04-30,GrubHub,455.34,Food Delivery
+2023-04-30,GrubHub,33.84,Food Delivery
+2023-05-01,Apple Store,189.51,Electronics
+2023-05-01,Micro Center,238.7,Electronics
+2023-05-02,Apple TV+,464.49,Subscription
+2023-05-02,Internet Subscription,280.37,Utilities
+2023-05-03,DoorDash,199.21,Food Delivery
+2023-05-03,Water Utility,210.01,Utilities
+2023-05-04,Consulting Invoice,3272.23,Income
+2023-05-06,UberEats,431.74,Food Delivery
+2023-05-06,Apple TV+,416.97,Subscription
+2023-05-06,Spotify,167.93,Subscription
+2023-05-06,Bowling Alley,165.39,Entertainment
+2023-05-06,Insurance Premium,140.54,Healthcare
+2023-05-07,Uber,198.52,Transport
+2023-05-07,Concert Venue,452.54,Entertainment
+2023-05-07,Internet Subscription,289.33,Utilities
+2023-05-07,Shell Gas Station,304.42,Transport
+2023-05-08,Local Bistro,147.66,Dining
+2023-05-08,City Parking,69.74,Transport
+2023-05-09,Pharmacy,297.53,Healthcare
+2023-05-09,Doctor Visit,259.23,Healthcare
+2023-05-10,Stock Dividend,5866.21,Income
+2023-05-10,Monthly Rent Payment,1428.64,Rent
+2023-05-10,UberEats,279.81,Food Delivery
+2023-05-10,Trader Joes,316.08,Groceries
+2023-05-11,Stock Dividend,3696.92,Income
+2023-05-11,Olive Garden,347.53,Dining
+2023-05-11,Amazon,307.71,Shopping
+2023-05-11,Pharmacy,206.68,Healthcare
+2023-05-12,Doctor Visit,41.66,Healthcare
+2023-05-12,Walmart,212.6,Shopping
+2023-05-13,DoorDash,12.69,Food Delivery
+2023-05-13,Dental Care,78.94,Healthcare
+2023-05-13,Studio Rental,1860.16,Rent
+2023-05-13,Local Gym,50.91,Entertainment
+2023-05-14,Netflix,94.73,Subscription
+2023-05-14,Uber,230.33,Transport
+2023-05-15,Consulting Invoice,5207.15,Income
+2023-05-16,Monthly Rent Payment,2043.39,Rent
+2023-05-16,Cell Phone Bill,182.61,Utilities
+2023-05-16,Freelance Payment,2237.43,Income
+2023-05-17,UberEats,247.39,Food Delivery
+2023-05-17,Apartment Lease,1905.07,Rent
+2023-05-17,Internet Subscription,261.81,Utilities
+2023-05-17,Samsung Online,279.82,Electronics
+2023-05-17,Uber,33.76,Transport
+2023-05-17,Macy's,89.43,Shopping
+2023-05-17,Apple TV+,404.24,Subscription
+2023-05-18,Spotify,148.08,Subscription
+2023-05-18,Stock Dividend,2995.52,Income
+2023-05-19,Concert Venue,296.37,Entertainment
+2023-05-19,Netflix,80.47,Subscription
+2023-05-20,Apartment Lease,1053.44,Rent
+2023-05-20,Electric Bill,474.6,Utilities
+2023-05-20,Insurance Premium,209.04,Healthcare
+2023-05-20,Samsung Online,141.21,Electronics
+2023-05-21,Disney+ Amazon Prime,351.66,Subscription
+2023-05-22,Lyft,211.69,Transport
+2023-05-23,Spotify,296.11,Subscription
+2023-05-23,Monthly Rent Payment,2414.49,Rent
+2023-05-23,Whole Foods,395.84,Groceries
+2023-05-23,Macy's,460.73,Shopping
+2023-05-24,Postmates,59.09,Food Delivery
+2023-05-24,Apartment Lease,1234.76,Rent
+2023-05-25,Pharmacy,206.49,Healthcare
+2023-05-25,Dell Store,265.99,Electronics
+2023-05-25,DoorDash,192.33,Food Delivery
+2023-05-25,Train Ticket,112.57,Transport
+2023-05-25,Studio Rental,1177.82,Rent
+2023-05-25,Consulting Invoice,3722.08,Income
+2023-05-26,Apartment Lease,2181.42,Rent
+2023-05-26,Spotify,240.9,Subscription
+2023-05-26,Local Bistro,254.65,Dining
+2023-05-27,Dental Care,372.93,Healthcare
+2023-05-27,Consulting Invoice,2736.87,Income
+2023-05-28,Cell Phone Bill,359.72,Utilities
+2023-05-28,Stock Dividend,6603.15,Income
+2023-05-28,Doctor Visit,249.42,Healthcare
+2023-05-29,Uber,247.53,Transport
+2023-05-29,Dental Care,474.64,Healthcare
+2023-05-30,GrubHub,368.72,Food Delivery
+2023-05-30,Postmates,486.35,Food Delivery
+2023-05-30,Amazon,400.36,Shopping
+2023-05-31,Market Basket,174.43,Groceries
+2023-05-31,UberEats,50.17,Food Delivery
+2023-05-31,Studio Rental,2214.53,Rent
+2023-05-31,Consulting Invoice,5623.93,Income
+2023-05-31,Macy's,250.04,Shopping
+2023-06-01,Doctor Visit,289.64,Healthcare
+2023-06-02,Chipotle,93.6,Dining
+2023-06-02,TechCorp Salary,2505.23,Income
+2023-06-02,Insurance Premium,107.35,Healthcare
+2023-06-02,Monthly Rent Payment,1583.84,Rent
+2023-06-03,Movie Theater,463.09,Entertainment
+2023-06-03,Apple Store,301.95,Electronics
+2023-06-03,Micro Center,211.78,Electronics
+2023-06-03,Shell Gas Station,371.78,Transport
+2023-06-03,DoorDash,369.03,Food Delivery
+2023-06-04,Cell Phone Bill,395.57,Utilities
+2023-06-04,Movie Theater,79.06,Entertainment
+2023-06-04,Starbucks,173.82,Dining
+2023-06-06,Spotify,119.1,Subscription
+2023-06-06,Amazon,458.31,Shopping
+2023-06-06,Local Bistro,369.08,Dining
+2023-06-07,Micro Center,172.31,Electronics
+2023-06-08,Apple TV+,256.43,Subscription
+2023-06-09,Train Ticket,299.82,Transport
+2023-06-09,Pharmacy,110.85,Healthcare
+2023-06-09,DoorDash,100.14,Food Delivery
+2023-06-10,Safeway,164.01,Groceries
+2023-06-10,Cell Phone Bill,171.61,Utilities
+2023-06-10,Stater Bros,449.95,Groceries
+2023-06-10,Spotify,301.81,Subscription
+2023-06-11,Studio Rental,2348.9,Rent
+2023-06-11,Pharmacy,320.12,Healthcare
+2023-06-12,Local Gym,241.69,Entertainment
+2023-06-13,Target,354.04,Shopping
+2023-06-13,Disney+ Amazon Prime,426.59,Subscription
+2023-06-14,Suspicious Wire Transfer,9258.6,Shopping
+2023-06-14,Local Bistro,51.55,Dining
+2023-06-15,DoorDash,32.37,Food Delivery
+2023-06-16,Dental Care,347.63,Healthcare
+2023-06-17,City Parking,179.52,Transport
+2023-06-17,Apartment Lease,2073.65,Rent
+2023-06-18,Netflix,336.86,Subscription
+2023-06-19,Sushi Place,91.61,Dining
+2023-06-19,Movie Theater,319.55,Entertainment
+2023-06-19,Micro Center,16.1,Electronics
+2023-06-19,Monthly Rent Payment,1448.31,Rent
+2023-06-20,Market Basket,226.18,Groceries
+2023-06-20,Freelance Payment,6566.04,Income
+2023-06-20,Internet Subscription,397.61,Utilities
+2023-06-20,Monthly Rent Payment,2218.62,Rent
+2023-06-20,Studio Rental,2151.66,Rent
+2023-06-20,TechCorp Salary,2737.04,Income
+2023-06-20,Apple Store,259.95,Electronics
+2023-06-20,Apartment Lease,1122.3,Rent
+2023-06-21,Safeway,341.59,Groceries
+2023-06-21,Micro Center,50.52,Electronics
+2023-06-22,Amazon,153.01,Shopping
+2023-06-22,Lyft,249.17,Transport
+2023-06-22,City Parking,257.31,Transport
+2023-06-23,Apple Store,45.44,Electronics
+2023-06-23,Pharmacy,33.94,Healthcare
+2023-06-23,Safeway,421.92,Groceries
+2023-06-24,Studio Rental,1532.26,Rent
+2023-06-24,Safeway,123.99,Groceries
+2023-06-24,Concert Venue,121.61,Entertainment
+2023-06-25,Amazon,385.78,Shopping
+2023-06-26,Uber,13.79,Transport
+2023-06-26,UberEats,298.02,Food Delivery
+2023-06-26,Dell Store,363.53,Electronics
+2023-06-26,Walmart,475.35,Shopping
+2023-06-27,Sushi Place,259.26,Dining
+2023-06-27,Netflix Premium Annual Plan,299.99,Subscription
+2023-06-27,DoorDash,496.18,Food Delivery
+2023-06-28,Consulting Invoice,5284.06,Income
+2023-06-28,Netflix,85.24,Subscription
+2023-06-28,Apartment Lease,1483.32,Rent
+2023-06-29,Studio Rental,1854.25,Rent
+2023-06-29,Netflix,463.67,Subscription
+2023-06-29,GrubHub,226.03,Food Delivery
+2023-06-30,TechCorp Salary,5068.54,Income
+2023-06-30,Electric Bill,316.11,Utilities
+2023-06-30,UberEats,155.92,Food Delivery
+2023-07-01,Local Gym,253.35,Entertainment
+2023-07-01,Monthly Rent Payment,2054.77,Rent
+2023-07-01,Starbucks,436.18,Dining
+2023-07-01,TechCorp Salary,4619.45,Income
+2023-07-01,Netflix,33.64,Subscription
+2023-07-01,Consulting Invoice,4615.75,Income
+2023-07-02,TechCorp Salary,2768.44,Income
+2023-07-02,Water Utility,41.71,Utilities
+2023-07-02,Concert Venue,90.08,Entertainment
+2023-07-02,Sushi Place,214.27,Dining
+2023-07-03,Water Utility,383.54,Utilities
+2023-07-03,Studio Rental,2256.77,Rent
+2023-07-03,Disney+ Amazon Prime,485.26,Subscription
+2023-07-03,Apple TV+,298.12,Subscription
+2023-07-03,Apple Store,233.79,Electronics
+2023-07-03,Stater Bros,98.72,Groceries
+2023-07-04,Local Bistro,300.46,Dining
+2023-07-05,Train Ticket,294.8,Transport
+2023-07-06,Spotify,75.06,Subscription
+2023-07-06,Doctor Visit,284.95,Healthcare
+2023-07-07,Dental Care,392.45,Healthcare
+2023-07-07,Studio Rental,1753.77,Rent
+2023-07-07,Samsung Online,395.04,Electronics
+2023-07-08,Doctor Visit,475.15,Healthcare
+2023-07-08,Dell Store,444.2,Electronics
+2023-07-08,Pharmacy,418.98,Healthcare
+2023-07-09,Doctor Visit,107.91,Healthcare
+2023-07-10,Safeway,331.89,Groceries
+2023-07-10,Sushi Place,416.26,Dining
+2023-07-12,Doctor Visit,141.13,Healthcare
+2023-07-12,Monthly Rent Payment,1497.97,Rent
+2023-07-12,Pharmacy,173.59,Healthcare
+2023-07-12,Local Gym,488.24,Entertainment
+2023-07-12,Chipotle,187.4,Dining
+2023-07-13,Monthly Rent Payment,1749.31,Rent
+2023-07-13,Consulting Invoice,2144.68,Income
+2023-07-14,Internet Subscription,96.76,Utilities
+2023-07-14,Monthly Rent Payment,1430.75,Rent
+2023-07-14,Movie Theater,81.41,Entertainment
+2023-07-15,Freelance Payment,5122.09,Income
+2023-07-15,Train Ticket,49.32,Transport
+2023-07-15,Lyft,313.94,Transport
+2023-07-16,Dental Care,188.58,Healthcare
+2023-07-16,Dell Store,308.07,Electronics
+2023-07-16,Market Basket,11.5,Groceries
+2023-07-17,Safeway,290.23,Groceries
+2023-07-17,Chipotle,408.05,Dining
+2023-07-17,Monthly Rent Payment,1688.6,Rent
+2023-07-17,Internet Subscription,49.31,Utilities
+2023-07-17,Studio Rental,1937.43,Rent
+2023-07-18,Micro Center,499.06,Electronics
+2023-07-19,Pharmacy,334.27,Healthcare
+2023-07-19,Amazon,239.75,Shopping
+2023-07-19,Postmates,481.05,Food Delivery
+2023-07-20,Micro Center,252.55,Electronics
+2023-07-20,Water Utility,254.79,Utilities
+2023-07-20,Sushi Place,114.33,Dining
+2023-07-20,Stater Bros,85.71,Groceries
+2023-07-21,Spotify,292.2,Subscription
+2023-07-21,Dell Store,286.3,Electronics
+2023-07-23,Internet Subscription,141.25,Utilities
+2023-07-23,Shell Gas Station,205.29,Transport
+2023-07-23,Consulting Invoice,6523.71,Income
+2023-07-23,Amazon,401.33,Shopping
+2023-07-23,Trader Joes,49.11,Groceries
+2023-07-24,Concert Venue,87.47,Entertainment
+2023-07-24,Target,196.36,Shopping
+2023-07-25,Insurance Premium,75.52,Healthcare
+2023-07-26,Movie Theater,383.12,Entertainment
+2023-07-26,Pharmacy,68.23,Healthcare
+2023-07-27,Water Utility,214.33,Utilities
+2023-07-27,Safeway,334.68,Groceries
+2023-07-27,TechCorp Salary,3864.8,Income
+2023-07-27,Stater Bros,47.48,Groceries
+2023-07-28,Apple Store,421.27,Electronics
+2023-07-28,Olive Garden,323.09,Dining
+2023-07-29,Sushi Place,265.92,Dining
+2023-07-29,Dell Store,262.04,Electronics
+2023-07-29,Stock Dividend,6901.32,Income
+2023-07-30,Apple Store,31.13,Electronics
+2023-07-30,Uber,50.96,Transport
+2023-07-30,Safeway,398.68,Groceries
+2023-07-30,Studio Rental,1772.95,Rent
+2023-07-31,Shell Gas Station,363.74,Transport
+2023-07-31,Olive Garden,71.02,Dining
+2023-07-31,Movie Theater,270.57,Entertainment
+2023-07-31,Chipotle,255.42,Dining
+2023-07-31,Stater Bros,57.38,Groceries
+2023-08-02,TechCorp Salary,7729.64,Income
+2023-08-03,Starbucks,434.11,Dining
+2023-08-03,Local Bistro,186.57,Dining
+2023-08-03,Micro Center,364.56,Electronics
+2023-08-03,Internet Subscription,432.28,Utilities
+2023-08-04,Market Basket,309.11,Groceries
+2023-08-04,Safeway,252.57,Groceries
+2023-08-04,TechCorp Salary,4687.47,Income
+2023-08-05,Postmates,410.14,Food Delivery
+2023-08-05,Stock Dividend,2988.76,Income
+2023-08-05,Cell Phone Bill,85.71,Utilities
+2023-08-06,Cell Phone Bill,384.24,Utilities
+2023-08-06,Electric Bill,195.55,Utilities
+2023-08-06,Apple Store,107.74,Electronics
+2023-08-07,Trader Joes,172.22,Groceries
+2023-08-07,Local Bistro,283.13,Dining
+2023-08-07,Concert Venue,251.37,Entertainment
+2023-08-08,Best Buy,198.45,Shopping
+2023-08-08,Walmart,371.19,Shopping
+2023-08-08,Freelance Payment,7342.45,Income
+2023-08-09,Movie Theater,255.12,Entertainment
+2023-08-09,Macy's,353.24,Shopping
+2023-08-09,Olive Garden,181.52,Dining
+2023-08-09,Starbucks,313.63,Dining
+2023-08-09,Sushi Place,488.56,Dining
+2023-08-10,Dell Store,177.31,Electronics
+2023-08-10,Best Buy,391.79,Shopping
+2023-08-11,Water Utility,30.24,Utilities
+2023-08-11,Apple Store,119.88,Electronics
+2023-08-11,Pharmacy,389.96,Healthcare
+2023-08-11,Samsung Online,458.47,Electronics
+2023-08-11,Apartment Lease,1530.82,Rent
+2023-08-12,Monthly Rent Payment,1821.03,Rent
+2023-08-12,Freelance Payment,7137.37,Income
+2023-08-12,Samsung Online,443.26,Electronics
+2023-08-13,Train Ticket,401.38,Transport
+2023-08-13,Dental Care,406.88,Healthcare
+2023-08-13,Apple Store,62.22,Electronics
+2023-08-14,Local Bistro,19.66,Dining
+2023-08-15,Insurance Premium,78.87,Healthcare
+2023-08-15,Disney+ Amazon Prime,76.76,Subscription
+2023-08-15,Doctor Visit,38.94,Healthcare
+2023-08-16,GrubHub,438.06,Food Delivery
+2023-08-17,Consulting Invoice,7150.09,Income
+2023-08-17,Studio Rental,2490.26,Rent
+2023-08-17,Disney+ Amazon Prime,351.43,Subscription
+2023-08-17,Local Gym,331.71,Entertainment
+2023-08-18,Postmates,379.45,Food Delivery
+2023-08-18,Chipotle,302.27,Dining
+2023-08-18,Bowling Alley,364.81,Entertainment
+2023-08-19,Amazon,359.05,Shopping
+2023-08-19,Water Utility,495.27,Utilities
+2023-08-19,Pharmacy,481.74,Healthcare
+2023-08-19,Movie Theater,67.86,Entertainment
+2023-08-19,Uber,124.09,Transport
+2023-08-20,Macy's,201.27,Shopping
+2023-08-20,Water Utility,81.57,Utilities
+2023-08-21,Whole Foods,37.1,Groceries
+2023-08-21,Freelance Payment,4714.3,Income
+2023-08-22,Lyft,286.95,Transport
+2023-08-22,Movie Theater,44.2,Entertainment
+2023-08-22,Walmart,417.85,Shopping
+2023-08-22,City Parking,239.73,Transport
+2023-08-23,Studio Rental,2448.75,Rent
+2023-08-24,Doctor Visit,13.74,Healthcare
+2023-08-24,Safeway,223.64,Groceries
+2023-08-24,Whole Foods,279.86,Groceries
+2023-08-24,Internet Subscription,35.14,Utilities
+2023-08-25,Macy's,243.61,Shopping
+2023-08-25,Micro Center,8.25,Electronics
+2023-08-26,Postmates,303.66,Food Delivery
+2023-08-27,Monthly Rent Payment,1554.3,Rent
+2023-08-27,Amazon,59.15,Shopping
+2023-08-27,Movie Theater,265.86,Entertainment
+2023-08-27,Apartment Lease,1251.54,Rent
+2023-08-27,Freelance Payment,6376.92,Income
+2023-08-27,Stock Dividend,2432.54,Income
+2023-08-27,Netflix,466.62,Subscription
+2023-08-28,Internet Subscription,334.09,Utilities
+2023-08-28,Netflix,450.14,Subscription
+2023-08-29,Studio Rental,1418.79,Rent
+2023-08-29,Safeway,473.12,Groceries
+2023-08-29,Studio Rental,1478.99,Rent
+2023-08-29,Lyft,469.36,Transport
+2023-08-30,Sushi Place,97.12,Dining
+2023-08-30,City Parking,88.25,Transport
+2023-08-30,Stater Bros,46.06,Groceries
+2023-08-30,Market Basket,160.83,Groceries
+2023-08-30,City Parking,332.92,Transport
+2023-08-31,UberEats,171.32,Food Delivery
+2023-08-31,Insurance Premium,304.14,Healthcare
+2023-09-01,Dental Care,294.02,Healthcare
+2023-09-01,Freelance Payment,3002.06,Income
+2023-09-01,Monthly Rent Payment,1782.94,Rent
+2023-09-01,Studio Rental,1622.06,Rent
+2023-09-01,Internet Subscription,359.81,Utilities
+2023-09-01,Samsung Online,58.28,Electronics
+2023-09-01,Dell Store,204.3,Electronics
+2023-09-01,Water Utility,36.56,Utilities
+2023-09-02,Insurance Premium,102.15,Healthcare
+2023-09-02,Consulting Invoice,6958.0,Income
+2023-09-02,Postmates,10.78,Food Delivery
+2023-09-02,DoorDash,250.74,Food Delivery
+2023-09-03,Lyft,125.73,Transport
+2023-09-03,Cell Phone Bill,403.57,Utilities
+2023-09-03,Sushi Place,86.62,Dining
+2023-09-04,Local Bistro,365.15,Dining
+2023-09-04,City Parking,108.8,Transport
+2023-09-04,Postmates,294.3,Food Delivery
+2023-09-05,Train Ticket,464.65,Transport
+2023-09-05,GrubHub,478.35,Food Delivery
+2023-09-06,Target,222.1,Shopping
+2023-09-06,Walmart,132.35,Shopping
+2023-09-07,DoorDash,403.73,Food Delivery
+2023-09-07,Disney+ Amazon Prime,212.51,Subscription
+2023-09-07,Postmates,369.06,Food Delivery
+2023-09-07,Internet Subscription,423.27,Utilities
+2023-09-07,Lyft,55.1,Transport
+2023-09-08,Studio Rental,2291.67,Rent
+2023-09-08,City Parking,151.15,Transport
+2023-09-09,Insurance Premium,219.84,Healthcare
+2023-09-09,Concert Venue,215.61,Entertainment
+2023-09-10,Lyft,194.87,Transport
+2023-09-10,City Parking,40.19,Transport
+2023-09-10,Disney+ Amazon Prime,91.9,Subscription
+2023-09-10,Pharmacy,445.97,Healthcare
+2023-09-11,GrubHub,196.7,Food Delivery
+2023-09-11,TechCorp Salary,5742.67,Income
+2023-09-11,Uber,158.12,Transport
+2023-09-11,Safeway,176.08,Groceries
+2023-09-11,TechCorp Salary,7422.7,Income
+2023-09-12,Lyft,395.41,Transport
+2023-09-12,TechCorp Salary,3348.78,Income
+2023-09-12,Postmates,342.4,Food Delivery
+2023-09-13,City Parking,65.37,Transport
+2023-09-14,Postmates,298.45,Food Delivery
+2023-09-14,Dental Care,251.54,Healthcare
+2023-09-15,Local Gym,237.05,Entertainment
+2023-09-15,Amazon,299.38,Shopping
+2023-09-15,TechCorp Salary,2800.15,Income
+2023-09-16,Studio Rental,1796.64,Rent
+2023-09-16,Train Ticket,9.95,Transport
+2023-09-16,Apple TV+,369.59,Subscription
+2023-09-16,Electric Bill,193.21,Utilities
+2023-09-17,DoorDash,418.48,Food Delivery
+2023-09-17,Movie Theater,331.45,Entertainment
+2023-09-17,Amazon,191.84,Shopping
+2023-09-17,Market Basket,125.23,Groceries
+2023-09-18,Train Ticket,287.03,Transport
+2023-09-18,Apartment Lease,2214.54,Rent
+2023-09-19,Bowling Alley,346.9,Entertainment
+2023-09-20,Disney+ Amazon Prime,117.22,Subscription
+2023-09-20,Pharmacy,120.8,Healthcare
+2023-09-20,Internet Subscription,464.84,Utilities
+2023-09-20,Spotify,106.55,Subscription
+2023-09-21,Monthly Rent Payment,1674.48,Rent
+2023-09-21,Best Buy,332.16,Shopping
+2023-09-22,Monthly Rent Payment,2292.83,Rent
+2023-09-23,Concert Venue,361.9,Entertainment
+2023-09-23,Stock Dividend,7151.14,Income
+2023-09-23,Insurance Premium,116.15,Healthcare
+2023-09-24,Whole Foods,102.96,Groceries
+2023-09-24,Stock Dividend,2387.95,Income
+2023-09-25,Uber,112.7,Transport
+2023-09-26,Starbucks,317.46,Dining
+2023-09-26,Internet Subscription,462.37,Utilities
+2023-09-27,Stater Bros,94.19,Groceries
+2023-09-28,Chipotle,222.36,Dining
+2023-09-28,Local Bistro,194.39,Dining
+2023-09-28,Dell Store,452.54,Electronics
+2023-09-28,City Parking,134.55,Transport
+2023-09-28,Whole Foods,151.25,Groceries
+2023-09-29,Apartment Lease,2411.93,Rent
+2023-09-29,Whole Foods,148.43,Groceries
+2023-09-29,Concert Venue,231.18,Entertainment
+2023-10-01,Insurance Premium,115.38,Healthcare
+2023-10-01,Walmart,495.69,Shopping
+2023-10-02,Apple Store,390.93,Electronics
+2023-10-02,Disney+ Amazon Prime,375.29,Subscription
+2023-10-02,Spotify,81.79,Subscription
+2023-10-03,Studio Rental,1134.88,Rent
+2023-10-03,Pharmacy,282.14,Healthcare
+2023-10-04,Olive Garden,31.69,Dining
+2023-10-04,Postmates,101.85,Food Delivery
+2023-10-04,Apartment Lease,1965.34,Rent
+2023-10-05,Insurance Premium,134.35,Healthcare
+2023-10-05,Monthly Rent Payment,1346.27,Rent
+2023-10-05,Disney+ Amazon Prime,311.34,Subscription
+2023-10-06,Amazon,449.95,Shopping
+2023-10-06,Insurance Premium,456.52,Healthcare
+2023-10-07,Monthly Rent Payment,2318.2,Rent
+2023-10-07,Insurance Premium,418.41,Healthcare
+2023-10-08,Stater Bros,293.44,Groceries
+2023-10-08,Disney+ Amazon Prime,228.89,Subscription
+2023-10-08,Safeway,15.51,Groceries
+2023-10-08,Dell Store,227.45,Electronics
+2023-10-09,Spotify,196.97,Subscription
+2023-10-09,Apartment Lease,1423.27,Rent
+2023-10-10,Uber,463.86,Transport
+2023-10-10,Local Bistro,268.55,Dining
+2023-10-10,Cell Phone Bill,445.53,Utilities
+2023-10-10,Dell Store,60.37,Electronics
+2023-10-11,Market Basket,76.16,Groceries
+2023-10-11,Stock Dividend,3794.97,Income
+2023-10-11,Postmates,144.68,Food Delivery
+2023-10-12,Micro Center,370.35,Electronics
+2023-10-14,Apple TV+,219.96,Subscription
+2023-10-14,Samsung Online,86.66,Electronics
+2023-10-14,Lyft,7.21,Transport
+2023-10-14,Bowling Alley,315.37,Entertainment
+2023-10-14,Olive Garden,487.49,Dining
+2023-10-15,Dell Store,196.63,Electronics
+2023-10-15,Apartment Lease,1317.84,Rent
+2023-10-17,Local Gym,114.22,Entertainment
+2023-10-17,Netflix,299.19,Subscription
+2023-10-17,Uber,174.5,Transport
+2023-10-18,Lyft,39.74,Transport
+2023-10-18,Pharmacy,221.81,Healthcare
+2023-10-18,Internet Subscription,121.4,Utilities
+2023-10-18,Lyft,99.89,Transport
+2023-10-19,Samsung Online,111.05,Electronics
+2023-10-19,Best Buy,197.54,Shopping
+2023-10-19,Best Buy,222.41,Shopping
+2023-10-20,Bowling Alley,122.5,Entertainment
+2023-10-20,Postmates,50.33,Food Delivery
+2023-10-21,UberEats,154.81,Food Delivery
+2023-10-21,DoorDash,125.83,Food Delivery
+2023-10-22,Olive Garden,94.81,Dining
+2023-10-22,Netflix,342.93,Subscription
+2023-10-23,City Parking,378.03,Transport
+2023-10-23,GrubHub,348.46,Food Delivery
+2023-10-23,Chipotle,87.09,Dining
+2023-10-23,GrubHub,267.66,Food Delivery
+2023-10-24,Netflix,133.58,Subscription
+2023-10-24,UberEats,175.24,Food Delivery
+2023-10-24,Chipotle,150.28,Dining
+2023-10-25,Samsung Online,465.59,Electronics
+2023-10-25,Cell Phone Bill,24.06,Utilities
+2023-10-25,Disney+ Amazon Prime,312.91,Subscription
+2023-10-26,Market Basket,199.7,Groceries
+2023-10-26,Studio Rental,1055.55,Rent
+2023-10-27,Sushi Place,460.1,Dining
+2023-10-27,Disney+ Amazon Prime,445.38,Subscription
+2023-10-27,Apple TV+,298.73,Subscription
+2023-10-27,Apple TV+,258.57,Subscription
+2023-10-28,Starbucks,69.46,Dining
+2023-10-28,Bowling Alley,88.05,Entertainment
+2023-10-28,Postmates,336.29,Food Delivery
+2023-10-28,Freelance Payment,6358.5,Income
+2023-10-28,Train Ticket,304.01,Transport
+2023-10-29,Insurance Premium,485.29,Healthcare
+2023-10-30,Disney+ Amazon Prime,430.02,Subscription
+2023-10-30,Insurance Premium,441.53,Healthcare
+2023-10-30,UberEats,123.33,Food Delivery
+2023-10-31,Disney+ Amazon Prime,456.1,Subscription
+2023-10-31,Consulting Invoice,4425.58,Income
+2023-11-01,Electric Bill,142.48,Utilities
+2023-11-01,Amazon,17.19,Shopping
+2023-11-01,Monthly Rent Payment,2472.31,Rent
+2023-11-02,Market Basket,211.21,Groceries
+2023-11-02,Dell Store,238.62,Electronics
+2023-11-02,TechCorp Salary,3349.57,Income
+2023-11-02,Internet Subscription,183.11,Utilities
+2023-11-02,Postmates,421.21,Food Delivery
+2023-11-03,Local Bistro,323.29,Dining
+2023-11-04,Starbucks,390.77,Dining
+2023-11-04,Bowling Alley,394.4,Entertainment
+2023-11-04,UberEats,395.0,Food Delivery
+2023-11-05,Market Basket,234.39,Groceries
+2023-11-05,Freelance Payment,4416.98,Income
+2023-11-05,Concert Venue,479.64,Entertainment
+2023-11-06,Local Bistro,139.24,Dining
+2023-11-07,Freelance Payment,2875.5,Income
+2023-11-07,Sushi Place,421.99,Dining
+2023-11-07,GrubHub,492.9,Food Delivery
+2023-11-07,Whole Foods,337.85,Groceries
+2023-11-08,Apartment Lease,1409.49,Rent
+2023-11-08,Pharmacy,175.62,Healthcare
+2023-11-09,Studio Rental,1615.76,Rent
+2023-11-10,Doctor Visit,65.23,Healthcare
+2023-11-10,Postmates,446.61,Food Delivery
+2023-11-10,Starbucks,473.93,Dining
+2023-11-11,Water Utility,407.77,Utilities
+2023-11-11,Samsung Online,274.88,Electronics
+2023-11-11,Studio Rental,1851.57,Rent
+2023-11-12,Target,202.19,Shopping
+2023-11-12,Sushi Place,375.63,Dining
+2023-11-12,Insurance Premium,388.52,Healthcare
+2023-11-13,Amazon,497.56,Shopping
+2023-11-13,Studio Rental,1811.43,Rent
+2023-11-14,Local Gym,219.35,Entertainment
+2023-11-15,Train Ticket,280.09,Transport
+2023-11-15,Movie Theater,288.29,Entertainment
+2023-11-16,Chipotle,163.64,Dining
+2023-11-16,Studio Rental,1132.5,Rent
+2023-11-16,Whole Foods,442.09,Groceries
+2023-11-16,Consulting Invoice,3392.06,Income
+2023-11-17,Stock Dividend,6507.41,Income
+2023-11-17,Netflix,252.29,Subscription
+2023-11-18,Micro Center,96.2,Electronics
+2023-11-18,Freelance Payment,7077.43,Income
+2023-11-19,Market Basket,280.66,Groceries
+2023-11-20,Macy's,128.17,Shopping
+2023-11-20,Postmates,96.06,Food Delivery
+2023-11-20,Disney+ Amazon Prime,347.7,Subscription
+2023-11-21,Movie Theater,392.81,Entertainment
+2023-11-21,Shell Gas Station,477.13,Transport
+2023-11-22,Bowling Alley,202.45,Entertainment
+2023-11-22,Disney+ Amazon Prime,125.52,Subscription
+2023-11-22,Apartment Lease,1054.29,Rent
+2023-11-22,Uber,39.56,Transport
+2023-11-23,DoorDash,117.92,Food Delivery
+2023-11-23,Target,252.97,Shopping
+2023-11-23,Uber,13.54,Transport
+2023-11-23,Netflix,145.87,Subscription
+2023-11-23,Amazon,283.87,Shopping
+2023-11-23,Cell Phone Bill,189.64,Utilities
+2023-11-24,TechCorp Salary,2881.11,Income
+2023-11-24,Best Buy,347.48,Shopping
+2023-11-24,TechCorp Salary,5738.96,Income
+2023-11-24,Freelance Payment,5248.88,Income
+2023-11-24,Target,480.32,Shopping
+2023-11-25,Samsung Online,106.95,Electronics
+2023-11-25,Samsung Online,420.61,Electronics
+2023-11-25,Freelance Payment,4150.03,Income
+2023-11-25,Trader Joes,451.63,Groceries
+2023-11-26,Monthly Rent Payment,1453.59,Rent
+2023-11-26,Stock Dividend,4464.75,Income
+2023-11-28,Stock Dividend,7835.75,Income
+2023-11-28,UberEats,236.1,Food Delivery
+2023-11-29,City Parking,64.21,Transport
+2023-11-29,Starbucks,125.0,Dining
+2023-11-29,DoorDash,65.82,Food Delivery
+2023-11-29,UberEats,334.03,Food Delivery
+2023-11-29,Target,34.37,Shopping
+2023-11-29,Dental Care,141.87,Healthcare
+2023-11-29,Trader Joes,299.75,Groceries
+2023-11-30,Micro Center,387.58,Electronics
+2023-11-30,Amazon,397.79,Shopping
+2023-11-30,Netflix,101.74,Subscription
+2023-12-01,Best Buy,99.27,Shopping
+2023-12-02,Trader Joes,309.38,Groceries
+2023-12-02,Apartment Lease,1737.8,Rent
+2023-12-02,Consulting Invoice,7446.05,Income
+2023-12-03,Dell Store,215.39,Electronics
+2023-12-03,Spotify,346.08,Subscription
+2023-12-04,Consulting Invoice,7236.53,Income
+2023-12-04,Best Buy,497.75,Shopping
+2023-12-05,Target,459.73,Shopping
+2023-12-07,Lyft,39.83,Transport
+2023-12-07,Apartment Lease,1443.48,Rent
+2023-12-07,Freelance Payment,2614.25,Income
+2023-12-07,Chipotle,484.2,Dining
+2023-12-07,TechCorp Salary,5222.92,Income
+2023-12-08,Shell Gas Station,202.85,Transport
+2023-12-08,Consulting Invoice,2501.95,Income
+2023-12-08,Local Bistro,33.01,Dining
+2023-12-08,Apartment Lease,2266.56,Rent
+2023-12-09,Stock Dividend,2093.67,Income
+2023-12-09,Postmates,379.95,Food Delivery
+2023-12-11,Micro Center,255.24,Electronics
+2023-12-12,Uber,492.78,Transport
+2023-12-12,Spotify,121.18,Subscription
+2023-12-12,Trader Joes,226.44,Groceries
+2023-12-12,Stater Bros,493.7,Groceries
+2023-12-13,Spotify,201.98,Subscription
+2023-12-13,Water Utility,219.24,Utilities
+2023-12-13,GrubHub,73.09,Food Delivery
+2023-12-15,Olive Garden,143.92,Dining
+2023-12-15,Studio Rental,1389.43,Rent
+2023-12-15,Stock Dividend,5896.61,Income
+2023-12-16,Doctor Visit,240.48,Healthcare
+2023-12-16,Dental Care,359.12,Healthcare
+2023-12-18,City Parking,308.77,Transport
+2023-12-18,Concert Venue,418.22,Entertainment
+2023-12-19,Local Gym,278.49,Entertainment
+2023-12-19,Micro Center,372.49,Electronics
+2023-12-19,Consulting Invoice,2181.12,Income
+2023-12-19,Bowling Alley,318.22,Entertainment
+2023-12-19,Stater Bros,381.35,Groceries
+2023-12-19,Apartment Lease,1367.66,Rent
+2023-12-19,Postmates,306.81,Food Delivery
+2023-12-20,Bowling Alley,287.97,Entertainment
+2023-12-20,Amazon,409.39,Shopping
+2023-12-21,Best Buy,140.58,Shopping
+2023-12-21,Chipotle,248.9,Dining
+2023-12-21,Insurance Premium,445.76,Healthcare
+2023-12-22,Dell Store,58.68,Electronics
+2023-12-22,Postmates,149.57,Food Delivery
+2023-12-23,Movie Theater,238.39,Entertainment
+2023-12-23,Local Gym,24.05,Entertainment
+2023-12-23,TechCorp Salary,2709.03,Income
+2023-12-23,Local Gym,467.9,Entertainment
+2023-12-24,Micro Center,134.2,Electronics
+2023-12-24,UberEats,177.92,Food Delivery
+2023-12-24,Internet Subscription,60.24,Utilities
+2023-12-25,Freelance Payment,7444.67,Income
+2023-12-25,Starbucks,453.93,Dining
+2023-12-25,Local Bistro,410.12,Dining
+2023-12-26,Disney+ Amazon Prime,122.68,Subscription
+2023-12-26,Cell Phone Bill,42.89,Utilities
+2023-12-26,Doctor Visit,9.8,Healthcare
+2023-12-26,Movie Theater,324.32,Entertainment
+2023-12-27,Local Gym,228.99,Entertainment
+2023-12-27,Starbucks,242.94,Dining
+2023-12-27,Insurance Premium,105.76,Healthcare
+2023-12-27,Insurance Premium,358.42,Healthcare
+2023-12-27,Stater Bros,77.98,Groceries
+2023-12-27,Dental Care,413.13,Healthcare
+2023-12-28,Disney+ Amazon Prime,57.21,Subscription
+2023-12-29,Trader Joes,237.97,Groceries
+2023-12-29,Local Gym,248.94,Entertainment
+2023-12-29,Dental Care,391.21,Healthcare
+2023-12-31,Samsung Online,192.3,Electronics
+2023-12-31,Monthly Rent Payment,1964.24,Rent
+2023-12-31,Electric Bill,26.1,Utilities
+2024-01-01,TechCorp Salary,2696.52,Income
+2024-01-01,Local Bistro,102.65,Dining
+2024-01-01,Dental Care,367.78,Healthcare
+2024-01-02,Freelance Payment,2155.41,Income
+2024-01-02,Doctor Visit,275.62,Healthcare
+2024-01-02,Consulting Invoice,3084.82,Income
+2024-01-02,Studio Rental,2011.22,Rent
+2024-01-03,Bowling Alley,65.56,Entertainment
+2024-01-03,Spotify,435.29,Subscription
+2024-01-04,Cell Phone Bill,158.45,Utilities
+2024-01-04,Freelance Payment,4218.67,Income
+2024-01-04,Local Gym,261.48,Entertainment
+2024-01-04,Walmart,248.51,Shopping
+2024-01-04,Chipotle,468.57,Dining
+2024-01-04,Water Utility,450.85,Utilities
+2024-01-05,Lyft,14.72,Transport
+2024-01-05,Olive Garden,355.51,Dining
+2024-01-05,Monthly Rent Payment,2029.89,Rent
+2024-01-06,Target,220.57,Shopping
+2024-01-06,Walmart,155.59,Shopping
+2024-01-06,Monthly Rent Payment,1345.19,Rent
+2024-01-08,Starbucks,328.95,Dining
+2024-01-09,Freelance Payment,7151.25,Income
+2024-01-10,Stock Dividend,5851.44,Income
+2024-01-10,Lyft,190.21,Transport
+2024-01-10,Market Basket,61.16,Groceries
+2024-01-11,DoorDash,359.56,Food Delivery
+2024-01-12,Samsung Online,129.22,Electronics
+2024-01-12,Whole Foods,448.21,Groceries
+2024-01-12,Micro Center,216.01,Electronics
+2024-01-13,Train Ticket,402.97,Transport
+2024-01-13,Trader Joes,372.09,Groceries
+2024-01-13,Micro Center,34.37,Electronics
+2024-01-13,Insurance Premium,397.44,Healthcare
+2024-01-13,Water Utility,438.02,Utilities
+2024-01-13,Dental Care,79.65,Healthcare
+2024-01-13,Monthly Rent Payment,1321.25,Rent
+2024-01-14,Consulting Invoice,4008.57,Income
+2024-01-14,Shell Gas Station,315.56,Transport
+2024-01-15,Apple TV+,68.77,Subscription
+2024-01-16,Apple Store,353.81,Electronics
+2024-01-16,City Parking,389.23,Transport
+2024-01-16,Dell Store,344.59,Electronics
+2024-01-16,Dental Care,281.08,Healthcare
+2024-01-16,Monthly Rent Payment,1122.96,Rent
+2024-01-17,Bowling Alley,239.12,Entertainment
+2024-01-17,Chipotle,442.06,Dining
+2024-01-17,Bowling Alley,100.99,Entertainment
+2024-01-17,Uber,32.45,Transport
+2024-01-17,Concert Venue,122.68,Entertainment
+2024-01-17,Bowling Alley,142.33,Entertainment
+2024-01-18,Best Buy,452.79,Shopping
+2024-01-18,Local Gym,212.97,Entertainment
+2024-01-18,Movie Theater,339.12,Entertainment
+2024-01-18,Stock Dividend,7368.42,Income
+2024-01-18,Whole Foods,134.91,Groceries
+2024-01-18,Sushi Place,469.43,Dining
+2024-01-18,Movie Theater,465.24,Entertainment
+2024-01-19,Consulting Invoice,6665.79,Income
+2024-01-19,Local Bistro,467.51,Dining
+2024-01-19,Bowling Alley,372.71,Entertainment
+2024-01-20,Movie Theater,80.16,Entertainment
+2024-01-21,Micro Center,18.33,Electronics
+2024-01-21,Netflix Premium Annual Plan,299.99,Subscription
+2024-01-21,Micro Center,460.52,Electronics
+2024-01-22,Water Utility,441.26,Utilities
+2024-01-22,Apartment Lease,2370.65,Rent
+2024-01-22,GrubHub,101.25,Food Delivery
+2024-01-22,Samsung Online,173.46,Electronics
+2024-01-23,Bowling Alley,463.7,Entertainment
+2024-01-23,Studio Rental,2372.53,Rent
+2024-01-23,Walmart,276.23,Shopping
+2024-01-23,Apartment Lease,1332.27,Rent
+2024-01-24,Insurance Premium,451.67,Healthcare
+2024-01-24,Disney+ Amazon Prime,331.74,Subscription
+2024-01-24,Insurance Premium,83.77,Healthcare
+2024-01-24,Postmates,482.04,Food Delivery
+2024-01-25,Trader Joes,358.54,Groceries
+2024-01-25,Train Ticket,465.76,Transport
+2024-01-25,Chipotle,185.26,Dining
+2024-01-25,Best Buy,58.2,Shopping
+2024-01-26,Water Utility,258.23,Utilities
+2024-01-26,Micro Center,10.72,Electronics
+2024-01-26,Cell Phone Bill,497.36,Utilities
+2024-01-26,Dental Care,95.84,Healthcare
+2024-01-26,Internet Subscription,188.37,Utilities
+2024-01-26,Consulting Invoice,3145.43,Income
+2024-01-27,Insurance Premium,427.84,Healthcare
+2024-01-27,Freelance Payment,3068.3,Income
+2024-01-29,Apartment Lease,1823.58,Rent
+2024-01-29,Amazon,51.13,Shopping
+2024-01-29,Stock Dividend,2052.15,Income
+2024-01-29,City Parking,94.68,Transport
+2024-01-29,Starbucks,55.81,Dining
+2024-01-30,Water Utility,398.79,Utilities
+2024-02-02,Doctor Visit,454.99,Healthcare
+2024-02-02,Starbucks,161.17,Dining
+2024-02-02,Samsung Online,486.46,Electronics
+2024-02-02,Studio Rental,1323.79,Rent
+2024-02-02,GrubHub,93.09,Food Delivery
+2024-02-03,Pharmacy,27.29,Healthcare
+2024-02-03,Shell Gas Station,116.4,Transport
+2024-02-03,Bowling Alley,42.2,Entertainment
+2024-02-04,Concert Venue,384.44,Entertainment
+2024-02-04,DoorDash,304.04,Food Delivery
+2024-02-04,Target,109.51,Shopping
+2024-02-05,Water Utility,483.28,Utilities
+2024-02-06,Local Gym,358.34,Entertainment
+2024-02-06,Consulting Invoice,6094.87,Income
+2024-02-06,Insurance Premium,434.2,Healthcare
+2024-02-06,City Parking,448.95,Transport
+2024-02-07,Studio Rental,2432.74,Rent
+2024-02-07,Local Gym,12.22,Entertainment
+2024-02-07,TechCorp Salary,5299.56,Income
+2024-02-08,Freelance Payment,4037.17,Income
+2024-02-08,Freelance Payment,6027.4,Income
+2024-02-09,Whole Foods,391.8,Groceries
+2024-02-09,Amazon,441.66,Shopping
+2024-02-09,Shell Gas Station,421.17,Transport
+2024-02-09,Studio Rental,1243.74,Rent
+2024-02-10,Lyft,227.3,Transport
+2024-02-10,Chipotle,479.97,Dining
+2024-02-10,Safeway,448.77,Groceries
+2024-02-10,Suspicious Wire Transfer,6901.33,Shopping
+2024-02-11,Stater Bros,472.99,Groceries
+2024-02-12,Cell Phone Bill,499.76,Utilities
+2024-02-12,Starbucks,470.65,Dining
+2024-02-12,Pharmacy,195.62,Healthcare
+2024-02-12,Studio Rental,1076.55,Rent
+2024-02-13,Pharmacy,461.51,Healthcare
+2024-02-13,Studio Rental,2305.13,Rent
+2024-02-13,Concert Venue,90.01,Entertainment
+2024-02-13,Lyft,475.34,Transport
+2024-02-13,Local Bistro,463.75,Dining
+2024-02-14,Apartment Lease,1347.33,Rent
+2024-02-14,Monthly Rent Payment,2177.37,Rent
+2024-02-14,DoorDash,308.54,Food Delivery
+2024-02-14,Electric Bill,334.69,Utilities
+2024-02-15,Stock Dividend,2479.11,Income
+2024-02-15,Apple TV+,100.5,Subscription
+2024-02-15,Shell Gas Station,245.64,Transport
+2024-02-15,Apple TV+,426.75,Subscription
+2024-02-16,Dell Store,306.09,Electronics
+2024-02-16,Macy's,460.13,Shopping
+2024-02-16,Sushi Place,443.88,Dining
+2024-02-16,GrubHub,10.53,Food Delivery
+2024-02-16,Dental Care,263.18,Healthcare
+2024-02-17,Safeway,188.14,Groceries
+2024-02-17,Uber,205.97,Transport
+2024-02-17,TechCorp Salary,2304.65,Income
+2024-02-17,Water Utility,444.58,Utilities
+2024-02-18,Postmates,78.56,Food Delivery
+2024-02-20,Walmart,39.13,Shopping
+2024-02-20,Monthly Rent Payment,2376.77,Rent
+2024-02-21,Water Utility,403.77,Utilities
+2024-02-21,Safeway,112.08,Groceries
+2024-02-21,Water Utility,425.38,Utilities
+2024-02-21,Olive Garden,229.54,Dining
+2024-02-21,Whole Foods,297.64,Groceries
+2024-02-22,Studio Rental,1278.34,Rent
+2024-02-23,Doctor Visit,44.28,Healthcare
+2024-02-23,DoorDash,300.72,Food Delivery
+2024-02-24,Stock Dividend,2957.11,Income
+2024-02-24,TechCorp Salary,7601.08,Income
+2024-02-24,Target,120.19,Shopping
+2024-02-24,Monthly Rent Payment,1618.3,Rent
+2024-02-25,Electric Bill,463.49,Utilities
+2024-02-25,Uber,276.15,Transport
+2024-02-26,Netflix,147.47,Subscription
+2024-02-26,Movie Theater,452.73,Entertainment
+2024-02-26,Netflix,146.57,Subscription
+2024-02-26,Trader Joes,314.46,Groceries
+2024-02-26,Whole Foods,41.35,Groceries
+2024-02-26,Internet Subscription,260.18,Utilities
+2024-02-28,Postmates,145.26,Food Delivery
+2024-02-28,Studio Rental,1563.34,Rent
+2024-02-29,Doctor Visit,443.21,Healthcare
+2024-02-29,UberEats,235.8,Food Delivery
+2024-02-29,DoorDash,477.27,Food Delivery
+2024-03-01,Electric Bill,279.09,Utilities
+2024-03-01,Monthly Rent Payment,1788.15,Rent
+2024-03-02,Uber,216.83,Transport
+2024-03-02,Studio Rental,1377.35,Rent
+2024-03-02,Dell Store,73.42,Electronics
+2024-03-03,GrubHub,470.67,Food Delivery
+2024-03-03,Water Utility,158.06,Utilities
+2024-03-03,DoorDash,227.19,Food Delivery
+2024-03-03,Whole Foods,343.7,Groceries
+2024-03-03,Bowling Alley,386.19,Entertainment
+2024-03-03,Freelance Payment,3672.62,Income
+2024-03-04,Movie Theater,363.89,Entertainment
+2024-03-04,Doctor Visit,121.82,Healthcare
+2024-03-04,DoorDash,429.1,Food Delivery
+2024-03-04,UberEats,293.21,Food Delivery
+2024-03-04,Olive Garden,82.66,Dining
+2024-03-05,Apple Store,399.97,Electronics
+2024-03-05,Amazon,164.53,Shopping
+2024-03-05,Olive Garden,329.66,Dining
+2024-03-06,Movie Theater,39.04,Entertainment
+2024-03-06,Apple Store,350.59,Electronics
+2024-03-06,City Parking,15.08,Transport
+2024-03-06,Dell Store,151.26,Electronics
+2024-03-06,Monthly Rent Payment,1793.97,Rent
+2024-03-06,Dental Care,173.87,Healthcare
+2024-03-06,Freelance Payment,5855.59,Income
+2024-03-07,Apple TV+,332.78,Subscription
+2024-03-08,Concert Venue,340.1,Entertainment
+2024-03-09,Starbucks,34.34,Dining
+2024-03-09,Local Gym,144.06,Entertainment
+2024-03-09,Best Buy,68.73,Shopping
+2024-03-10,UberEats,366.01,Food Delivery
+2024-03-10,Insurance Premium,186.22,Healthcare
+2024-03-10,GrubHub,304.3,Food Delivery
+2024-03-10,Studio Rental,1699.0,Rent
+2024-03-10,Internet Subscription,200.41,Utilities
+2024-03-11,Stock Dividend,2035.11,Income
+2024-03-11,Olive Garden,119.87,Dining
+2024-03-11,Cell Phone Bill,363.02,Utilities
+2024-03-11,Train Ticket,121.84,Transport
+2024-03-12,UberEats,409.77,Food Delivery
+2024-03-12,Safeway,68.77,Groceries
+2024-03-12,Electric Bill,415.69,Utilities
+2024-03-13,Monthly Rent Payment,2093.97,Rent
+2024-03-13,Macy's,393.19,Shopping
+2024-03-13,TechCorp Salary,3489.99,Income
+2024-03-14,Spotify,334.04,Subscription
+2024-03-14,Electric Bill,401.08,Utilities
+2024-03-14,Spotify,359.02,Subscription
+2024-03-14,Chipotle,436.13,Dining
+2024-03-14,Local Gym,187.01,Entertainment
+2024-03-15,Local Gym,400.6,Entertainment
+2024-03-15,Electric Bill,383.44,Utilities
+2024-03-15,Stater Bros,320.99,Groceries
+2024-03-16,Dell Store,242.62,Electronics
+2024-03-16,Safeway,383.82,Groceries
+2024-03-17,Micro Center,319.72,Electronics
+2024-03-17,Shell Gas Station,316.7,Transport
+2024-03-17,Bowling Alley,79.99,Entertainment
+2024-03-17,Postmates,180.05,Food Delivery
+2024-03-17,Safeway,164.02,Groceries
+2024-03-18,Train Ticket,118.46,Transport
+2024-03-19,Dell Store,288.63,Electronics
+2024-03-19,Doctor Visit,355.12,Healthcare
+2024-03-19,Whole Foods,432.4,Groceries
+2024-03-19,Dental Care,407.56,Healthcare
+2024-03-19,Pharmacy,379.49,Healthcare
+2024-03-20,Netflix,496.3,Subscription
+2024-03-20,TechCorp Salary,7239.9,Income
+2024-03-21,TechCorp Salary,2706.84,Income
+2024-03-21,Studio Rental,1585.79,Rent
+2024-03-22,Train Ticket,168.37,Transport
+2024-03-22,Movie Theater,263.65,Entertainment
+2024-03-23,Local Bistro,374.46,Dining
+2024-03-23,Internet Subscription,48.51,Utilities
+2024-03-23,Cell Phone Bill,185.4,Utilities
+2024-03-23,Internet Subscription,39.52,Utilities
+2024-03-24,Market Basket,93.43,Groceries
+2024-03-24,Pharmacy,273.24,Healthcare
+2024-03-25,Macy's,307.26,Shopping
+2024-03-26,Walmart,265.72,Shopping
+2024-03-28,Movie Theater,488.12,Entertainment
+2024-03-28,Samsung Online,490.53,Electronics
+2024-03-28,Whole Foods,321.52,Groceries
+2024-03-28,Local Gym,69.97,Entertainment
+2024-03-28,Doctor Visit,352.08,Healthcare
+2024-03-29,Train Ticket,368.82,Transport
+2024-03-29,Safeway,404.51,Groceries
+2024-03-29,Pharmacy,297.38,Healthcare
+2024-03-29,Internet Subscription,182.42,Utilities
+2024-03-30,Postmates,206.12,Food Delivery
+2024-03-30,Best Buy,12.39,Shopping
+2024-03-30,Best Buy,80.08,Shopping
+2024-03-31,Insurance Premium,498.94,Healthcare
+2024-04-01,Best Buy,81.72,Shopping
+2024-04-01,Doctor Visit,142.91,Healthcare
+2024-04-01,Studio Rental,1234.02,Rent
+2024-04-01,Samsung Online,19.97,Electronics
+2024-04-01,Water Utility,22.92,Utilities
+2024-04-02,Pharmacy,299.77,Healthcare
+2024-04-02,GrubHub,108.31,Food Delivery
+2024-04-02,Movie Theater,223.64,Entertainment
+2024-04-03,Whole Foods,196.73,Groceries
+2024-04-04,Micro Center,55.92,Electronics
+2024-04-04,Consulting Invoice,5485.62,Income
+2024-04-04,Starbucks,473.19,Dining
+2024-04-04,Market Basket,115.34,Groceries
+2024-04-04,Uber,194.13,Transport
+2024-04-05,Monthly Rent Payment,1642.7,Rent
+2024-04-05,Dell Store,493.02,Electronics
+2024-04-05,Electric Bill,195.28,Utilities
+2024-04-05,Sushi Place,121.63,Dining
+2024-04-05,Cell Phone Bill,445.03,Utilities
+2024-04-05,Spotify,482.33,Subscription
+2024-04-05,Electric Bill,285.35,Utilities
+2024-04-06,Apartment Lease,2334.79,Rent
+2024-04-06,Market Basket,367.77,Groceries
+2024-04-06,Netflix,91.95,Subscription
+2024-04-06,Dell Store,125.45,Electronics
+2024-04-06,Studio Rental,2308.28,Rent
+2024-04-06,Walmart,312.1,Shopping
+2024-04-07,Bowling Alley,233.29,Entertainment
+2024-04-07,Lyft,450.16,Transport
+2024-04-07,Apple TV+,115.54,Subscription
+2024-04-07,Shell Gas Station,19.48,Transport
+2024-04-08,City Parking,40.43,Transport
+2024-04-09,Insurance Premium,300.56,Healthcare
+2024-04-09,Shell Gas Station,261.99,Transport
+2024-04-09,DoorDash,218.88,Food Delivery
+2024-04-10,Spotify,98.19,Subscription
+2024-04-11,Walmart,43.15,Shopping
+2024-04-11,DoorDash,192.79,Food Delivery
+2024-04-12,Apartment Lease,1146.87,Rent
+2024-04-13,Netflix,456.78,Subscription
+2024-04-15,Apple Store,304.53,Electronics
+2024-04-15,TechCorp Salary,2419.54,Income
+2024-04-15,Macy's,446.85,Shopping
+2024-04-15,UberEats,68.05,Food Delivery
+2024-04-16,Internet Subscription,63.28,Utilities
+2024-04-16,Best Buy,229.51,Shopping
+2024-04-16,Uber,278.47,Transport
+2024-04-17,Water Utility,394.35,Utilities
+2024-04-17,Apartment Lease,2372.34,Rent
+2024-04-17,Macy's,56.73,Shopping
+2024-04-17,Apple Store,400.22,Electronics
+2024-04-17,Concert Venue,209.35,Entertainment
+2024-04-18,Postmates,442.33,Food Delivery
+2024-04-18,Sushi Place,367.69,Dining
+2024-04-18,Local Gym,95.91,Entertainment
+2024-04-18,Market Basket,283.35,Groceries
+2024-04-19,Target,290.57,Shopping
+2024-04-19,Starbucks,268.59,Dining
+2024-04-20,GrubHub,273.38,Food Delivery
+2024-04-20,Electric Bill,72.45,Utilities
+2024-04-21,Electric Bill,470.04,Utilities
+2024-04-21,Pharmacy,254.89,Healthcare
+2024-04-22,Micro Center,405.59,Electronics
+2024-04-22,Local Bistro,136.49,Dining
+2024-04-22,Apple Store,159.72,Electronics
+2024-04-22,Apple Store,165.64,Electronics
+2024-04-23,Stater Bros,233.08,Groceries
+2024-04-23,Doctor Visit,106.32,Healthcare
+2024-04-24,Train Ticket,235.18,Transport
+2024-04-24,Netflix,331.66,Subscription
+2024-04-25,Movie Theater,356.13,Entertainment
+2024-04-25,TechCorp Salary,3764.83,Income
+2024-04-25,Insurance Premium,79.96,Healthcare
+2024-04-25,Electric Bill,205.72,Utilities
+2024-04-26,Postmates,313.34,Food Delivery
+2024-04-26,Apple Store,235.49,Electronics
+2024-04-28,Dell Store,236.16,Electronics
+2024-04-28,Stater Bros,17.0,Groceries
+2024-04-28,DoorDash,83.73,Food Delivery
+2024-04-28,Consulting Invoice,6008.46,Income
+2024-04-28,Internet Subscription,35.95,Utilities
+2024-04-29,Samsung Online,381.04,Electronics
+2024-04-29,Walmart,152.78,Shopping
+2024-04-29,Spotify,490.69,Subscription
+2024-04-29,Stater Bros,89.01,Groceries
+2024-04-29,Amazon,148.11,Shopping
+2024-04-30,Monthly Rent Payment,1438.25,Rent
+2024-04-30,Starbucks,485.11,Dining
+2024-05-01,Cell Phone Bill,319.71,Utilities
+2024-05-01,Studio Rental,2393.85,Rent
+2024-05-01,Amazon,219.67,Shopping
+2024-05-02,Market Basket,306.63,Groceries
+2024-05-03,Apple TV+,57.65,Subscription
+2024-05-03,DoorDash,229.27,Food Delivery
+2024-05-03,Doctor Visit,467.95,Healthcare
+2024-05-04,Stater Bros,343.8,Groceries
+2024-05-05,Starbucks,435.99,Dining
+2024-05-05,Water Utility,395.61,Utilities
+2024-05-05,Dental Care,222.59,Healthcare
+2024-05-05,Train Ticket,166.07,Transport
+2024-05-06,Apartment Lease,1878.73,Rent
+2024-05-06,Market Basket,255.02,Groceries
+2024-05-06,Consulting Invoice,4666.17,Income
+2024-05-07,Chipotle,191.27,Dining
+2024-05-07,DoorDash,68.3,Food Delivery
+2024-05-07,Disney+ Amazon Prime,380.65,Subscription
+2024-05-07,TechCorp Salary,7961.07,Income
+2024-05-08,Trader Joes,351.75,Groceries
+2024-05-08,Trader Joes,279.82,Groceries
+2024-05-08,Internet Subscription,47.16,Utilities
+2024-05-08,Walmart,409.61,Shopping
+2024-05-08,Electric Bill,472.54,Utilities
+2024-05-08,Micro Center,7.84,Electronics
+2024-05-08,Dell Store,399.91,Electronics
+2024-05-08,Apartment Lease,1450.32,Rent
+2024-05-09,Dell Store,97.48,Electronics
+2024-05-09,Postmates,237.17,Food Delivery
+2024-05-09,Best Buy,454.31,Shopping
+2024-05-10,Dental Care,69.0,Healthcare
+2024-05-10,Market Basket,339.28,Groceries
+2024-05-12,Whole Foods,149.32,Groceries
+2024-05-12,Freelance Payment,4788.58,Income
+2024-05-12,Dell Store,35.67,Electronics
+2024-05-12,Studio Rental,1183.61,Rent
+2024-05-13,TechCorp Salary,7238.88,Income
+2024-05-13,Apple Store,376.89,Electronics
+2024-05-14,Sushi Place,229.21,Dining
+2024-05-14,Doctor Visit,48.9,Healthcare
+2024-05-15,Apple Store,472.4,Electronics
+2024-05-15,Pharmacy,239.89,Healthcare
+2024-05-15,App Store In-App Purchase,1.33,Electronics
+2024-05-15,Cell Phone Bill,260.29,Utilities
+2024-05-15,App Store In-App Purchase,1.73,Electronics
+2024-05-15,App Store In-App Purchase,3.24,Electronics
+2024-05-15,App Store In-App Purchase,1.1,Electronics
+2024-05-15,App Store In-App Purchase,4.2,Electronics
+2024-05-15,App Store In-App Purchase,2.73,Electronics
+2024-05-15,App Store In-App Purchase,4.48,Electronics
+2024-05-15,App Store In-App Purchase,3.54,Electronics
+2024-05-15,App Store In-App Purchase,3.62,Electronics
+2024-05-15,App Store In-App Purchase,3.31,Electronics
+2024-05-15,App Store In-App Purchase,4.91,Electronics
+2024-05-15,App Store In-App Purchase,1.19,Electronics
+2024-05-15,App Store In-App Purchase,4.46,Electronics
+2024-05-15,App Store In-App Purchase,3.49,Electronics
+2024-05-15,App Store In-App Purchase,3.73,Electronics
+2024-05-15,App Store In-App Purchase,4.0,Electronics
+2024-05-15,App Store In-App Purchase,2.48,Electronics
+2024-05-15,App Store In-App Purchase,3.61,Electronics
+2024-05-15,App Store In-App Purchase,1.31,Electronics
+2024-05-15,App Store In-App Purchase,2.31,Electronics
+2024-05-15,App Store In-App Purchase,3.01,Electronics
+2024-05-15,App Store In-App Purchase,2.48,Electronics
+2024-05-15,App Store In-App Purchase,4.51,Electronics
+2024-05-15,App Store In-App Purchase,2.58,Electronics
+2024-05-15,App Store In-App Purchase,2.88,Electronics
+2024-05-15,App Store In-App Purchase,3.62,Electronics
+2024-05-15,App Store In-App Purchase,2.32,Electronics
+2024-05-15,App Store In-App Purchase,4.3,Electronics
+2024-05-15,App Store In-App Purchase,1.97,Electronics
+2024-05-15,App Store In-App Purchase,3.51,Electronics
+2024-05-16,Netflix,234.31,Subscription
+2024-05-16,Walmart,490.86,Shopping
+2024-05-16,Doctor Visit,24.27,Healthcare
+2024-05-17,Insurance Premium,447.88,Healthcare
+2024-05-18,Trader Joes,482.51,Groceries
+2024-05-18,Water Utility,482.95,Utilities
+2024-05-18,Apple Store,391.65,Electronics
+2024-05-18,Apple Store,166.77,Electronics
+2024-05-18,Macy's,243.51,Shopping
+2024-05-18,Amazon,213.1,Shopping
+2024-05-18,Micro Center,97.01,Electronics
+2024-05-19,Olive Garden,392.18,Dining
+2024-05-19,UberEats,251.43,Food Delivery
+2024-05-19,Freelance Payment,5429.49,Income
+2024-05-19,Consulting Invoice,5465.73,Income
+2024-05-20,Local Gym,26.45,Entertainment
+2024-05-20,Olive Garden,414.16,Dining
+2024-05-21,Water Utility,448.56,Utilities
+2024-05-21,Bowling Alley,327.61,Entertainment
+2024-05-22,Olive Garden,291.58,Dining
+2024-05-23,GrubHub,455.18,Food Delivery
+2024-05-23,Uber,84.75,Transport
+2024-05-23,Cell Phone Bill,429.59,Utilities
+2024-05-24,Insurance Premium,465.2,Healthcare
+2024-05-24,Monthly Rent Payment,1791.23,Rent
+2024-05-24,Cell Phone Bill,258.51,Utilities
+2024-05-25,Bowling Alley,275.07,Entertainment
+2024-05-25,Movie Theater,182.83,Entertainment
+2024-05-26,Safeway,353.84,Groceries
+2024-05-26,Stock Dividend,2575.5,Income
+2024-05-26,Electric Bill,443.64,Utilities
+2024-05-27,Cell Phone Bill,398.22,Utilities
+2024-05-28,Micro Center,189.74,Electronics
+2024-05-28,Spotify,453.34,Subscription
+2024-05-28,Apartment Lease,1982.29,Rent
+2024-05-29,Chipotle,211.41,Dining
+2024-05-29,Macy's,395.96,Shopping
+2024-05-30,UberEats,168.0,Food Delivery
+2024-05-30,Apple Store,470.17,Electronics
+2024-06-01,Disney+ Amazon Prime,310.44,Subscription
+2024-06-01,Consulting Invoice,2495.53,Income
+2024-06-01,Electric Bill,20.0,Utilities
+2024-06-01,Sushi Place,347.59,Dining
+2024-06-01,Uber,483.3,Transport
+2024-06-02,Internet Subscription,207.69,Utilities
+2024-06-02,Sushi Place,13.12,Dining
+2024-06-02,DoorDash,154.6,Food Delivery
+2024-06-02,GrubHub,255.91,Food Delivery
+2024-06-02,Whole Foods,113.54,Groceries
+2024-06-02,Internet Subscription,233.73,Utilities
+2024-06-02,Target,82.17,Shopping
+2024-06-03,Pharmacy,46.06,Healthcare
+2024-06-03,Bowling Alley,410.91,Entertainment
+2024-06-04,GrubHub,499.65,Food Delivery
+2024-06-04,Concert Venue,189.73,Entertainment
+2024-06-04,Insurance Premium,470.33,Healthcare
+2024-06-04,Spotify,86.7,Subscription
+2024-06-05,Whole Foods,85.51,Groceries
+2024-06-05,Studio Rental,2051.92,Rent
+2024-06-06,Train Ticket,169.32,Transport
+2024-06-07,Spotify,180.47,Subscription
+2024-06-07,Studio Rental,1554.76,Rent
+2024-06-07,Disney+ Amazon Prime,446.38,Subscription
+2024-06-08,Olive Garden,276.51,Dining
+2024-06-08,Dental Care,5.43,Healthcare
+2024-06-08,Suspicious Wire Transfer,9285.93,Shopping
+2024-06-08,Apartment Lease,1896.96,Rent
+2024-06-09,Electric Bill,44.4,Utilities
+2024-06-09,Uber,489.02,Transport
+2024-06-09,Movie Theater,229.26,Entertainment
+2024-06-09,Safeway,169.41,Groceries
+2024-06-10,Disney+ Amazon Prime,326.09,Subscription
+2024-06-10,DoorDash,362.8,Food Delivery
+2024-06-11,City Parking,228.34,Transport
+2024-06-11,Olive Garden,495.27,Dining
+2024-06-11,Safeway,305.93,Groceries
+2024-06-11,Lyft,96.07,Transport
+2024-06-11,Trader Joes,281.72,Groceries
+2024-06-12,Market Basket,355.3,Groceries
+2024-06-12,UberEats,32.1,Food Delivery
+2024-06-12,Bowling Alley,271.48,Entertainment
+2024-06-13,Stock Dividend,5663.72,Income
+2024-06-13,Apartment Lease,1776.59,Rent
+2024-06-14,Spotify,316.57,Subscription
+2024-06-15,Bowling Alley,301.87,Entertainment
+2024-06-16,Micro Center,65.04,Electronics
+2024-06-17,Micro Center,331.23,Electronics
+2024-06-17,Cell Phone Bill,424.68,Utilities
+2024-06-17,Disney+ Amazon Prime,483.78,Subscription
+2024-06-17,Trader Joes,207.57,Groceries
+2024-06-18,Local Gym,212.67,Entertainment
+2024-06-18,Bowling Alley,170.27,Entertainment
+2024-06-19,Cell Phone Bill,30.58,Utilities
+2024-06-20,Doctor Visit,308.27,Healthcare
+2024-06-20,Trader Joes,488.48,Groceries
+2024-06-20,Stock Dividend,5069.61,Income
+2024-06-21,Walmart,120.75,Shopping
+2024-06-21,City Parking,467.58,Transport
+2024-06-21,Consulting Invoice,2156.72,Income
+2024-06-23,GrubHub,453.33,Food Delivery
+2024-06-23,Train Ticket,144.51,Transport
+2024-06-23,Amazon,19.12,Shopping
+2024-06-24,GrubHub,208.22,Food Delivery
+2024-06-24,Netflix,471.56,Subscription
+2024-06-24,Netflix,163.52,Subscription
+2024-06-24,Uber,20.75,Transport
+2024-06-24,Olive Garden,307.83,Dining
+2024-06-25,Freelance Payment,5735.17,Income
+2024-06-26,Apple Store,392.31,Electronics
+2024-06-26,Local Gym,59.53,Entertainment
+2024-06-26,Postmates,16.67,Food Delivery
+2024-06-26,Apple Store,338.02,Electronics
+2024-06-27,Walmart,24.41,Shopping
+2024-06-27,Apartment Lease,1819.51,Rent
+2024-06-27,Shell Gas Station,354.49,Transport
+2024-06-28,UberEats,22.6,Food Delivery
+2024-06-28,DoorDash,441.27,Food Delivery
+2024-06-28,Pharmacy,130.54,Healthcare
+2024-06-28,Water Utility,135.63,Utilities
+2024-06-28,Studio Rental,2121.99,Rent
+2024-06-29,UberEats,209.29,Food Delivery
+2024-06-29,Stock Dividend,7035.26,Income
+2024-06-29,Bowling Alley,21.01,Entertainment
+2024-06-29,Disney+ Amazon Prime,72.73,Subscription
+2024-06-30,Electric Bill,449.48,Utilities
+2024-06-30,Stater Bros,12.94,Groceries
+2024-07-01,GrubHub,70.93,Food Delivery
+2024-07-02,Apartment Lease,1717.84,Rent
+2024-07-02,Studio Rental,2417.01,Rent
+2024-07-03,Macy's,133.36,Shopping
+2024-07-04,Apartment Lease,1403.17,Rent
+2024-07-04,Water Utility,358.11,Utilities
+2024-07-05,Macy's,338.23,Shopping
+2024-07-05,Chipotle,449.99,Dining
+2024-07-06,Apple Store,152.45,Electronics
+2024-07-06,Dell Store,365.78,Electronics
+2024-07-06,Monthly Rent Payment,2421.83,Rent
+2024-07-06,Monthly Rent Payment,1419.79,Rent
+2024-07-07,Disney+ Amazon Prime,124.45,Subscription
+2024-07-07,DoorDash,249.3,Food Delivery
+2024-07-08,Monthly Rent Payment,1364.77,Rent
+2024-07-08,Doctor Visit,108.63,Healthcare
+2024-07-09,Water Utility,164.57,Utilities
+2024-07-10,Electric Bill,134.03,Utilities
+2024-07-11,Dell Store,230.55,Electronics
+2024-07-11,Bowling Alley,317.69,Entertainment
+2024-07-11,TechCorp Salary,4039.58,Income
+2024-07-11,Uber,289.2,Transport
+2024-07-11,Netflix,345.98,Subscription
+2024-07-11,Consulting Invoice,6940.83,Income
+2024-07-12,Stock Dividend,3529.53,Income
+2024-07-12,Samsung Online,333.42,Electronics
+2024-07-12,Disney+ Amazon Prime,398.13,Subscription
+2024-07-13,Market Basket,191.01,Groceries
+2024-07-13,Dell Store,147.17,Electronics
+2024-07-13,Freelance Payment,4347.92,Income
+2024-07-14,Concert Venue,212.11,Entertainment
+2024-07-14,Consulting Invoice,6569.66,Income
+2024-07-15,Apple Store,371.1,Electronics
+2024-07-15,Concert Venue,483.86,Entertainment
+2024-07-15,DoorDash,222.78,Food Delivery
+2024-07-16,Electric Bill,301.81,Utilities
+2024-07-17,Uber,57.49,Transport
+2024-07-17,Market Basket,352.54,Groceries
+2024-07-18,Insurance Premium,67.68,Healthcare
+2024-07-18,Market Basket,460.19,Groceries
+2024-07-18,Olive Garden,165.06,Dining
+2024-07-19,Shell Gas Station,215.06,Transport
+2024-07-19,Chipotle,103.45,Dining
+2024-07-20,Spotify,360.6,Subscription
+2024-07-20,Studio Rental,1131.29,Rent
+2024-07-20,Apple TV+,8.78,Subscription
+2024-07-21,Lyft,207.34,Transport
+2024-07-21,Amazon,273.86,Shopping
+2024-07-21,Dental Care,161.59,Healthcare
+2024-07-22,Pharmacy,71.91,Healthcare
+2024-07-22,Spotify,179.43,Subscription
+2024-07-22,Walmart,427.26,Shopping
+2024-07-22,Monthly Rent Payment,1183.63,Rent
+2024-07-22,Safeway,473.23,Groceries
+2024-07-22,Insurance Premium,432.58,Healthcare
+2024-07-22,Lyft,175.72,Transport
+2024-07-23,GrubHub,166.44,Food Delivery
+2024-07-23,Concert Venue,366.28,Entertainment
+2024-07-23,Studio Rental,2015.42,Rent
+2024-07-23,Amazon,367.03,Shopping
+2024-07-23,Lyft,60.48,Transport
+2024-07-24,Postmates,285.86,Food Delivery
+2024-07-24,Spotify,447.95,Subscription
+2024-07-25,Monthly Rent Payment,1120.26,Rent
+2024-07-25,Doctor Visit,485.81,Healthcare
+2024-07-25,Olive Garden,86.58,Dining
+2024-07-26,Studio Rental,1306.93,Rent
+2024-07-26,Freelance Payment,6737.89,Income
+2024-07-26,Stater Bros,30.48,Groceries
+2024-07-26,Sushi Place,416.98,Dining
+2024-07-26,Concert Venue,419.76,Entertainment
+2024-07-27,DoorDash,351.31,Food Delivery
+2024-07-28,DoorDash,6.89,Food Delivery
+2024-07-28,Local Gym,393.7,Entertainment
+2024-07-28,Best Buy,183.02,Shopping
+2024-07-28,Water Utility,10.86,Utilities
+2024-07-28,Water Utility,55.56,Utilities
+2024-07-29,Doctor Visit,128.24,Healthcare
+2024-07-29,Monthly Rent Payment,1358.29,Rent
+2024-07-29,Disney+ Amazon Prime,123.56,Subscription
+2024-07-29,Whole Foods,276.54,Groceries
+2024-07-30,Olive Garden,386.21,Dining
+2024-07-30,Macy's,253.2,Shopping
+2024-07-31,Target,429.6,Shopping
+2024-07-31,Uber,498.14,Transport
+2024-07-31,Bowling Alley,28.19,Entertainment
+2024-08-01,Uber,95.58,Transport
+2024-08-01,Apple TV+,320.4,Subscription
+2024-08-01,Pharmacy,107.32,Healthcare
+2024-08-02,Train Ticket,202.2,Transport
+2024-08-02,Bowling Alley,111.22,Entertainment
+2024-08-02,Market Basket,157.83,Groceries
+2024-08-02,UberEats,254.6,Food Delivery
+2024-08-03,Concert Venue,408.03,Entertainment
+2024-08-03,Stater Bros,228.24,Groceries
+2024-08-03,Bowling Alley,94.1,Entertainment
+2024-08-03,Local Gym,340.34,Entertainment
+2024-08-03,Apartment Lease,1588.7,Rent
+2024-08-04,Walmart,236.27,Shopping
+2024-08-04,Water Utility,484.51,Utilities
+2024-08-04,Trader Joes,100.3,Groceries
+2024-08-04,Freelance Payment,6267.97,Income
+2024-08-04,DoorDash,89.09,Food Delivery
+2024-08-04,Netflix,252.37,Subscription
+2024-08-04,Local Gym,451.9,Entertainment
+2024-08-05,Samsung Online,432.07,Electronics
+2024-08-05,Concert Venue,283.58,Entertainment
+2024-08-05,Consulting Invoice,4725.73,Income
+2024-08-06,Freelance Payment,3578.49,Income
+2024-08-06,Olive Garden,115.51,Dining
+2024-08-06,Cell Phone Bill,64.75,Utilities
+2024-08-07,Samsung Online,314.57,Electronics
+2024-08-08,Sushi Place,404.19,Dining
+2024-08-08,Bowling Alley,443.41,Entertainment
+2024-08-08,Starbucks,314.0,Dining
+2024-08-09,Spotify,119.52,Subscription
+2024-08-09,TechCorp Salary,3651.67,Income
+2024-08-09,Target,15.76,Shopping
+2024-08-10,GrubHub,53.35,Food Delivery
+2024-08-10,GrubHub,162.23,Food Delivery
+2024-08-10,Apple Store,378.04,Electronics
+2024-08-10,Movie Theater,128.73,Entertainment
+2024-08-11,Starbucks,478.41,Dining
+2024-08-11,Studio Rental,1941.7,Rent
+2024-08-12,Pharmacy,384.05,Healthcare
+2024-08-12,Doctor Visit,267.45,Healthcare
+2024-08-13,Apple Store,240.34,Electronics
+2024-08-13,Spotify,367.21,Subscription
+2024-08-14,Postmates,248.76,Food Delivery
+2024-08-15,Whole Foods,78.77,Groceries
+2024-08-15,Olive Garden,415.8,Dining
+2024-08-15,Spotify,39.16,Subscription
+2024-08-15,Spotify,237.25,Subscription
+2024-08-15,Best Buy,420.41,Shopping
+2024-08-16,Micro Center,325.29,Electronics
+2024-08-17,City Parking,434.06,Transport
+2024-08-17,Trader Joes,311.01,Groceries
+2024-08-17,Shell Gas Station,63.68,Transport
+2024-08-18,Internet Subscription,131.65,Utilities
+2024-08-18,Apartment Lease,1297.71,Rent
+2024-08-18,Movie Theater,62.25,Entertainment
+2024-08-19,Movie Theater,301.85,Entertainment
+2024-08-19,GrubHub,240.25,Food Delivery
+2024-08-20,Trader Joes,410.39,Groceries
+2024-08-20,Target,418.14,Shopping
+2024-08-20,Olive Garden,377.48,Dining
+2024-08-20,Movie Theater,380.25,Entertainment
+2024-08-20,Pharmacy,45.14,Healthcare
+2024-08-21,Postmates,329.58,Food Delivery
+2024-08-21,Local Gym,419.66,Entertainment
+2024-08-21,Disney+ Amazon Prime,91.93,Subscription
+2024-08-21,Spotify,238.29,Subscription
+2024-08-21,Suspicious Wire Transfer,12312.84,Shopping
+2024-08-22,City Parking,406.78,Transport
+2024-08-22,Dental Care,406.54,Healthcare
+2024-08-23,Pharmacy,167.01,Healthcare
+2024-08-23,Postmates,301.71,Food Delivery
+2024-08-23,Uber,334.33,Transport
+2024-08-23,Monthly Rent Payment,1236.68,Rent
+2024-08-23,Postmates,451.26,Food Delivery
+2024-08-23,Apple Store,394.6,Electronics
+2024-08-23,Dell Store,244.57,Electronics
+2024-08-23,Apartment Lease,1255.44,Rent
+2024-08-24,Walmart,71.34,Shopping
+2024-08-26,Electric Bill,196.49,Utilities
+2024-08-26,Studio Rental,2236.3,Rent
+2024-08-26,Walmart,146.83,Shopping
+2024-08-27,Cell Phone Bill,463.3,Utilities
+2024-08-27,Lyft,371.48,Transport
+2024-08-27,Consulting Invoice,2961.04,Income
+2024-08-27,Postmates,235.21,Food Delivery
+2024-08-27,Samsung Online,364.84,Electronics
+2024-08-27,Amazon,322.17,Shopping
+2024-08-28,Netflix,127.56,Subscription
+2024-08-29,Apartment Lease,1878.89,Rent
+2024-08-29,Whole Foods,388.85,Groceries
+2024-08-29,Apartment Lease,2224.5,Rent
+2024-08-29,Internet Subscription,442.69,Utilities
+2024-08-30,Cell Phone Bill,216.29,Utilities
+2024-08-30,TechCorp Salary,7692.3,Income
+2024-08-30,Macy's,35.64,Shopping
+2024-08-30,Spotify,101.68,Subscription
+2024-08-30,Internet Subscription,291.18,Utilities
+2024-08-30,Pharmacy,200.83,Healthcare
+2024-08-30,Stock Dividend,2637.31,Income
+2024-08-31,Insurance Premium,97.21,Healthcare
+2024-08-31,Train Ticket,99.12,Transport
+2024-08-31,Doctor Visit,340.1,Healthcare
+2024-08-31,Studio Rental,1317.53,Rent
+2024-08-31,Monthly Rent Payment,1294.11,Rent
+2024-09-01,Spotify,450.27,Subscription
+2024-09-01,Suspicious Wire Transfer,13183.67,Shopping
+2024-09-01,Monthly Rent Payment,1008.0,Rent
+2024-09-02,GrubHub,361.49,Food Delivery
+2024-09-03,Internet Subscription,70.75,Utilities
+2024-09-03,Micro Center,139.72,Electronics
+2024-09-03,Market Basket,222.84,Groceries
+2024-09-03,Bowling Alley,8.01,Entertainment
+2024-09-03,Lyft,41.83,Transport
+2024-09-04,Safeway,491.42,Groceries
+2024-09-05,Safeway,309.3,Groceries
+2024-09-05,Train Ticket,290.25,Transport
+2024-09-06,Electric Bill,136.5,Utilities
+2024-09-06,Postmates,183.22,Food Delivery
+2024-09-07,Lyft,493.61,Transport
+2024-09-07,Studio Rental,2095.96,Rent
+2024-09-08,Disney+ Amazon Prime,53.72,Subscription
+2024-09-08,TechCorp Salary,7808.63,Income
+2024-09-09,Lyft,364.04,Transport
+2024-09-09,Studio Rental,1300.98,Rent
+2024-09-09,Insurance Premium,361.82,Healthcare
+2024-09-10,Apartment Lease,1129.1,Rent
+2024-09-10,Local Gym,248.52,Entertainment
+2024-09-10,Olive Garden,250.35,Dining
+2024-09-10,Amazon,242.28,Shopping
+2024-09-11,Uber,222.03,Transport
+2024-09-11,Internet Subscription,188.57,Utilities
+2024-09-12,Bowling Alley,469.99,Entertainment
+2024-09-12,Studio Rental,1746.34,Rent
+2024-09-12,Apple TV+,6.51,Subscription
+2024-09-12,Shell Gas Station,413.16,Transport
+2024-09-12,Electric Bill,33.11,Utilities
+2024-09-12,Movie Theater,344.69,Entertainment
+2024-09-13,Insurance Premium,256.27,Healthcare
+2024-09-13,Amazon,40.43,Shopping
+2024-09-13,Samsung Online,495.27,Electronics
+2024-09-13,Dental Care,394.03,Healthcare
+2024-09-13,Local Gym,175.86,Entertainment
+2024-09-14,Amazon,227.48,Shopping
+2024-09-15,Apartment Lease,1226.56,Rent
+2024-09-15,Apartment Lease,1586.61,Rent
+2024-09-16,Apple TV+,45.06,Subscription
+2024-09-16,Electric Bill,81.67,Utilities
+2024-09-16,Pharmacy,311.99,Healthcare
+2024-09-16,Doctor Visit,319.54,Healthcare
+2024-09-17,Insurance Premium,375.25,Healthcare
+2024-09-17,Freelance Payment,3416.94,Income
+2024-09-17,Best Buy,391.45,Shopping
+2024-09-17,Shell Gas Station,419.74,Transport
+2024-09-19,Studio Rental,1983.89,Rent
+2024-09-19,Shell Gas Station,163.19,Transport
+2024-09-19,Netflix Premium Annual Plan,299.99,Subscription
+2024-09-19,Trader Joes,349.9,Groceries
+2024-09-19,Apple TV+,453.05,Subscription
+2024-09-19,Uber,54.84,Transport
+2024-09-20,Postmates,297.66,Food Delivery
+2024-09-20,Shell Gas Station,154.1,Transport
+2024-09-20,Uber,378.85,Transport
+2024-09-21,Consulting Invoice,6910.51,Income
+2024-09-24,Cell Phone Bill,451.98,Utilities
+2024-09-24,Doctor Visit,483.8,Healthcare
+2024-09-25,Whole Foods,305.21,Groceries
+2024-09-25,DoorDash,341.48,Food Delivery
+2024-09-25,Apple Store,172.67,Electronics
+2024-09-26,Movie Theater,81.34,Entertainment
+2024-09-26,DoorDash,487.83,Food Delivery
+2024-09-26,Disney+ Amazon Prime,57.16,Subscription
+2024-09-27,Shell Gas Station,205.46,Transport
+2024-09-27,Samsung Online,436.3,Electronics
+2024-09-27,Disney+ Amazon Prime,249.94,Subscription
+2024-09-28,Electric Bill,447.64,Utilities
+2024-09-28,Dell Store,393.71,Electronics
+2024-09-28,Starbucks,69.31,Dining
+2024-09-29,Freelance Payment,6276.93,Income
+2024-09-30,Postmates,63.83,Food Delivery
+2024-09-30,Macy's,318.51,Shopping
+2024-09-30,Stock Dividend,5310.48,Income
+2024-09-30,Uber,390.52,Transport
+2024-09-30,City Parking,434.58,Transport
+2024-10-01,Samsung Online,115.97,Electronics
+2024-10-01,Micro Center,168.22,Electronics
+2024-10-02,Doctor Visit,122.03,Healthcare
+2024-10-02,Local Gym,394.11,Entertainment
+2024-10-02,Local Bistro,415.19,Dining
+2024-10-03,Safeway,278.38,Groceries
+2024-10-03,Monthly Rent Payment,1242.96,Rent
+2024-10-03,Amazon,284.71,Shopping
+2024-10-03,Disney+ Amazon Prime,359.12,Subscription
+2024-10-04,Samsung Online,34.11,Electronics
+2024-10-05,Micro Center,20.57,Electronics
+2024-10-05,Internet Subscription,100.14,Utilities
+2024-10-05,Shell Gas Station,452.42,Transport
+2024-10-05,Apartment Lease,1188.76,Rent
+2024-10-06,Insurance Premium,267.69,Healthcare
+2024-10-06,Insurance Premium,481.01,Healthcare
+2024-10-07,Doctor Visit,101.39,Healthcare
+2024-10-07,Macy's,231.34,Shopping
+2024-10-08,Apple Store,133.1,Electronics
+2024-10-08,Amazon,300.46,Shopping
+2024-10-08,Doctor Visit,383.04,Healthcare
+2024-10-09,Pharmacy,180.56,Healthcare
+2024-10-09,Safeway,238.28,Groceries
+2024-10-10,Local Gym,323.06,Entertainment
+2024-10-10,Doctor Visit,436.66,Healthcare
+2024-10-11,Disney+ Amazon Prime,474.91,Subscription
+2024-10-11,Uber,69.8,Transport
+2024-10-11,Suspicious Wire Transfer,5914.81,Shopping
+2024-10-12,Apple TV+,130.75,Subscription
+2024-10-12,Samsung Online,79.35,Electronics
+2024-10-13,Cell Phone Bill,35.67,Utilities
+2024-10-13,Sushi Place,80.12,Dining
+2024-10-14,Pharmacy,425.97,Healthcare
+2024-10-14,Doctor Visit,322.42,Healthcare
+2024-10-14,Uber,50.87,Transport
+2024-10-15,DoorDash,324.72,Food Delivery
+2024-10-16,Lyft,450.47,Transport
+2024-10-16,Starbucks,34.42,Dining
+2024-10-16,Chipotle,21.78,Dining
+2024-10-16,Target,239.33,Shopping
+2024-10-16,Internet Subscription,75.72,Utilities
+2024-10-17,Suspicious Wire Transfer,9019.9,Shopping
+2024-10-17,Cell Phone Bill,50.82,Utilities
+2024-10-18,DoorDash,355.4,Food Delivery
+2024-10-18,Consulting Invoice,2399.24,Income
+2024-10-19,Sushi Place,285.24,Dining
+2024-10-19,Safeway,110.12,Groceries
+2024-10-19,Netflix Premium Annual Plan,299.99,Subscription
+2024-10-19,Bowling Alley,122.87,Entertainment
+2024-10-20,Pharmacy,391.58,Healthcare
+2024-10-20,DoorDash,312.78,Food Delivery
+2024-10-20,GrubHub,61.89,Food Delivery
+2024-10-21,Apple Store,45.42,Electronics
+2024-10-21,Water Utility,482.93,Utilities
+2024-10-21,Sushi Place,293.14,Dining
+2024-10-22,Best Buy,471.05,Shopping
+2024-10-22,Target,105.74,Shopping
+2024-10-22,Bowling Alley,309.51,Entertainment
+2024-10-22,Amazon,127.06,Shopping
+2024-10-23,UberEats,244.21,Food Delivery
+2024-10-23,Starbucks,38.99,Dining
+2024-10-23,Disney+ Amazon Prime,233.52,Subscription
+2024-10-25,Consulting Invoice,3328.9,Income
+2024-10-25,Apple TV+,407.73,Subscription
+2024-10-25,Target,22.47,Shopping
+2024-10-26,Apartment Lease,1018.33,Rent
+2024-10-26,Target,373.41,Shopping
+2024-10-26,Internet Subscription,330.14,Utilities
+2024-10-26,Olive Garden,252.25,Dining
+2024-10-27,Freelance Payment,5910.7,Income
+2024-10-27,GrubHub,314.39,Food Delivery
+2024-10-27,Studio Rental,2099.09,Rent
+2024-10-28,Studio Rental,2171.54,Rent
+2024-10-29,Trader Joes,484.37,Groceries
+2024-10-29,Pharmacy,180.42,Healthcare
+2024-10-29,Best Buy,133.96,Shopping
+2024-10-29,Market Basket,52.24,Groceries
+2024-10-30,Market Basket,177.81,Groceries
+2024-10-31,Local Bistro,56.73,Dining
+2024-10-31,Stock Dividend,2148.18,Income
+2024-11-02,Suspicious Wire Transfer,12493.03,Shopping
+2024-11-02,Electric Bill,78.24,Utilities
+2024-11-02,Samsung Online,464.18,Electronics
+2024-11-03,Chipotle,192.1,Dining
+2024-11-03,UberEats,94.03,Food Delivery
+2024-11-03,Starbucks,186.97,Dining
+2024-11-04,Trader Joes,473.6,Groceries
+2024-11-04,Shell Gas Station,169.36,Transport
+2024-11-04,Trader Joes,429.97,Groceries
+2024-11-04,Studio Rental,2357.42,Rent
+2024-11-04,Local Gym,332.75,Entertainment
+2024-11-04,Micro Center,140.91,Electronics
+2024-11-04,Doctor Visit,229.33,Healthcare
+2024-11-04,Safeway,393.86,Groceries
+2024-11-04,Samsung Online,375.65,Electronics
+2024-11-04,Shell Gas Station,478.59,Transport
+2024-11-05,Studio Rental,2429.81,Rent
+2024-11-05,Target,498.95,Shopping
+2024-11-05,Bowling Alley,395.27,Entertainment
+2024-11-06,Studio Rental,1370.53,Rent
+2024-11-06,Freelance Payment,6223.44,Income
+2024-11-06,Stock Dividend,3565.1,Income
+2024-11-06,Bowling Alley,54.68,Entertainment
+2024-11-07,Sushi Place,247.42,Dining
+2024-11-08,Amazon,490.26,Shopping
+2024-11-08,Netflix,5.66,Subscription
+2024-11-08,Postmates,281.89,Food Delivery
+2024-11-08,Cell Phone Bill,318.61,Utilities
+2024-11-09,Dell Store,338.45,Electronics
+2024-11-09,Walmart,199.31,Shopping
+2024-11-09,Consulting Invoice,6525.26,Income
+2024-11-09,Walmart,69.63,Shopping
+2024-11-10,Doctor Visit,241.35,Healthcare
+2024-11-11,Doctor Visit,358.12,Healthcare
+2024-11-11,Whole Foods,477.14,Groceries
+2024-11-11,Postmates,323.49,Food Delivery
+2024-11-11,Apartment Lease,1444.03,Rent
+2024-11-12,Freelance Payment,7161.03,Income
+2024-11-13,Movie Theater,170.98,Entertainment
+2024-11-13,Freelance Payment,2847.4,Income
+2024-11-13,Bowling Alley,57.55,Entertainment
+2024-11-14,Apartment Lease,1933.05,Rent
+2024-11-15,Best Buy,371.05,Shopping
+2024-11-15,Shell Gas Station,108.42,Transport
+2024-11-15,Micro Center,467.08,Electronics
+2024-11-17,Studio Rental,2271.13,Rent
+2024-11-17,Bowling Alley,198.14,Entertainment
+2024-11-18,Netflix,336.77,Subscription
+2024-11-18,Disney+ Amazon Prime,334.62,Subscription
+2024-11-18,Monthly Rent Payment,1045.83,Rent
+2024-11-19,GrubHub,157.84,Food Delivery
+2024-11-19,Doctor Visit,58.4,Healthcare
+2024-11-19,Freelance Payment,7651.04,Income
+2024-11-19,Pharmacy,460.49,Healthcare
+2024-11-20,Dental Care,293.08,Healthcare
+2024-11-20,UberEats,219.31,Food Delivery
+2024-11-20,Micro Center,419.24,Electronics
+2024-11-20,City Parking,467.68,Transport
+2024-11-21,Apple Store,65.61,Electronics
+2024-11-21,Apartment Lease,2118.13,Rent
+2024-11-21,Doctor Visit,31.75,Healthcare
+2024-11-23,Stater Bros,498.95,Groceries
+2024-11-24,DoorDash,220.7,Food Delivery
+2024-11-24,Movie Theater,219.61,Entertainment
+2024-11-24,Sushi Place,389.72,Dining
+2024-11-25,Local Bistro,120.95,Dining
+2024-11-25,Train Ticket,217.38,Transport
+2024-11-25,Micro Center,194.93,Electronics
+2024-11-26,Apple TV+,164.71,Subscription
+2024-11-26,Dental Care,307.48,Healthcare
+2024-11-26,Dental Care,50.78,Healthcare
+2024-11-26,Chipotle,383.11,Dining
+2024-11-27,Whole Foods,364.91,Groceries
+2024-11-27,Trader Joes,165.86,Groceries
+2024-11-27,Local Bistro,88.74,Dining
+2024-11-27,Shell Gas Station,123.62,Transport
+2024-11-27,Sushi Place,346.9,Dining
+2024-11-28,Best Buy,53.36,Shopping
+2024-11-28,Apartment Lease,2022.71,Rent
+2024-11-29,Studio Rental,1248.03,Rent
+2024-11-29,Dell Store,272.02,Electronics
+2024-11-29,Apple Store,377.5,Electronics
+2024-11-30,DoorDash,156.5,Food Delivery
+2024-12-02,Apartment Lease,2072.81,Rent
+2024-12-02,Walmart,54.93,Shopping
+2024-12-04,Netflix,457.89,Subscription
+2024-12-04,Lyft,80.73,Transport
+2024-12-04,Concert Venue,319.05,Entertainment
+2024-12-04,Target,106.32,Shopping
+2024-12-04,Concert Venue,358.27,Entertainment
+2024-12-05,Target,56.78,Shopping
+2024-12-05,Walmart,272.3,Shopping
+2024-12-05,Macy's,56.06,Shopping
+2024-12-06,Spotify,376.43,Subscription
+2024-12-06,Trader Joes,499.04,Groceries
+2024-12-06,Amazon,127.61,Shopping
+2024-12-06,Doctor Visit,142.68,Healthcare
+2024-12-07,Movie Theater,210.2,Entertainment
+2024-12-07,Trader Joes,199.75,Groceries
+2024-12-07,City Parking,225.56,Transport
+2024-12-08,Shell Gas Station,229.81,Transport
+2024-12-09,Train Ticket,122.93,Transport
+2024-12-09,Shell Gas Station,452.25,Transport
+2024-12-09,Consulting Invoice,7496.44,Income
+2024-12-10,Concert Venue,82.68,Entertainment
+2024-12-11,Studio Rental,2291.5,Rent
+2024-12-11,Sushi Place,164.95,Dining
+2024-12-12,Doctor Visit,346.14,Healthcare
+2024-12-12,Chipotle,356.04,Dining
+2024-12-13,Electric Bill,80.93,Utilities
+2024-12-13,Target,9.46,Shopping
+2024-12-13,Stock Dividend,3770.14,Income
+2024-12-13,Apple TV+,65.58,Subscription
+2024-12-13,Postmates,201.62,Food Delivery
+2024-12-14,Cell Phone Bill,152.1,Utilities
+2024-12-14,Samsung Online,379.76,Electronics
+2024-12-14,Stater Bros,79.94,Groceries
+2024-12-17,Local Bistro,284.43,Dining
+2024-12-17,Amazon,333.31,Shopping
+2024-12-17,GrubHub,449.01,Food Delivery
+2024-12-17,Internet Subscription,241.64,Utilities
+2024-12-18,Apartment Lease,2184.56,Rent
+2024-12-18,Stock Dividend,2402.85,Income
+2024-12-18,Local Gym,470.65,Entertainment
+2024-12-19,Spotify,311.09,Subscription
+2024-12-19,DoorDash,144.33,Food Delivery
+2024-12-19,Pharmacy,300.35,Healthcare
+2024-12-20,Best Buy,135.55,Shopping
+2024-12-20,Insurance Premium,416.67,Healthcare
+2024-12-21,Uber,291.57,Transport
+2024-12-21,Disney+ Amazon Prime,239.32,Subscription
+2024-12-22,Netflix,15.08,Subscription
+2024-12-22,Consulting Invoice,3139.6,Income
+2024-12-22,Dell Store,193.4,Electronics
+2024-12-22,Electric Bill,16.52,Utilities
+2024-12-22,Lyft,228.98,Transport
+2024-12-22,TechCorp Salary,7027.59,Income
+2024-12-22,Lyft,339.61,Transport
+2024-12-23,Local Bistro,83.9,Dining
+2024-12-23,Stater Bros,306.62,Groceries
+2024-12-23,Apple Store,216.19,Electronics
+2024-12-23,Local Bistro,235.55,Dining
+2024-12-23,Disney+ Amazon Prime,434.57,Subscription
+2024-12-23,Train Ticket,411.05,Transport
+2024-12-23,Whole Foods,216.54,Groceries
+2024-12-23,Stater Bros,230.15,Groceries
+2024-12-24,Studio Rental,2440.46,Rent
+2024-12-24,City Parking,420.56,Transport
+2024-12-24,Local Gym,216.39,Entertainment
+2024-12-25,Spotify,399.97,Subscription
+2024-12-25,Freelance Payment,6893.03,Income
+2024-12-25,Freelance Payment,6173.87,Income
+2024-12-25,Local Gym,292.55,Entertainment
+2024-12-26,Apple Store,338.22,Electronics
+2024-12-26,GrubHub,495.43,Food Delivery
+2024-12-26,Best Buy,412.13,Shopping
+2024-12-26,Consulting Invoice,3352.55,Income
+2024-12-27,Walmart,33.05,Shopping
+2024-12-27,Spotify,185.38,Subscription
+2024-12-28,Movie Theater,80.77,Entertainment
+2024-12-29,Train Ticket,161.84,Transport
+2024-12-29,DoorDash,443.9,Food Delivery
+2024-12-30,Chipotle,299.94,Dining
+2024-12-30,Micro Center,112.61,Electronics
+2024-12-31,Samsung Online,74.53,Electronics
+2024-12-31,Walmart,252.48,Shopping
+2024-12-31,Pharmacy,142.89,Healthcare
+2024-12-31,Dell Store,173.25,Electronics

@@ -15,11 +15,8 @@ def orchestrator_node(state: SystemState) -> dict:
         print(f"[Orchestrator WARNING] Recovering from {len(errors)} previous errors: {errors[-1]}")
         # In a real system, we'd trigger a fallback path or self-correction mechanism
     
-    # 2. Lifecycle Check - 'IDK' Fallback
+    # 2. Lifecycle Check
     target_layer = state.get("target_layer", "")
-    if target_layer == "IDK":
-        print("[Orchestrator STOP] Classifier yielded 'IDK'. Triggering human handoff or asking for clarification.")
-        # If IDK, we clear current intent to ask user
-        return {"current_intent": "clarification_needed", "active_registry": active_agents}
-        
+    print(f"[Orchestrator] Targeted layer: {target_layer}")
+    
     return {"active_registry": active_agents}

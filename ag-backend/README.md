@@ -13,8 +13,8 @@ The system is rigorously isolated into seven functional boundaries to emulate a 
 ### 2. Orchestration Layer
 *   **Location:** `/core/`
 *   **Role:** The central nervous system. It strictly mediates all traffic. Agents *never* talk directly to each other or external networks without orchestrator permission.
-    *   **`orchestrator.py`**: The Semantic Kernel. Checks agent capabilities via the registry, manages workflow lifecycles, handles errors, and intercepts unresolvable intents (IDK fallback).
-    *   **`classifier.py`**: The Semantic Router. Implements tiered routing from cheapest to most expensive (NLU Regex -> SLM Pattern -> LLM Deep Reasoning -> IDK exception) to save token costs.
+    *   **`orchestrator.py`**: The Semantic Kernel. Checks agent capabilities via the registry, manages workflow lifecycles, and handles errors.
+    *   **`classifier.py`**: The Semantic Router. Implements tiered routing from cheapest to most expensive (NLU Regex -> SLM Pattern -> LLM Deep Reasoning) to save token costs.
     *   **`registry.py`**: The Agent Registry. A mocked Document DB caching all agent capabilities, endpoint routes, security protocols, and version histories.
     *   **`graph.py`**: The literal LangGraph topology wiring the state edges together safely.
 
@@ -55,8 +55,18 @@ conda activate genie
 pip install -r requirements.txt
 ```
 
-### Running the System
+### 1. Generate Synthetic Data
+Before running the workflow, generate a large dataset (~2040 rows) with injected anomalies for testing:
 ```bash
+python scripts/generate_transactions.py
+```
+This creates `data/transactions.csv`.
+
+### 2. Running the System
+Execute the full LangGraph workflow:
+```bash
+# Set your Gemini API key (optional, falls back to template if missing)
+export GOOGLE_API_KEY="your_api_key_here"
 python main.py data/transactions.csv
 ```
 
@@ -90,7 +100,7 @@ graph TD
     %% Conditional Logic
     Classifier -- "target_layer == 'local_supervisor'" --> LocalSupervisor
     Classifier -- "target_layer == 'remote_agent'" --> RemoteAgent
-    Classifier -- "default / unresolveable" --> EndNode
+    Classifier -- "default" --> LocalSupervisor
     
     %% Return paths
     LocalSupervisor --> EndNode

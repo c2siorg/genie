@@ -16,30 +16,29 @@ class MessageMeta(TypedDict):
     timestamp: str
 
 class STM_Message(TypedDict):
+    id: str
     content: str
-    meta: MessageMeta
+    role: str
+    timestamp: str
 
-# Agent State
-class AgentRuntimeState(TypedDict):
-    agent_states: Dict[str, Any]
-    spending_summary: str
-    anomalies_detected: List[str]
-    cash_flow_prediction: str
-    recommendations: List[str]
-
-# Overall System State combining segregated stores
+# Agent State Domain Fields
 class SystemState(TypedDict):
     # Conversation History Domain
     messages: Annotated[Sequence[STM_Message], operator.add]
     current_intent: str
     target_layer: str
+    user_id: str
+    session_id: str
     
     # Agent State Domain
     agent_states: Dict[str, Any]
     spending_summary: str
     anomalies_detected: List[str]
-    cash_flow_prediction: str
+    isolation_forest_anomalies: List[str]
+    arima_forecast: str
+    prophet_forecast: str
     recommendations: List[str]
+    reasoning_output: str
     
     # Registry Domain
     active_registry: Dict[str, dict]
