@@ -1,6 +1,98 @@
 import os
+import requests
+import json
+from dotenv import load_dotenv
+load_dotenv()
 from storage.state import SystemState
 from telemetry.observability import trace_execution
+
+def build_prompt(spending_summary, anomalies_detected, isolation_forest_anomalies, arima_forecast, prophet_forecast):
+    if not spending_summary:
+        spending_summary = "No data available"
+    if not anomalies_detected:
+        anomalies_detected = "No rule based anomalies detected"
+    else:
+        anomalies_detected = "\n-".join(anomalies_detected)
+    if not isolation_forest_anomalies:
+        isolation_forest_anomalies = "No statistical anomalies detected"
+    else:
+        isolation_forest_anomalies = "\n-".join(isolation_forest_anomalies)
+    if not arima_forecast:
+        arima_forecast = "ARIMA forecast unavailable"
+    if not prophet_forecast:
+        prophet_forecast = "Prophet forecast unavailable"
+
+    instruction = (f"You are a financial advisor generating a personal finance report for an everyday user."
+              f"Be clear, concise, and actionable. A non-expert should understand every sentence."
+              f"Generate a report with exactly these four sections:"
+              f" 1. Spending Overview — based on the spending summary provided"
+              f" 2. Anomaly Alert — based on rule-based and statistical anomalies provided"
+              f" 3. Forecast Outlook — based on ARIMA and Prophet forecast provided"
+              f" 4. Key Recommendations — based on all sections above"
+              f" Format: each section has a 2-3 sentence summary followed by bullet"
+              f" points for specific items where relevant. Critical constraint:never invent numbers, transactions, or facts."
+              f" Use only what is explicitly provided in the data below.\n "
+    )
+    data = (f"--- USER FINANCIAL DATA --- \n"
+              f"Spending Summary: \n{spending_summary}\n"
+              f"Anomalies Detected: \n-{anomalies_detected}\n"
+              f"Isolation Forest Anomalies: \n-{isolation_forest_anomalies}\n"
+              f"Arima Forecast: \n{arima_forecast}\n"
+              f"Prophet Forecast: \n{prophet_forecast}"
+            )
+    return instruction, data
+
+def post_data(instruct, d, url):
+    r = requests.post(
+        url,
+        headers={
+        "Authorization": f"Bearer {os.getenv('AUTH_TOKEN')}",
+        "Content-Type": "application/json"
+    },
+        data=json.dumps(
+            {
+                "model": "nvidia/nemotron-3-super-120b-a12b:free",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": f"{instruct}"
+                    },
+                    {
+                        "role": "user",
+                        "content": f"{d}"
+                    }
+                ]
+            })
+    )
+    r.raise_for_status()
+    r = r.json()['choices'][0]['message']['content']
+    return r
+
+def call_llm(instruction, data):
+    try:
+        response = post_data(instruction, data, "https://openrouter.ai/api/v1/chat/completions")
+        return response
+
+    except requests.exceptions.Timeout:
+        print("Timeout — try again")
+
+    except requests.exceptions.RequestException as e:
+        print(f"LLM Call Failed: {e}")
+        return None
+
+def synthesise(state:SystemState) -> str:
+
+    spending_summary = state.get("spending_summary")
+    anomalies_detected = state.get("anomalies_detected")
+    isolation_forest_anomalies = state.get("isolation_forest_anomalies")
+    arima_forecast = state.get("arima_forecast")
+    prophet_forecast = state.get("prophet_forecast")
+
+    instruction, data = build_prompt(spending_summary, anomalies_detected, isolation_forest_anomalies, arima_forecast, prophet_forecast)
+
+    report = call_llm(instruction, data)
+    print(f"[synthesise] LLM returned: {'SUCCESS' if report else 'None - will fallback'}")
+    return report
 
 
 def _synthesize_with_template(state: dict) -> str:
@@ -120,7 +212,7 @@ def reasoning_llm_node(state: SystemState) -> dict:
     """
     print("[Reasoning LLM Agent] Compiling all agent data into final report...")
 
-    report = None
+    report = synthesise(state)
 
     if not report:
         print("   -> Falling back to template-based synthesis...")
