@@ -46,6 +46,29 @@ The system is rigorously isolated into seven functional boundaries to emulate a 
     *   **`observability.py`**: Contains strict `redact_pii` safeguards invoked by the user app, and `trace_execution`, which tags all LLM node execution paths with unique trace UUIDs matching an input identity hash against an output payload hash.
 ---
 
+## Package Documentation
+
+Each package in this project contains a `docs.py` file that provides a detailed
+description of the package's purpose, its modules, public API, design decisions,
+and extension points. These files are the **primary in-code documentation reference**
+for contributors and maintainers.
+
+| Package | `docs.py` Location | Covers |
+|---|---|---|
+| Root backend | [`docs.py`](./docs.py) | End-to-end workflow overview, package structure, quick start, design principles |
+| `core/` | [`core/docs.py`](./core/docs.py) | Graph DAG topology, orchestrator lifecycle, 3-tier classifier (NLU → SLM → LLM), agent registry |
+| `agents/local/` | [`agents/local/docs.py`](./agents/local/docs.py) | Supervisor fan-out, spending analysis, anomaly detection (rules + Isolation Forest), ARIMA/Prophet forecasting, reasoning LLM |
+| `agents/remote/` | [`agents/remote/docs.py`](./agents/remote/docs.py) | Remote agent stub, intended production transport behaviour, routing context |
+| `integration/` | [`integration/docs.py`](./integration/docs.py) | MCP gateway, authentication flow, RBAC enforcement, tool adapter dispatch |
+| `knowledge/` | [`knowledge/docs.py`](./knowledge/docs.py) | Vector DB RAG pipeline — rule retrieval, dynamic tool search, semantic cache |
+| `storage/` | [`storage/docs.py`](./storage/docs.py) | `Transaction`, `STM_Message`, `SystemState` TypedDicts with field-level descriptions |
+| `telemetry/` | [`telemetry/docs.py`](./telemetry/docs.py) | `@trace_execution` decorator, prompt-injection safety guardrails, extension points |
+
+> **Convention:** `docs.py` files contain only a module-level docstring — no executable code.
+> They are safe to import and compatible with documentation generators (Sphinx, pdoc, mkdocstrings).
+
+---
+
 ## Setup & Execution
 
 ### Prerequisites
@@ -65,8 +88,6 @@ This creates `data/transactions.csv`.
 ### 2. Running the System
 Execute the full LangGraph workflow:
 ```bash
-# Set your Gemini API key (optional, falls back to template if missing)
-export GOOGLE_API_KEY="your_api_key_here"
 python main.py data/transactions.csv
 ```
 

@@ -56,7 +56,7 @@ def anomaly_detection_node(state: SystemState) -> dict:
         desc = tx.get("description", "Unknown")
         cat = tx.get("category", "N/A")
 
-        # Large Transaction Rule
+        # TODO: ADD some statistical method to find anamoly
         if amount > 1000:
             anomalies.append(f"[RuleBased] Unusually large transaction: {desc} for ${amount:,.2f}")
         
