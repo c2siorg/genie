@@ -1,6 +1,7 @@
 import csv
 import io
 import uuid
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from app.api.dependencies import verify_cbac, rate_limiter
 from app.api.pii import sanitize_transaction_row
@@ -45,14 +46,28 @@ async def upload_transactions(
     # 2. Generate a tracking ID
     task_id = str(uuid.uuid4())
 
-    # 3. Process batch with duplicate detection and ingestion stats
-    processing_stats = await process_transaction_batch(batch, str(context["user_id"]))
+    # 3. Process batch with duplicate detection and ingestion stats in a thread.
+    processing_stats = await run_in_threadpool(
+        process_transaction_batch,
+        batch,
+        str(context["user_id"]),
+    )
     
     # 4. Log PII modifications for compliance/forensics
     await log_audit_events(context["user_id"], audit_logs, task_id)
+
+    if processing_stats.get("error"):
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "task_id": task_id,
+                "message": "Transaction batch processing failed.",
+                "error": processing_stats["error"],
+            },
+        )
     
     return {
-        "status": "completed" if not processing_stats.get("error") else "failed",
+        "status": "completed",
         "task_id": task_id,
         "rows_received": len(batch),
         "rows_processed": processing_stats.get("processed", 0),
@@ -67,5 +82,4 @@ async def upload_transactions(
             f"{processing_stats.get('duplicate_count', 0)} duplicates skipped, "
             f"and {processing_stats.get('missing_transaction_id', 0)} rows missing transaction_id."
         ),
-        "error": processing_stats.get("error"),
     }
