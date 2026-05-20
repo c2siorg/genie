@@ -1,5 +1,0 @@
-transaction_id,amount,merchant,merchant_description,date,account_number
-TXN_011,45.50,Starbucks,"Coffee with John Smith at Starbucks",2024-03-01T10:00:00,1234567890
-TXN_012,1200.00,Rent,"Transfer to landlord Jane Doe via UPI: jane.doe@okbank",2024-03-01T12:00:00,0987654321
-TXN_013,15.75,Uber,"Ride back home, contact driver at +1-555-0199",2024-03-02T18:30:00,1122334455
-TXN_014,350.00,HDFC Bank,"Repayment for loan, IFSC: HDFC0001234",2024-03-03T09:15:00,5544332211

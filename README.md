@@ -2,10 +2,7 @@
 
 > Turn raw financial data into **clear, actionable insights** using an open-source **Agentic AI financial copilot**.
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
-![AI](https://img.shields.io/badge/AI-Agentic%20AI-purple)
-![Open Source](https://img.shields.io/badge/Open%20Source-Yes-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.10+-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green) ![AI](https://img.shields.io/badge/AI-Agentic%20AI-purple) ![Open Source](https://img.shields.io/badge/Open%20Source-Yes-brightgreen)
 
 Genie is an **open-source AI-powered financial assistant** that helps users understand their financial behavior and make better decisions.
 
@@ -21,65 +18,36 @@ Think of Genie as your **AI-powered financial copilot.**
 
 ---
 
-# ✨ Why Genie?
+## ✨ Why Genie?
 
-Financial data is everywhere:
+Financial data is everywhere: bank transactions, subscriptions, payments, expenses, budgets — but turning that data into **real financial insight** is still difficult.
 
-- bank transactions
-- subscriptions
-- payments
-- expenses
-- budgets
-
-But turning that data into **real financial insight** is still difficult.
-
-Genie solves this problem by building an **AI system that understands financial behavior and suggests actions.**
-
-Instead of dashboards that only show numbers, Genie provides:
-
-- insights
-- predictions
-- recommendations
+Genie builds an **AI system that understands financial behavior and suggests actions**, providing insights, predictions, and recommendations instead of just numbers.
 
 ---
 
-# 🚀 Features
+## 🚀 Features
 
-🧠 **Financial Insights**  
-Automatically analyze spending and financial habits.
-
-📊 **Spending Pattern Detection**  
-Understand where your money is going.
-
-🔮 **Cash Flow Forecasting**  
-Predict future balances based on past transactions.
-
-🚨 **Anomaly Detection**  
-Identify unusual or suspicious spending.
-
-💡 **AI Financial Recommendations**  
-Get suggestions to improve budgeting and savings.
-
-📈 **Interactive Dashboard**  
-Visualize insights through charts and reports.
+- 🧠 **Financial Insights** — Automatically analyze spending and financial habits.
+- 📊 **Spending Pattern Detection** — Understand where your money is going.
+- 🔮 **Cash Flow Forecasting** — Predict future balances based on past transactions.
+- 🚨 **Anomaly Detection** — Identify unusual or suspicious spending.
+- 💡 **AI Financial Recommendations** — Get suggestions to improve budgeting and savings.
+- 📈 **Interactive Dashboard** — Visualize insights through charts and reports.
 
 ---
 
-# ⚙️ How Genie Works
+## ⚙️ How Genie Works
 
-## Input
+### Input
 
 Genie receives financial data such as:
 
 - Transaction history (CSV or APIs)
 - User financial goals (budget, savings targets)
-- Questions like:
-  - *Where am I overspending?*
-  - *How can I save more money?*
+- Questions like: *Where am I overspending?*, *How can I save more money?*
 
----
-
-## Processing
+### Processing
 
 Genie runs an **Agentic AI workflow** that:
 
@@ -89,21 +57,13 @@ Genie runs an **Agentic AI workflow** that:
 4. Forecasts future cash flow
 5. Generates recommendations using AI models and financial rules
 
----
+### Output
 
-## Output
-
-Genie produces insights such as:
-
-- spending summaries
-- savings recommendations
-- cash flow predictions
-- alerts for unusual spending
-- automated financial reports
+Genie produces insights such as spending summaries, savings recommendations, cash flow predictions, alerts for unusual spending, and automated financial reports.
 
 ---
 
-# 🎯 Example Genie Output
+## 🎯 Example Genie Output
 
 ```
 Monthly Financial Insight Report
@@ -124,7 +84,7 @@ Recommendations:
 
 ---
 
-# 🏗 Architecture Overview
+## 🏗 Architecture Overview
 
 ```
 User / API Request
@@ -154,29 +114,26 @@ Supporting services:
 
 ---
 
-# 🛠 Tech Stack
+## 🛠 Tech Stack
 
 ### Backend
 FastAPI (Python)
 
 ### AI / LLM
-LangGraph or LangChain  
-HuggingFace / OpenAI compatible models
+LangGraph or LangChain — HuggingFace / OpenAI compatible models
 
 ### Data
-PostgreSQL  
-FAISS / Pinecone (vector database)
+PostgreSQL — FAISS / Pinecone (vector database)
 
 ### Infrastructure
-Redis  
-Docker
+Redis — Docker
 
 ### Dashboard
 Streamlit or React
 
 ---
 
-# 📂 Repository Structure
+## 📂 Repository Structure (project-level)
 
 ```
 genie/
@@ -193,7 +150,7 @@ genie/
 
 ---
 
-# 🧪 Sample Dataset
+## 🧪 Sample Dataset
 
 ```
 date,description,category,amount,type
@@ -207,7 +164,7 @@ date,description,category,amount,type
 
 ---
 
-# 🗺 Roadmap
+## 🗺 Roadmap
 
 ### Phase 1 — Core System
 - FastAPI backend
@@ -216,26 +173,24 @@ date,description,category,amount,type
 
 ### Phase 2 — Financial Intelligence
 - Cash flow forecasting
-- anomaly detection
-- recommendation engine
+- Anomaly detection
+- Recommendation engine
 
 ### Phase 3 — AI Layer
-- agentic workflow
+- Agentic workflow
 - LLM-powered insights
-- explainable recommendations
+- Explainable recommendations
 
 ### Phase 4 — Platform
-- dashboard
+- Dashboard
 - API integrations
-- report generation
+- Report generation
 
 ---
 
-# 🤝 Contributing
+## 🤝 Contributing
 
-We welcome contributors from the community.
-
-Ways to contribute:
+We welcome contributors from the community. Ways to contribute:
 
 - financial analytics modules
 - AI insights
@@ -252,27 +207,75 @@ help wanted
 
 ---
 
-# 👨‍🏫 Mentor
+## 👨‍🏫 Mentor
 
 Pratik Dhanave
 
 ---
 
-# 💬 Community
+## 💬 Community
 
-C2SI Slack  
-Channel: **#genie**
+C2SI Slack — Channel: **#genie**
 
 ---
 
-# ⭐ Support the Project
+## ⭐ Support the Project
 
 If you find Genie interesting, please consider **starring the repository** ⭐
 
-It helps the project grow and reach more contributors.
+---
+
+## 🔗 Genie Repository
+
+https://github.com/c2siorg/genie
 
 ---
 
-# 🔗 Repository
+---
 
-https://github.com/c2siorg/genie
+## Multi-Agent Reference Architecture — Go Implementation
+
+This repository also includes a **Go (Golang) reference implementation** inspired by Microsoft’s Multi-Agent Reference Architecture guide. The Go implementation demonstrates a modular, message-driven architecture suitable for building multi-agent systems and orchestration patterns that can power projects like Genie.
+
+### Key concepts included (Go reference)
+
+- `pkg/protocol` — shared message schema
+- `pkg/agent` — agent abstraction
+- `pkg/registry` — agent discovery
+- `pkg/comm` — in-memory message bus
+- `pkg/governance` — policy checks
+- `pkg/orchestration` — orchestrator wiring registry + bus + governance
+- `pkg/observability` — logging + clock abstractions
+- `pkg/memory` — memory hooks
+- `pkg/eval` — evaluation hooks
+- `cmd/demo` — end-to-end demo (planner → executor → coordinator)
+
+### Why both in one README?
+
+This repository is a reference architecture and can be adapted to different domains. The Genie concept (Python-based AI financial copilot) is a natural use-case for a multi-agent, message-driven backend: agents can handle ingestion, analysis, forecasting, recommendation generation, and persistence in a decoupled, testable way.
+
+### Getting started (Go demo)
+
+Run the demo:
+
+```bash
+go run ./cmd/demo
+```
+
+Run tests:
+
+```bash
+go test ./...
+```
+
+### How to extend (quick)
+
+- Add a new specialist agent implementing `agent.Agent` and register it in the registry.
+- Extend `agent.Environment` to provide DB, vector store, or model clients (for Genie’s AI components).
+- Add governance policies for safety, tool access, and content limits.
+
+---
+
+## License / status
+
+This repository is a reference architecture for learning and extension. Use it as a starting point and adapt components to match your environment and requirements.
