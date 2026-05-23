@@ -1,0 +1,47 @@
+version: 2.1
+
+orbs:
+  go: circleci/go@2.1.0
+
+jobs:
+  test:
+    docker:
+      - image: cimg/go:1.22
+    resource_class: medium
+    steps:
+      - checkout
+      - go/load-cache
+      - go/mod-download
+      - go/save-cache
+      - run:
+          name: vet
+          command: go vet ./...
+      - run:
+          name: test
+          command: go test -race -coverprofile=coverage.out ./...
+      - store_artifacts:
+          path: coverage.out
+          destination: coverage.out
+
+  docker-build:
+    docker:
+      - image: cimg/go:1.22
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: default
+      - run:
+          name: docker build
+          command: docker build -t genie-api:${CIRCLE_SHA1:0:7} .
+
+workflows:
+  ci:
+    jobs:
+      - test
+      - docker-build:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - main

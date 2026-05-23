@@ -29,8 +29,8 @@ func TestAnalyzer_FansOutAndTotals(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(out) != 3 {
-		t.Fatalf("want 3 fan-out messages, got %d", len(out))
+	if len(out) != 4 {
+		t.Fatalf("want 4 fan-out messages (forecaster, anomaly, recommender, supervisor), got %d", len(out))
 	}
 	var res Result
 	if err := json.Unmarshal([]byte(out[0].Content), &res); err != nil {

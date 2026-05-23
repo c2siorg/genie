@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Genie API
+  version: 0.1.0
+  description: |
+    Genie is a multi-agent AI financial assistant. The HTTP surface is a thin
+    edge: requests translate to messages on the in-process bus, which routes
+    them through specialist agents (ingest → normalize → enrich → analyze →
+    fan-out → report).
+servers:
+  - url: http://localhost:8080
+    description: Local docker-compose
+
+tags:
+  - name: users
+  - name: accounts
+  - name: documents
+  - name: ask
+  - name: health
+
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Service is alive
+  /readyz:
+    get:
+      tags: [health]
+      summary: Readiness probe — pings DB
+      responses:
+        '200':
+          description: Ready
+        '503':
+          description: Not ready
+
+  /v1/users:
+    post:
+      tags: [users]
+      summary: Sign up a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400': { description: Invalid input }
+        '409': { description: Email already exists }
+
+  /v1/users/login:
+    post:
+      tags: [users]
+      summary: Exchange credentials for a JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401': { description: Invalid credentials }
+
+  /v1/users/me:
+    get:
+      tags: [users]
+      security: [{ bearer: [] }]
+      summary: Current user's public profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '401': { description: Unauthenticated }
+
+  /v1/accounts:
+    get:
+      tags: [accounts]
+      security: [{ bearer: [] }]
+      summary: List accounts for the authenticated user
+      responses:
+        '200':
+          description: Array of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Account' }
+    post:
+      tags: [accounts]
+      security: [{ bearer: [] }]
+      summary: Create an account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAccountRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+
+  /v1/documents:
+    post:
+      tags: [documents]
+      security: [{ bearer: [] }]
+      summary: Upload an encrypted CSV document
+      parameters:
+        - in: query
+          name: description
+          schema: { type: string }
+        - in: query
+          name: classification
+          schema:
+            type: string
+            enum: [public, internal, pii, secret]
+            default: pii
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema: { type: string }
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '201':
+          description: Stored (encrypted at rest)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '413': { description: Payload too large }
+    get:
+      tags: [documents]
+      security: [{ bearer: [] }]
+      summary: Document metadata (never returns plaintext)
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Metadata
+        '404': { description: Not found }
+
+  /v1/ask:
+    post:
+      tags: [ask]
+      security: [{ bearer: [] }]
+      summary: Ask Genie a finance question against a stored document
+      description: |
+        Publishes a finance_question onto the bus. The supervisor decrypts the
+        document, runs the pipeline, and returns a human-readable report.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AskRequest' }
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AskResponse' }
+        '504': { description: Pipeline timed out }
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SignupRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        name: { type: string }
+        password:
+          type: string
+          minLength: 8
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    TokenResponse:
+      type: object
+      properties:
+        token: { type: string }
+        expires_at: { type: integer, format: int64 }
+        user: { $ref: '#/components/schemas/PublicUser' }
+    PublicUser:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string }
+        roles:
+          type: array
+          items: { type: string, enum: [user, advisor, admin] }
+    Account:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        name: { type: string }
+        currency: { type: string }
+        created_at: { type: string, format: date-time }
+    CreateAccountRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        currency: { type: string, default: INR }
+    UploadResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        classification: { type: string }
+        description: { type: string }
+        kek_id: { type: string }
+    AskRequest:
+      type: object
+      required: [question, document_id]
+      properties:
+        question: { type: string }
+        document_id: { type: string, format: uuid }
+    AskResponse:
+      type: object
+      properties:
+        trace_id: { type: string }
+        report: { type: string }

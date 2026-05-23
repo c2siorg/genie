@@ -20,6 +20,7 @@ const (
 	FanForecaster = "forecaster"
 	FanAnomaly    = "anomaly_detector"
 	FanRecommend  = "recommender"
+	FanSupervisor = "financial_supervisor"
 )
 
 type CategoryTotal struct {
@@ -103,5 +104,6 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 		agent.NewMessage(ID, FanForecaster, agent.RoleAgent, TypeOut, content, msg.Metadata),
 		agent.NewMessage(ID, FanAnomaly, agent.RoleAgent, TypeOut, content, msg.Metadata),
 		agent.NewMessage(ID, FanRecommend, agent.RoleAgent, TypeOut, content, msg.Metadata),
+		agent.NewMessage(ID, FanSupervisor, agent.RoleAgent, TypeOut, content, msg.Metadata),
 	}, nil
 }

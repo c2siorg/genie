@@ -7,30 +7,45 @@ import (
 	"os"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
+)
+
+// ExporterKind selects which OTEL exporter pair to install.
+type ExporterKind string
+
+const (
+	// ExporterStdout writes pretty JSON to the configured Writers. Demo default.
+	ExporterStdout ExporterKind = "stdout"
+	// ExporterOTLP sends traces+metrics to an OTLP gRPC collector
+	// (e.g. otel-collector → Tempo / Prometheus).
+	ExporterOTLP ExporterKind = "otlp"
 )
 
 // TelemetryConfig controls OpenTelemetry setup.
 //
-// Defaults target local development: stdout exporters and a small batch timeout.
-// In production you would wire OTLP exporters by setting Writer to nil and
-// providing alternative SpanProcessor/Reader via WithSpanProcessor / WithReader.
+// Defaults: stdout exporter pair. Set Exporter=ExporterOTLP and OTLPEndpoint
+// (or env OTEL_EXPORTER_OTLP_ENDPOINT) to ship to a collector instead.
 type TelemetryConfig struct {
 	ServiceName    string
 	ServiceVersion string
 
-	// TraceWriter receives stdout trace JSON. Defaults to os.Stdout.
-	// Set to io.Discard to silence traces while keeping the SDK active.
-	TraceWriter io.Writer
+	Exporter ExporterKind
 
-	// MetricWriter receives stdout metric JSON. Defaults to os.Stdout.
-	MetricWriter io.Writer
+	// OTLP options
+	OTLPEndpoint string // host:port, no scheme; defaults to env OTEL_EXPORTER_OTLP_ENDPOINT
+	OTLPInsecure bool   // skip TLS — recommended only for local dev
+
+	// Stdout options
+	TraceWriter  io.Writer // defaults to os.Stdout
+	MetricWriter io.Writer // defaults to os.Stdout
 }
 
 // Telemetry holds the OTEL providers so callers can shut them down.
@@ -77,6 +92,12 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 	if cfg.MetricWriter == nil {
 		cfg.MetricWriter = os.Stdout
 	}
+	if cfg.Exporter == "" {
+		cfg.Exporter = ExporterStdout
+	}
+	if cfg.OTLPEndpoint == "" {
+		cfg.OTLPEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	}
 
 	res, err := resource.Merge(resource.Default(), resource.NewWithAttributes(
 		semconv.SchemaURL,
@@ -87,12 +108,9 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 		return nil, fmt.Errorf("otel resource: %w", err)
 	}
 
-	traceExp, err := stdouttrace.New(
-		stdouttrace.WithWriter(cfg.TraceWriter),
-		stdouttrace.WithPrettyPrint(),
-	)
+	traceExp, metricReader, err := buildExporters(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("otel trace exporter: %w", err)
+		return nil, err
 	}
 
 	tp := sdktrace.NewTracerProvider(
@@ -102,13 +120,8 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 	)
 	otel.SetTracerProvider(tp)
 
-	metricExp, err := stdoutmetric.New(stdoutmetric.WithWriter(cfg.MetricWriter))
-	if err != nil {
-		return nil, fmt.Errorf("otel metric exporter: %w", err)
-	}
-
 	mp := sdkmetric.NewMeterProvider(
-		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExp)),
+		sdkmetric.WithReader(metricReader),
 		sdkmetric.WithResource(res),
 	)
 	otel.SetMeterProvider(mp)
@@ -119,6 +132,40 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 	))
 
 	return &Telemetry{TracerProvider: tp, MeterProvider: mp}, nil
+}
+
+// buildExporters returns the configured trace exporter and metric reader.
+func buildExporters(ctx context.Context, cfg TelemetryConfig) (sdktrace.SpanExporter, sdkmetric.Reader, error) {
+	switch cfg.Exporter {
+	case ExporterOTLP:
+		traceOpts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(cfg.OTLPEndpoint)}
+		metricOpts := []otlpmetricgrpc.Option{otlpmetricgrpc.WithEndpoint(cfg.OTLPEndpoint)}
+		if cfg.OTLPInsecure {
+			traceOpts = append(traceOpts, otlptracegrpc.WithInsecure())
+			metricOpts = append(metricOpts, otlpmetricgrpc.WithInsecure())
+		}
+		traceExp, err := otlptracegrpc.New(ctx, traceOpts...)
+		if err != nil {
+			return nil, nil, fmt.Errorf("otlp trace exporter: %w", err)
+		}
+		metricExp, err := otlpmetricgrpc.New(ctx, metricOpts...)
+		if err != nil {
+			return nil, nil, fmt.Errorf("otlp metric exporter: %w", err)
+		}
+		return traceExp, sdkmetric.NewPeriodicReader(metricExp), nil
+	case ExporterStdout, "":
+		traceExp, err := stdouttrace.New(stdouttrace.WithWriter(cfg.TraceWriter), stdouttrace.WithPrettyPrint())
+		if err != nil {
+			return nil, nil, fmt.Errorf("stdout trace exporter: %w", err)
+		}
+		metricExp, err := stdoutmetric.New(stdoutmetric.WithWriter(cfg.MetricWriter))
+		if err != nil {
+			return nil, nil, fmt.Errorf("stdout metric exporter: %w", err)
+		}
+		return traceExp, sdkmetric.NewPeriodicReader(metricExp), nil
+	default:
+		return nil, nil, fmt.Errorf("unknown exporter kind %q", cfg.Exporter)
+	}
 }
 
 // MetadataCarrier adapts a protocol.Message.Metadata map for OTEL propagation.

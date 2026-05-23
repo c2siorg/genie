@@ -48,7 +48,7 @@ type session struct {
 }
 
 func (s *session) isReady() bool {
-	return s.Forecast != nil && s.Anomalies != nil && s.Recommendations != nil
+	return s.Analysis != nil && s.Forecast != nil && s.Anomalies != nil && s.Recommendations != nil
 }
 
 type Agent struct {

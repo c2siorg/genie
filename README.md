@@ -1,505 +1,228 @@
-# 🧞 Genie — AI Financial Assistant (Go)
+# Genie — AI Financial Assistant (Go)
 
-> **Genie** is an open-source **AI financial assistant** implemented in **Go**, following Microsoft’s [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/index.html): orchestration, agent registry, message-driven specialists, governance, memory, observability, and evaluation.
+> Open-source **AI financial assistant** in Go, built on Microsoft's
+> [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/index.html).
+> A thin HTTP edge gates requests with JWT + RBAC, persists encrypted
+> documents in Postgres, and routes finance questions through a
+> message-driven pipeline of specialist agents — fully traced via
+> OpenTelemetry.
 
 ![Go](https://img.shields.io/badge/Go-1.22+-00ADD8)
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
-![AI](https://img.shields.io/badge/Domain-Financial%20Copilot-purple)
-![Open Source](https://img.shields.io/badge/Open%20Source-Yes-brightgreen)
+![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**Repository:** https://github.com/c2siorg/genie
+Repository: <https://github.com/c2siorg/genie>
 
 ---
 
-## Architecture diagram
+## Table of contents
 
-This repository includes a **high-level architecture image** at the repo root: [`Architecture.png`](./Architecture.png) (PNG). It visualizes how **Genie** (financial copilot) sits on the same **multi-agent** structure described in Microsoft’s [Multi-Agent Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/index.html): user-facing entry, orchestration, specialist agents, shared data, and governed tool access.
+- [Why Genie](#why-genie)
+- [System architecture](#system-architecture)
+- [End-to-end finance flow](#end-to-end-finance-flow)
+- [Repository layout](#repository-layout)
+- [Quick start (CLI demo)](#quick-start-cli-demo)
+- [Run the HTTP API with docker-compose](#run-the-http-api-with-docker-compose)
+- [HTTP API: signup → upload → ask](#http-api-signup--upload--ask)
+- [Authentication & Authorization](#authentication--authorization)
+- [Document encryption](#document-encryption)
+- [Governance & policies](#governance--policies)
+- [Observability: traces, metrics, logs](#observability-traces-metrics-logs)
+- [Scaffolding a new agent](#scaffolding-a-new-agent)
+- [Testing](#testing)
+- [Configuration reference](#configuration-reference)
+- [Roadmap](#roadmap)
 
-<p align="center">
-  <a href="./Architecture.png" title="Open full-size Architecture.png">
-    <img src="./Architecture.png" alt="Genie architecture diagram aligned with Microsoft Multi-Agent Reference Architecture (MARA)" width="920" />
-  </a>
-</p>
+---
 
-**How to read this diagram with the code**
+## Why Genie
 
-| Area you see on the diagram | What it is in Genie | Where it lives in Go |
+Genie answers *"What should I do with my money?"* by combining deterministic
+finance logic with specialist agents (ingestion, normalization, analysis,
+forecasting, anomaly detection, recommendations). Every step is a message on
+a bus, every message passes through governance, and every hop is traced.
+
+The same shape — orchestrator + registry + bus + governance + memory +
+observability + evaluation — is what MARA describes for production-grade
+multi-agent systems.
+
+---
+
+## System architecture
+
+```mermaid
+flowchart LR
+    subgraph Client
+        UA[CLI / curl / SDK]
+    end
+
+    subgraph Edge["pkg/web (HTTP + Middleware)"]
+        H[chi router]
+        MW1[RequestID]
+        MW2[Recovery]
+        MW3[AccessLog]
+        MW4[OTel Trace]
+        MW5[JWT Auth]
+        H --> MW1 --> MW2 --> MW3 --> MW4 --> MW5
+    end
+
+    subgraph Domain["Multi-Agent Platform (MARA)"]
+        ORCH[pkg/orchestration]
+        BUS[pkg/comm Bus]
+        REG[pkg/registry]
+        POL[pkg/governance Policies]
+        AGENTS[(15 specialist agents)]
+        ORCH --> BUS
+        ORCH --> POL
+        REG --> ORCH
+        BUS --> AGENTS
+    end
+
+    subgraph Storage
+        PG[(Postgres)]
+        KV[(In-mem KV / Sessions)]
+        DOCS[(Encrypted Documents)]
+    end
+
+    subgraph Observability
+        OTLP[OTel Collector]
+        TEMPO[Tempo]
+        GRAF[Grafana]
+        OTLP --> TEMPO --> GRAF
+    end
+
+    UA -->|REST + Bearer JWT| H
+    MW5 --> |Publish msg| BUS
+    AGENTS --> |Persist| PG
+    PG --> DOCS
+    AGENTS --> |Spans + Metrics| OTLP
+    H --> |Spans| OTLP
+    BUS --> |Spans| OTLP
+```
+
+### What lives where
+
+| Layer | Package | Role |
 | --- | --- | --- |
-| User / client / API | Entry that publishes the first `protocol.Message` | Today: `cmd/demo` · later: `cmd/api` or similar |
-| Orchestrator / coordination | Subscribes agents, runs governance, calls `HandleMessage`, republishes outputs | `pkg/orchestration` |
-| Message bus / event path | Routes by `Message.To` (agent ID) | `pkg/comm` |
-| Agent registry | Lists agents and resolves capabilities | `pkg/registry` |
-| Specialist agents | Planner, executor, or future ingestor / analyzer / recommender | `cmd/demo` agents · future `agents/` |
-| Governance / policy | Allow/deny before an agent sees a message | `pkg/governance` |
-| Memory / state | Short- or long-term context (KV today) | `pkg/memory` (+ DB when added) |
-| Observability / evaluation | Logs, clocks, interaction records | `pkg/observability`, `pkg/eval` |
-| Knowledge / storage / tools | Ledger, docs, MCP-style integrations | Planned: PostgreSQL, RAG, tool adapters via `Environment` |
+| Wire format | `pkg/protocol` | `Message`, `Classification`, metadata keys |
+| Worker interface | `pkg/agent` | `Agent` + `Environment` |
+| Discovery | `pkg/registry` | In-memory registry; capability lookup |
+| Transport | `pkg/comm` | Pub/sub bus (in-mem; swap for Kafka/NATS) |
+| Coordination | `pkg/orchestration` | Subscribes agents, enforces policy, traces |
+| Safety | `pkg/governance` | Content length, required metadata, RBAC, classification, PII, prompt-injection |
+| Memory | `pkg/memory` | Pluggable KV — local for sessions |
+| Persistence | `pkg/storage/postgres` | pgx repos: users, accounts, encrypted documents, eval records |
+| Crypto | `pkg/crypto` | Envelope AES-256-GCM + KEK resolvers |
+| Auth | `pkg/auth` | JWT (HS256, stdlib), bcrypt, roles, claims |
+| Observability | `pkg/observability` | slog + OTel traces/metrics; stdout or OTLP exporters |
+| HTTP edge | `pkg/web` | chi router, middleware, handlers |
+| Bus ↔ HTTP | `pkg/busio` | Correlator (await response by trace_id) |
+| Agents | `agents/` | 15 specialists (see below) |
 
-When you open a pull request that changes behavior, **update `Architecture.png`** if the box-level architecture changes so this image stays the single visual source of truth for newcomers.
+### The 15 specialists
+
+```mermaid
+flowchart TB
+    SUP[financial_supervisor]
+    ING[ingestor]
+    NORM[normalizer]
+    ENR[enricher]
+    AN[analyzer]
+    FC[forecaster]
+    AD[anomaly_detector]
+    REC[recommender]
+    REP[reporter]
+
+    CUR[currency_converter]
+    EDU[financial_educator]
+    MAC[macro_research]
+    RAT[rate_watcher]
+    LOA[loan_advisor]
+    AUD[llm_auditor]
+
+    SUP -->|kicks off| ING --> NORM --> ENR --> AN
+    AN --> FC --> SUP
+    AN --> AD --> SUP
+    AN --> REC --> SUP
+    AN --> SUP
+    SUP --> REP
+
+    AUD -. "broadcast subscriber, audits every msg" .-> SUP
+
+    classDef adk fill:#fef6dd,stroke:#d99e2c
+    class CUR,EDU,MAC,RAT,LOA,AUD adk
+```
+
+Yellow agents are the ADK-inspired adjacent specialists (currency, educator,
+macro, rate-watcher, loan-advisor, auditor). They are first-class citizens in
+the registry but the standard "ask" flow uses the main grey pipeline.
 
 ---
 
-## Start here (new contributors)
+## End-to-end finance flow
 
-Read this README in order. You do **not** need prior LLM framework experience; you **do** need basic Go and the idea that **agents coordinate by sending messages**, not by calling each other’s functions directly.
-
-### The one-sentence model
-
-**A user (or API) publishes a message → the orchestrator delivers it to the right agent → the agent returns zero or more new messages → the orchestrator publishes those → the workflow continues until no more messages are emitted.**
-
-That pattern is exactly what [MARA’s building blocks](https://microsoft.github.io/multi-agent-reference-architecture/docs/building-blocks/Building-Blocks.html) describe: an **orchestrator**, **specialized agents**, a **registry**, and shared **memory** / **governance** / **observability**.
-
-### What is implemented today vs planned
-
-| Layer | Status | Where |
-| --- | --- | --- |
-| **Platform (MARA)** | Implemented | `pkg/protocol`, `pkg/agent`, `pkg/registry`, `pkg/comm`, `pkg/orchestration`, `pkg/governance`, `pkg/observability`, `pkg/memory`, `pkg/eval` |
-| **Demo workflow** | Implemented | `cmd/demo` (planner → executor → coordinator) |
-| **Genie financial agents** | Planned | `agents/` (ingestor, analyzer, recommender, …) |
-| **HTTP API / UI** | Planned | Can be a thin Go service that only publishes messages to the bus |
-
-### Run the demo in 30 seconds
-
-```bash
-go run ./cmd/demo
-go test ./...
-```
-
-You should see logs like:
-
-```
-[planner] received: draft a short plan for a new feature launch
-[executor] executing: Plan for goal '...': ...
-[coordinator] final result: Executed plan derived from: ...
-```
-
-That is a **full multi-agent flow** using the same machinery you will use for financial analysis.
-
----
-
-## What is Genie?
-
-**Product vision:** Genie helps people answer *“What should I do with my money?”* — not only *“What did I spend?”*
-
-It does that by combining:
-
-1. **Deterministic finance logic** (aggregations, trends, forecasts, rules).
-2. **Specialist agents** (ingestion, analysis, recommendations), each with a narrow job.
-3. **Orchestrated, governed message flows** so every step is traceable and safe.
-
-**Engineering reality in this repo:** Genie is a **Go codebase** that implements the **multi-agent platform** from [MARA](https://microsoft.github.io/multi-agent-reference-architecture/index.html). Financial behavior lives in **agents you add**; the platform stays stable.
-
----
-
-## Why MARA (and not “one big LLM call”)?
-
-Microsoft’s guide focuses on systems where **many specialized agents** interact. The hard problems are not “write a prompt,” but:
-
-- **Routing** — which agent should handle this request?
-- **Decomposition** — who does step 1 vs step 2?
-- **Governance** — what is allowed before any agent runs?
-- **State** — conversation history, agent state, registry metadata.
-- **Operations** — logs, traces, evaluation, security, rollback.
-
-MARA documents these for production-scale systems. Genie adopts the same structure so finance features (CSV ingest, overspend analysis, forecasts) do not collapse into one unmaintainable module.
-
-**Further reading:** [MARA overview](https://microsoft.github.io/multi-agent-reference-architecture/index.html) · [Reference Architecture chapter](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html)
-
----
-
-## MARA concepts → Go packages
-
-This table is the **map of the codebase**. Each row is a MARA idea; the **Go package** is where it lives.
-
-| MARA concept | What it does | Go package | Key types |
-| --- | --- | --- | --- |
-| **Message / protocol** | Common wire format for all interaction | `pkg/protocol` | `Message`, `MessageRole`, `NewMessage` |
-| **Agent** | Domain worker: handle one message, emit follow-ups | `pkg/agent` | `Agent`, `Environment` |
-| **Agent registry** | Who exists? What can they do? | `pkg/registry` | `Registry`, `InMemoryRegistry`, `FindByCapability` |
-| **Communication bus** | Deliver messages to subscribers | `pkg/comm` | `Bus`, `InMemoryBus` |
-| **Orchestrator** | Subscribe agents, apply policy, dispatch | `pkg/orchestration` | `Orchestrator`, `SimpleEnvironment` |
-| **Governance** | Allow/deny messages at the boundary | `pkg/governance` | `Policy`, `CompositePolicy`, `MaxContentLengthPolicy` |
-| **Memory** | Short/long-term storage hooks | `pkg/memory` | `KeyValueStore`, `InMemoryKV` |
-| **Observability** | Logging, time (testable clocks) | `pkg/observability` | `Logger`, `Clock` |
-| **Evaluation** | Record runs for offline/online eval | `pkg/eval` | `InteractionRecord`, `Store` |
-
-MARA also describes components you will **add for Genie** (not all are code yet):
-
-| MARA concept | Genie role | Planned location |
-| --- | --- | --- |
-| **User application** | CLI, HTTP API, dashboard | `cmd/api`, `dashboard/` |
-| **Classifier** | Route “forecast” vs “overspend” vs “simulate cancel” | Router agent or `pkg/classifier` |
-| **Supervisor agent** | Break complex questions into sub-tasks | `agents/financial_supervisor` |
-| **Knowledge layer** | Categories, merchant dictionaries | DB + optional vector index |
-| **MCP / tools** | DB queries, model calls, simulators | Tools via extended `Environment` |
-
-The table above matches the **boxes and flows** in [`Architecture.png`](#architecture-diagram); use the diagram for onboarding talks and the ASCII diagram below for exact Go package names.
-
----
-
-## System diagram (how pieces connect)
-
-```
-                    ┌──────────────────────┐
-                    │  cmd/demo or future  │
-                    │  HTTP entrypoint     │
-                    │  bus.Publish(msg)    │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │  pkg/comm (Bus)      │
-                    │  route by msg.To     │
-                    └──────────┬───────────┘
-                               │
-         ┌─────────────────────┼─────────────────────┐
-         │                     │                     │
-┌────────▼────────┐   ┌────────▼────────┐   ┌──────▼──────┐
-│ Orchestrator    │   │ Governance      │   │ Registry    │
-│ subscribes each │   │ Evaluate()      │   │ List/Get/   │
-│ agent ID        │   │ before Handle   │   │ FindByCap   │
-└────────┬────────┘   └─────────────────┘   └─────────────┘
-         │
-         │  for each message to agent X:
-         │    1) policy.Evaluate(msg)
-         │    2) agent.HandleMessage(msg, env)
-         │    3) bus.Publish(each output)
-         │
-┌────────▼────────────────────────────────────────┐
-│  Specialist agents (demo or Genie)             │
-│  planner, executor, ingestor, analyzer, ...      │
-└────────────────────────────────────────────────┘
-```
-
-**Important rule from MARA:** agents should **not** call `otherAgent.HandleMessage()` directly. They **emit messages** addressed with `To: "other_agent_id"`. The orchestrator and bus handle delivery. That keeps coupling low and matches [agents communication](https://microsoft.github.io/multi-agent-reference-architecture/docs/agents-communication/Agents-Communication.html) guidance (message-driven, loosely coupled).
-
----
-
-## Package guide (read before writing code)
-
-### `pkg/protocol` — the wire format
-
-Every package that touches messages imports `protocol` (or gets types via `pkg/agent` re-exports). This avoids **import cycles** (documented in `pkg/protocol/doc.go`).
-
-```go
-type Message struct {
-    ID        string
-    From      string
-    To        string            // routing address = agent ID
-    Role      MessageRole       // user | system | agent | tool | observer | evaluator
-    Type      string            // handler branch, e.g. "goal", "plan", "ingest"
-    Content   string            // payload (often JSON for finance data)
-    CreatedAt time.Time
-    Metadata  map[string]any    // trace_id, account_id, etc.
-}
-```
-
-**Roles** matter for observability and policy:
-
-| Role | Typical use |
-| --- | --- |
-| `user` | End-user intent |
-| `agent` | Plans, delegations, analysis results |
-| `tool` | Output from DB/API/model tools |
-| `system` | Control-plane instructions |
-| `observer` | Audit/telemetry events |
-| `evaluator` | Rubric or automated judgment |
-
-**Contributor tip:** put structured finance data in `Content` as JSON and use `Type` to select the handler branch inside `HandleMessage`.
-
----
-
-### `pkg/agent` — the worker contract
-
-```go
-type Agent interface {
-    ID() string
-    Name() string
-    Capabilities() []string
-    HandleMessage(ctx context.Context, msg Message, env Environment) ([]Message, error)
-}
-```
-
-- **`ID()`** is the **routing address**. It must match `Message.To` when someone sends work to this agent.
-- **`Capabilities()`** is how the registry supports **capability-based discovery** (MARA [Agent Registry](https://microsoft.github.io/multi-agent-reference-architecture/docs/agent-registry/Agent-Registry.html)).
-- **`HandleMessage`** returns **0..N messages**. Zero means “done, no follow-up.” Multiple messages mean fan-out.
-
-`Environment` is intentionally minimal (`Now`, `Logf`). Production Genie code extends it with memory, DB, and tool clients **without** changing the `Agent` interface (composition over bloat).
-
----
-
-### `pkg/registry` — discovery
-
-```go
-type Registry interface {
-    Register(ctx context.Context, a agent.Agent) error
-    Get(ctx context.Context, id string) (agent.Agent, error)
-    List(ctx context.Context) []agent.Agent
-    FindByCapability(ctx context.Context, capability string) []agent.Agent
-}
-```
-
-**MARA alignment:** registry answers *“which agents exist and what can they do?”* It does **not** transport messages—that is the bus.
-
-**Contributor flows:**
-
-- Register all agents **before** `orch.Start(ctx)`.
-- Use `FindByCapability("analyze_spending")` in a supervisor or router agent to pick specialists dynamically.
-
----
-
-### `pkg/comm` — message bus
-
-```go
-type Bus interface {
-    Subscribe(agentID string, h Handler) (unsubscribe func())
-    Publish(ctx context.Context, msg protocol.Message)
-}
-```
-
-`InMemoryBus` routing:
-
-- If `msg.To` is set → deliver to subscribers registered for that ID.
-- Also delivers to **broadcast** subscribers (`agentID == ""`).
-
-Handlers run in **goroutines** (async). The demo sleeps 2 seconds so `main` does not exit early; production should use completion signals or contexts.
-
-**Swapping implementations:** Kafka/NATS/RabbitMQ can implement `Bus` without changing agent code—only wiring in `main`.
-
----
-
-### `pkg/orchestration` — the coordinator
-
-`Orchestrator.Start`:
-
-1. `List()` all agents from the registry.
-2. For each agent ID, `bus.Subscribe(agentID, handler)`.
-3. On each message:
-   - Run `policy.Evaluate(msg)` → deny stops processing.
-   - Call `agent.HandleMessage`.
-   - `Publish` every returned message back to the bus.
-
-The orchestrator is **generic**—no finance logic inside. That matches MARA’s orchestrator role ([Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html)).
-
----
-
-### `pkg/governance` — safety at the boundary
-
-Policies implement:
-
-```go
-Evaluate(ctx context.Context, msg protocol.Message) (PolicyResult, error)
-```
-
-`CompositePolicy` denies if **any** child denies. The demo uses `MaxContentLengthPolicy{Max: 4096}`.
-
-**Why before `HandleMessage`?** So agents never see illegal payloads—aligned with MARA [Security](https://microsoft.github.io/multi-agent-reference-architecture/docs/security/Security.html) and [Governance](https://microsoft.github.io/multi-agent-reference-architecture/docs/governance/Governance.html).
-
-**Genie examples to add:**
-
-- Deny messages missing `metadata["account_id"]` for PII-bearing types.
-- Deny `tool:*` message types from agents without `capability:invoke_tool`.
-
----
-
-### `pkg/memory`, `pkg/observability`, `pkg/eval` — extension points
-
-| Package | Purpose today | Genie direction |
-| --- | --- | --- |
-| `memory` | `KeyValueStore` / `InMemoryKV` | STM: session scratchpad; LTM: goals, aliases ([MARA Memory](https://microsoft.github.io/multi-agent-reference-architecture/docs/memory/Memory.html)) |
-| `observability` | `Logger`, `Clock` | Structured logs with `trace_id`, OpenTelemetry later ([MARA Observability](https://microsoft.github.io/multi-agent-reference-architecture/docs/observability/Observability.html)) |
-| `eval` | `InteractionRecord`, `InMemoryStore` | Golden-month tests, regression metrics ([MARA Evaluation](https://microsoft.github.io/multi-agent-reference-architecture/docs/evaluation/Evaluation.html)) |
-
-Wire these through a richer `Environment` implementation, not inside individual agents’ global state.
-
----
-
-## Walkthrough: `cmd/demo` (line by line)
-
-Open `cmd/demo/main.go` alongside this section.
-
-### Step 1 — Environment
-
-```go
-logger := observability.NewStdLogger()
-env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
-```
-
-Agents log through `env.Logf`. Tests can inject a fake `Clock`.
-
-### Step 2 — Platform
-
-```go
-reg := registry.NewInMemory()
-bus := comm.NewInMemoryBus()
-policy := governance.NewComposite(governance.MaxContentLengthPolicy{Max: 4096})
-```
-
-Three separate concerns: **discovery**, **transport**, **policy**.
-
-### Step 3 — Agents and registration
-
-```go
-planner := &planningAgent{id: "planner"}
-executor := &executorAgent{id: "executor"}
-coord := &coordinatorAgent{id: "coordinator"}
-reg.Register(ctx, planner)
-reg.Register(ctx, executor)
-reg.Register(ctx, coord)
-```
-
-IDs **`planner`**, **`executor`**, **`coordinator`** are routing addresses.
-
-### Step 4 — Start orchestration
-
-```go
-orch := orchestration.NewOrchestrator(reg, bus, policy, env)
-orch.Start(ctx)
-```
-
-This wires subscriptions. No messages have flowed yet.
-
-### Step 5 — Kick off with one user message
-
-```go
-start := agent.NewMessage("user", "planner", agent.RoleUser, "goal", "draft a short plan...", nil)
-bus.Publish(ctx, start)
-```
-
-Sequence:
+What happens when a user uploads a CSV and asks *"Where am I overspending?"*:
 
 ```mermaid
 sequenceDiagram
-    participant User as user (id)
-    participant Bus
-    participant Planner
-    participant Executor
-    participant Coordinator
+    autonumber
+    actor U as User
+    participant API as cmd/api (HTTP)
+    participant DB as Postgres
+    participant ENC as pkg/crypto
+    participant BUS as comm.Bus
+    participant POL as Governance
+    participant SUP as supervisor
+    participant ING as ingestor
+    participant N as normalizer
+    participant EN as enricher
+    participant AN as analyzer
+    participant FC as forecaster
+    participant AD as anomaly
+    participant REC as recommender
+    participant REP as reporter
 
-    User->>Bus: Publish To=planner, type=goal
-    Bus->>Planner: HandleMessage
-    Planner->>Bus: Publish To=executor, type=plan
-    Bus->>Executor: HandleMessage
-    Executor->>Bus: Publish To=coordinator, type=result
-    Bus->>Coordinator: HandleMessage
-    Coordinator->>Coordinator: log final (no outbound msgs)
+    U->>API: POST /v1/users/login (email,password)
+    API->>DB: SELECT user by email
+    API->>U: 200 {token, user}
+
+    U->>API: POST /v1/documents (CSV body, Bearer JWT)
+    API->>ENC: Encrypt(csv) -> EncryptedPayload
+    API->>DB: INSERT documents (payload JSONB)
+    API->>U: 201 {id, classification, kek_id}
+
+    U->>API: POST /v1/ask {question, document_id}
+    API->>DB: SELECT documents WHERE id=?
+    API->>ENC: Decrypt(payload)
+    API->>BUS: Publish finance_question (with trace_id, roles, classification)
+    BUS->>POL: Evaluate (length, metadata, RBAC, classification, injection)
+    POL-->>BUS: allow
+    BUS->>SUP: HandleMessage
+    SUP->>BUS: To=ingestor (ingest_csv)
+    BUS->>ING: HandleMessage
+    ING->>BUS: raw_transactions
+    BUS->>N: HandleMessage
+    N->>BUS: normalized_transactions
+    BUS->>EN: HandleMessage
+    EN->>BUS: enriched_transactions
+    BUS->>AN: HandleMessage
+    AN->>BUS: 4× analysis_result fan-out
+    BUS->>FC: forecast_result -> SUP
+    BUS->>AD: anomalies -> SUP
+    BUS->>REC: recommendations -> SUP
+    BUS->>SUP: 4 fan-outs collected
+    SUP->>BUS: final_report_request
+    BUS->>REP: HandleMessage
+    REP->>BUS: To=user (final_report)
+    BUS-->>API: Correlator wakes the waiting handler
+    API->>U: 200 {trace_id, report}
 ```
 
-**Notice:** `planningAgent` never imports `executorAgent`. It only creates a message with `To: "executor"`. That is the pattern every Genie agent must follow.
-
----
-
-## How a Genie financial request will work (target)
-
-Same platform, different agents:
-
-```mermaid
-sequenceDiagram
-    participant API as Go API / CLI
-    participant Bus
-    participant Sup as financial_supervisor
-    participant Ing as ingestor
-    participant Ana as analyzer
-    participant Rec as recommender
-
-    API->>Bus: finance_question (user role)
-    Bus->>Sup: HandleMessage
-    Sup->>Bus: To=ingestor (if data needed)
-    Bus->>Ing: HandleMessage
-    Ing->>Bus: ingest_done
-    Bus->>Sup: HandleMessage
-    Sup->>Bus: To=analyzer
-    Bus->>Ana: HandleMessage
-    Ana->>Bus: analysis_result
-    Bus->>Sup: HandleMessage
-    Sup->>Bus: To=recommender
-    Bus->>Rec: HandleMessage
-    Rec->>Bus: recommendations
-    Bus->>Sup: HandleMessage
-    Sup->>API: final report (via callback or polling store)
-```
-
-MARA’s **supervisor** role ([Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html)): decompose, delegate, merge, ensure coherence—implemented as `financial_supervisor` agent logic, not inside `Orchestrator`.
-
----
-
-## Genie specialist agents (what to build)
-
-Each row is a **cohesive capability** (MARA: do not make “call one API” its own agent).
-
-| Agent ID | Capability strings | Responsibility |
-| --- | --- | --- |
-| `ingestor` | `ingest_csv` | Parse uploads, emit row events |
-| `normalizer` | `normalize` | Bank-specific CSV → canonical ledger JSON |
-| `enricher` | `enrich_merchant` | Merchants, categories |
-| `analyzer` | `analyze_spending` | Windows, MoM deltas, overspend |
-| `forecaster` | `forecast_cashflow` | Forward balances, scenarios |
-| `anomaly_detector` | `detect_anomaly` | Outliers and alerts |
-| `recommender` | `recommend`, `simulate_action` | Ranked actions + impact |
-| `reporter` | `render_report` | Human-readable + JSON sections |
-| `financial_supervisor` | `supervise_finance` | Multi-step orchestration at agent level |
-
-**Example message** (future):
-
-```json
-{
-  "from": "user",
-  "to": "financial_supervisor",
-  "role": "user",
-  "type": "finance_question",
-  "content": "Where am I overspending vs last month?",
-  "metadata": {
-    "account_id": "acct-123",
-    "trace_id": "tr-abc",
-    "from_date": "2026-01-01",
-    "to_date": "2026-01-31"
-  }
-}
-```
-
----
-
-## Canonical finance data (for agents)
-
-Normalized transaction (use in `Content` JSON):
-
-```json
-{
-  "transaction_id": "txn-0001",
-  "account_id": "acct-123",
-  "date": "2026-01-03",
-  "amount_cents": -45000,
-  "currency": "INR",
-  "description": "Swiggy order",
-  "merchant": "swiggy",
-  "category": "food:delivery"
-}
-```
-
-Sample CSV in `data/` (when added):
-
-```csv
-date,description,category,amount,type
-2026-01-01,Salary,Income,50000,credit
-2026-01-03,Swiggy,Food,450,debit
-```
-
----
-
-## MARA chapters — what to read and when
-
-| MARA chapter | Link | When you need it |
-| --- | --- | --- |
-| Overview | [index](https://microsoft.github.io/multi-agent-reference-architecture/index.html) | First day — vocabulary |
-| Building blocks | [Building blocks](https://microsoft.github.io/multi-agent-reference-architecture/docs/building-blocks/Building-Blocks.html) | Before writing your first agent |
-| Design options | [Design options](https://microsoft.github.io/multi-agent-reference-architecture/docs/design-options/Design-Options.html) | Choosing monolith vs splitting services |
-| Agent registry | [Agent registry](https://microsoft.github.io/multi-agent-reference-architecture/docs/agent-registry/Agent-Registry.html) | Dynamic routing, capabilities |
-| Memory | [Memory](https://microsoft.github.io/multi-agent-reference-architecture/docs/memory/Memory.html) | Sessions, user goals |
-| Agents communication | [Agents communication](https://microsoft.github.io/multi-agent-reference-architecture/docs/agents-communication/Agents-Communication.html) | Bus vs direct RPC trade-offs |
-| Observability | [Observability](https://microsoft.github.io/multi-agent-reference-architecture/docs/observability/Observability.html) | Logging, tracing |
-| Evaluation | [Evaluation](https://microsoft.github.io/multi-agent-reference-architecture/docs/evaluation/Evaluation.html) | Tests and quality gates |
-| Security | [Security](https://microsoft.github.io/multi-agent-reference-architecture/docs/security/Security.html) | PII, tool authz |
-| Governance | [Governance](https://microsoft.github.io/multi-agent-reference-architecture/docs/governance/Governance.html) | Responsible AI, policies |
-| Reference Architecture | [Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html) | Full component diagram + supervisor |
+Trace context propagates across goroutines via `Message.Metadata` — the W3C
+`traceparent` header is injected on publish and re-extracted by the
+orchestrator before each agent runs, so the entire flow shows up as one
+distributed trace in Tempo.
 
 ---
 
@@ -507,136 +230,406 @@ date,description,category,amount,type
 
 ```
 genie/
-├── cmd/demo/           # Entrypoint: wires platform + demo agents
+├── cmd/
+│   ├── api/           # HTTP service-edge binary (auth + RBAC + Postgres + OTLP)
+│   ├── genie/         # CLI that runs the bus pipeline end-to-end in-process
+│   ├── demo/          # original toy planner/executor/coordinator demo
+│   └── scaffold/      # generates a new agent skeleton
+├── agents/            # 15 specialist agents
 ├── pkg/
-│   ├── protocol/       # Message schema (shared wire format)
-│   ├── agent/          # Agent + Environment interfaces
-│   ├── registry/       # Agent discovery
-│   ├── comm/           # Bus (in-memory; swappable)
-│   ├── orchestration/  # Orchestrator
-│   ├── governance/     # Policies
-│   ├── observability/  # Logger, Clock
-│   ├── memory/         # KV store abstraction
-│   └── eval/           # Evaluation records
-├── agents/             # (planned) Genie financial specialists
-├── data/               # (planned) sample CSV / fixtures
-├── tests/
-└── docs/
+│   ├── protocol/      # Message + Classification
+│   ├── agent/         # Agent + Environment
+│   ├── registry/      # in-memory registry
+│   ├── comm/          # in-memory pub/sub bus (with OTEL spans)
+│   ├── orchestration/ # orchestrator (governance + tracing in the critical path)
+│   ├── governance/    # policies: length, metadata, RBAC, classification, PII, injection
+│   ├── memory/        # KV store interface + in-mem impl
+│   ├── observability/ # slog + OTel (stdout or OTLP)
+│   ├── eval/          # interaction records
+│   ├── auth/          # JWT (stdlib), bcrypt, roles, claims
+│   ├── crypto/        # envelope AES-GCM, KEK resolvers
+│   ├── storage/postgres/ # pgxpool + migrations + repos
+│   ├── busio/         # Correlator: await bus response by trace_id
+│   └── web/           # chi router + middleware + HTTP handlers
+├── data/sample.csv
+├── deploy/local/      # tempo + otel-collector + grafana configs
+├── docs/openapi.yaml  # full HTTP spec
+├── tests/             # end-to-end integration test
+├── Dockerfile
+├── docker-compose.yaml
+├── Makefile
+└── .circleci/config.yml
 ```
 
-**Module path:** `github.com/PratikDhanave/multi-agent-reference-architecture-go` (see `go.mod`).
+**Module path:** `github.com/PratikDhanave/multi-agent-reference-architecture-go`
 
 ---
 
-## Add your first Genie agent (tutorial)
+## Quick start (CLI demo)
 
-### 1. Create a new file `agents/analyzer/analyzer.go`
+No Postgres, no HTTP server. Runs the full bus pipeline in-process with
+stdout OTel exporters.
 
-```go
-package analyzer
-
-import (
-    "context"
-
-    "github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
-)
-
-type Agent struct{}
-
-func (a *Agent) ID() string   { return "analyzer" }
-func (a *Agent) Name() string { return "Spending Analyzer" }
-func (a *Agent) Capabilities() []string {
-    return []string{"analyze_spending"}
-}
-
-func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
-    env.Logf("[analyzer] type=%s from=%s", msg.Type, msg.From)
-    // TODO: parse msg.Content / metadata, compute metrics
-    out := agent.NewMessage(
-        a.ID(),
-        "financial_supervisor",
-        agent.RoleAgent,
-        "analysis_result",
-        `{"overspend_categories":["food:delivery"]}`,
-        msg.Metadata,
-    )
-    return []agent.Message{out}, nil
-}
+```bash
+go run ./cmd/genie
 ```
 
-### 2. Register in `cmd/demo/main.go` (or a new `cmd/genie/main.go`)
+You should see structured logs and:
 
-```go
-_ = reg.Register(ctx, &analyzer.Agent{})
+```text
+=== FINAL REPORT ===
+Genie Financial Report
+Question: Where am I overspending vs last month?
+Currency: INR
+Income:  10000000 (minor units)
+Expense: 3279800 (minor units)
+Net:     6720200 (minor units)
+Top categories: housing:rent, food:delivery, Utilities
+Forecast: {...}
+Recommendations: {...}
 ```
 
-### 3. Send a message in tests or main
-
-```go
-bus.Publish(ctx, agent.NewMessage("user", "analyzer", agent.RoleUser, "analyze_spending", "{}", map[string]any{
-    "account_id": "acct-123",
-    "trace_id":   "test-1",
-}))
-```
-
-### 4. PR checklist
-
-- [ ] Unit test for `HandleMessage` (table-driven on `msg.Type`)
-- [ ] Capability string documented in README agent table
-- [ ] No direct calls to other agents—only outbound messages
-- [ ] Governance considered (payload size, required metadata)
-- [ ] Logs use `env.Logf`, not fmt in library code
+A `genie-traces.json` file is produced alongside the binary; it's a stream of
+JSON-encoded OTel spans that mirror the sequence diagram above.
 
 ---
 
-## Design rules (from MARA — follow these)
+## Run the HTTP API with docker-compose
 
-1. **Orchestrator coordinates; agents do not call each other.** Use `Message.To`.
-2. **One agent = one meaningful capability**, not one API endpoint.
-3. **Registry for discovery; bus for delivery.** Do not mix the two.
-4. **Governance runs before `HandleMessage`.** Fail closed.
-5. **Prefer message-driven flows** for multi-step work; use a supervisor agent to plan steps.
-6. **Version agents and prompts**; support rollback when eval metrics drop ([MARA Security](https://microsoft.github.io/multi-agent-reference-architecture/docs/security/Security.html)).
-7. **Finance safety:** recommendations are informational; never log raw account numbers—hash or tokenize in `Metadata`.
+```bash
+make compose-up
+```
+
+Brings up:
+
+| Service | URL | Purpose |
+| --- | --- | --- |
+| `genie-api` | <http://localhost:8080> | the service |
+| `postgres` | localhost:5432 | persistence (genie/genie/genie) |
+| `otel-collector` | grpc :4317, http :4318 | receives OTLP |
+| `tempo` | <http://localhost:3200> | trace backend |
+| `grafana` | <http://localhost:3000> | UI (anonymous admin) |
+
+In Grafana, open **Explore → Tempo** and run a trace search by service name
+`genie-api`. Each Ask request appears as one distributed trace spanning the
+HTTP server, the bus, governance, and every agent that handled a message.
+
+Stop everything with `make compose-down`.
+
+---
+
+## HTTP API: signup → upload → ask
+
+```bash
+# 1) Sign up
+TOKEN=$(curl -s -X POST localhost:8080/v1/users \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@example.com","name":"Alice","password":"hunter2hunter2"}' \
+  | jq -r .token)
+
+# 2) Upload an encrypted CSV
+DOC_ID=$(curl -s -X POST 'localhost:8080/v1/documents?description=Jan%20statement&classification=pii' \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-binary @data/sample.csv \
+  | jq -r .id)
+
+# 3) Ask Genie
+curl -s -X POST localhost:8080/v1/ask \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d "{\"question\":\"Where am I overspending?\",\"document_id\":\"$DOC_ID\"}" | jq .
+```
+
+Sample response:
+
+```json
+{
+  "trace_id": "tr-1779514412090640000",
+  "report": "Genie Financial Report\nQuestion: Where am I overspending?\nCurrency: INR\nIncome:  10000000 ...\n"
+}
+```
+
+Full spec: [`docs/openapi.yaml`](docs/openapi.yaml). Render in any
+OpenAPI viewer (Swagger UI, Redoc) for the interactive form.
+
+---
+
+## Authentication & Authorization
+
+### Token lifecycle
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant API
+    participant Repo as UserRepo (Postgres)
+    participant JWT as auth.Issuer (HS256)
+
+    U->>API: POST /v1/users {email,name,password}
+    API->>API: bcrypt(password)
+    API->>Repo: INSERT users (...)
+    API->>JWT: Issue(subject, email, [user])
+    API->>U: {token, expires_at, user}
+
+    Note over U: subsequent requests
+    U->>API: GET /v1/users/me<br/>Authorization: Bearer <token>
+    API->>JWT: Verify(token)
+    JWT-->>API: claims{sub, roles, exp}
+    API->>Repo: SELECT user
+    API->>U: {id, email, roles, ...}
+```
+
+- **JWT**: HS256 signed by `GENIE_JWT_SECRET`. Issued for 60 minutes.
+  Implemented in stdlib (`pkg/auth/jwt.go`) to keep the security surface
+  small and auditable — no third-party JWT library.
+- **Passwords**: bcrypt via `golang.org/x/crypto/bcrypt`, default cost (10).
+- **Roles**: `user` (default), `advisor`, `admin`. Stored as a Postgres
+  `TEXT[]` column on `users`.
+
+### Authorization at two layers
+
+Genie enforces authz in two places — **before** the HTTP handler and
+**before** the agent sees the message:
+
+```mermaid
+flowchart LR
+    REQ[Bearer JWT request] --> MW{mid.Auth}
+    MW -- invalid --> R401[401]
+    MW -- valid --> RR{mid.RequireRole?<br/>route gate}
+    RR -- no match --> R403[403]
+    RR -- ok --> HANDLE[Handler]
+    HANDLE --> PUB[bus.Publish<br/>user_roles in metadata]
+    PUB --> POL{governance.RBACPolicy}
+    POL -- deny --> DROP[message dropped<br/>span marked Error]
+    POL -- allow --> AGENT[Agent.HandleMessage]
+```
+
+- `pkg/web/mid.Auth` verifies the JWT and pins `auth.Claims` onto the
+  request context.
+- `pkg/web/mid.RequireRole(roles...)` is an optional route-level gate.
+- `pkg/governance.RBACPolicy` runs on the bus. It reads
+  `metadata["user_roles"]` (set by the HTTP layer) and denies messages
+  whose required roles are not held.
+- `AdminBypass: true` lets `admin` skip every RBAC denial.
+
+This means a compromised handler can't sneak data to an agent it isn't
+authorized to talk to — the bus policy is still the gate.
+
+---
+
+## Document encryption
+
+CSV uploads are encrypted before they reach Postgres. Genie uses an
+**envelope encryption** scheme: each document gets a fresh data encryption
+key (DEK), the DEK is wrapped with the active key encryption key (KEK), and
+the wrapped DEK + ciphertext are stored together.
+
+```mermaid
+flowchart LR
+    PT[CSV plaintext]
+    DEK[(DEK 32 bytes,<br/>fresh per doc)]
+    KEK[(KEK<br/>env / KMS)]
+    CT[ciphertext]
+    WDEK[wrapped DEK]
+    JSON[EncryptedPayload JSON<br/>{kek_id, wrapped_dek, nonce, ciphertext}]
+
+    PT --AES-256-GCM--> CT
+    DEK --AES-256-GCM--> WDEK
+    KEK -.wraps.-> DEK
+    CT --> JSON
+    WDEK --> JSON
+    JSON --> PG[(documents.payload JSONB)]
+```
+
+- **Algorithm**: AES-256-GCM for both DEK encryption of the document and
+  KEK wrapping of the DEK.
+- **Local**: `pkg/crypto.EnvKeyResolver` reads the KEK from
+  `GENIE_KEK_BASE64` (32 bytes, base64 encoded — generate with
+  `openssl rand -base64 32`).
+- **Production**: `pkg/crypto.KMSKeyResolver` is the production shape. Plug
+  in any KMS by implementing the `KMSClient` interface (AWS KMS, GCP KMS,
+  HashiCorp Vault Transit). Genie never sees the raw KEK in the prod path.
+- **Storage**: `EncryptedPayload` is stored in `documents.payload` as
+  JSONB. Decryption happens *only* in the `/v1/ask` flow, in memory, and
+  the plaintext exits the process boundary on the bus marked
+  `classification=pii`.
+- **Description**: an arbitrary user-supplied label and a
+  `classification` query parameter (`public | internal | pii | secret`) are
+  stored alongside each document, so audits and governance policies can
+  reason about content sensitivity without ever decrypting.
+
+Key rotation is a future feature — the schema already accommodates it
+(`kek_id` per row); decryption first asks the resolver if it can serve that
+KEK id, otherwise rejects.
+
+---
+
+## Governance & policies
+
+Every message that crosses the bus is evaluated by a composite policy
+**before** the destination agent's `HandleMessage` runs.
+
+```mermaid
+flowchart TB
+    MSG[Message] --> C[CompositePolicy]
+    C --> P1[MaxContentLengthPolicy]
+    C --> P2[RequiredMetadataPolicy<br/>e.g. trace_id, user_id]
+    C --> P3[RBACPolicy<br/>roles vs message type]
+    C --> P4[ClassificationPolicy<br/>recipient ceiling vs msg class]
+    C --> P5[PIIBlockPolicy<br/>regex on content]
+    C --> P6[PromptInjectionPolicy<br/>known marker phrases]
+    P1 & P2 & P3 & P4 & P5 & P6 --> D{any deny?}
+    D -- yes --> SP[span.Error +<br/>denial counter +<br/>drop msg]
+    D -- no --> A[agent.HandleMessage]
+```
+
+Policies are deliberately small and composable. The composite denies on the
+first deny and reports the reason via OTel span attributes and the
+`genie.governance.denials` counter.
+
+To add a policy, implement:
+
+```go
+type Policy interface {
+    Evaluate(ctx context.Context, msg protocol.Message) (PolicyResult, error)
+}
+```
+
+and put it into the composite at startup.
+
+---
+
+## Observability: traces, metrics, logs
+
+```mermaid
+flowchart LR
+    APP[genie-api / cmd/genie] --OTLP gRPC--> COL[otel-collector]
+    COL --> TEMPO[(Tempo)]
+    APP --slog JSON--> STDOUT[(stdout / Loki)]
+    TEMPO --datasource--> GRAF[Grafana]
+```
+
+- **Traces**: spans around `http <method> <path>`, `governance.evaluate`,
+  `bus.publish`, `agent.handle`. Trace context is propagated through
+  `Message.Metadata` so async hops stay linked.
+- **Metrics**:
+  - `genie.bus.messages_published`
+  - `genie.agent.messages_handled`
+  - `genie.governance.denials`
+  - `genie.agent.errors`
+  - `genie.agent.handle_duration_ms` (histogram)
+- **Logs**: structured slog (`pkg/observability.SlogLogger`). Use the
+  `LogAttrs` method for hot paths.
+
+Switch between exporters:
+
+| Mode | When | Set |
+| --- | --- | --- |
+| stdout | CLI demo (`cmd/genie`) | nothing — default |
+| OTLP gRPC | service (`cmd/api`) | `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317` (compose does this for you) |
+
+---
+
+## Scaffolding a new agent
+
+Add a "tax estimator" agent without writing the boilerplate:
+
+```bash
+make scaffold name=tax_estimator cap=estimate_tax \
+  in=analysis_result out=tax_estimate next=financial_supervisor
+```
+
+Genie generates:
+
+```
+agents/tax_estimator/
+  tax_estimator.go      # full Agent implementation skeleton
+  tax_estimator_test.go # passing table-driven test
+```
+
+It also prints the line you need to add to `cmd/api/main.go` and
+`cmd/genie/main.go`:
+
+```go
+register(tax_estimator.New())
+```
+
+Fill in `HandleMessage`'s TODO with your domain logic.
+
+---
+
+## Testing
+
+```bash
+make test
+```
+
+This runs:
+
+- Unit tests for every agent (table-driven, no I/O).
+- `pkg/auth` JWT + bcrypt roundtrips.
+- `pkg/crypto` envelope encryption roundtrips (with env KEK).
+- `pkg/governance` policy decisions.
+- End-to-end pipeline through the in-memory bus (`tests/integration_test.go`).
+
+Postgres-backed integration tests are not wired in (no testcontainers
+dependency yet). The repos are exposed via interfaces (`UserRepo`,
+`AccountRepo`, `DocumentRepo`) so handler-level tests can substitute fakes.
+
+---
+
+## Configuration reference
+
+| Variable | Required by | Description |
+| --- | --- | --- |
+| `GENIE_HTTP_ADDR` | `cmd/api` | listen address (default `:8080`) |
+| `GENIE_JWT_SECRET` | `cmd/api` | HS256 secret bytes |
+| `GENIE_KEK_BASE64` | `cmd/api` | 32-byte base64-encoded KEK |
+| `GENIE_DB_DSN` | `cmd/api` | Postgres DSN |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `cmd/api` (optional) | enables OTLP exporter |
+| `GENIE_OTEL_INSECURE` | `cmd/api` (optional) | `"true"` to skip TLS on OTLP |
+
+Generate a key locally:
+
+```bash
+openssl rand -base64 32
+```
 
 ---
 
 ## Roadmap
 
-| Phase | Goal |
-| --- | --- |
-| **1** | `ingestor` + `normalizer` + `analyzer` on sample CSV |
-| **2** | `forecaster`, `anomaly_detector`, `recommender` |
-| **3** | `financial_supervisor` + classifier routing + eval golden files |
-| **4** | Go HTTP API, persistence (PostgreSQL), optional dashboard |
+| Phase | Status | Notes |
+| --- | --- | --- |
+| Multi-agent platform | ✅ | MARA-aligned, message-driven |
+| 9 core finance agents | ✅ | ingestor → reporter |
+| 6 ADK-inspired agents | ✅ | currency, educator, macro, rate-watcher, loan, auditor |
+| OTel traces + metrics | ✅ | stdout + OTLP exporters |
+| HTTP API, JWT auth, RBAC | ✅ | chi + stdlib JWT |
+| Postgres persistence | ✅ | pgx + embedded migrations |
+| Envelope encryption (AES-GCM) | ✅ | env / KMS resolvers |
+| Tempo + Grafana via compose | ✅ | local stack |
+| CircleCI pipeline | ✅ | test + docker build |
+| Scaffold generator | ✅ | `make scaffold name=...` |
+| OpenAPI spec | ✅ | `docs/openapi.yaml` |
+| Kubernetes manifests | 🚧 | kustomize overlays for local/prod |
+| Postgres-backed eval store | 🚧 | currently in-memory |
+| Key rotation | 🚧 | schema ready (`kek_id`), logic pending |
+| Vector store / RAG knowledge layer | 🚧 | future tool integration |
 
 ---
 
-## Contributing
+## License
 
-- Issues: `good first issue`, `help wanted`
-- **Good first tasks:** tests for `MaxContentLengthPolicy`; `analyzer` with fixture CSV; document one message type in `docs/messages.md`
-
-**Mentor:** Pratik Dhanave · **Slack:** C2SI `#genie` · **Star:** https://github.com/c2siorg/genie
+MIT. See [LICENSE](LICENSE) when added.
 
 ---
 
 ## References
 
-- [Multi-Agent Reference Architecture (overview)](https://microsoft.github.io/multi-agent-reference-architecture/index.html)
-- [Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html)
+- [Multi-Agent Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/index.html)
 - [Building blocks](https://microsoft.github.io/multi-agent-reference-architecture/docs/building-blocks/Building-Blocks.html)
-- [Agent registry](https://microsoft.github.io/multi-agent-reference-architecture/docs/agent-registry/Agent-Registry.html)
-- [Memory](https://microsoft.github.io/multi-agent-reference-architecture/docs/memory/Memory.html)
 - [Agents communication](https://microsoft.github.io/multi-agent-reference-architecture/docs/agents-communication/Agents-Communication.html)
 - [Observability](https://microsoft.github.io/multi-agent-reference-architecture/docs/observability/Observability.html)
-- [Evaluation](https://microsoft.github.io/multi-agent-reference-architecture/docs/evaluation/Evaluation.html)
 - [Security](https://microsoft.github.io/multi-agent-reference-architecture/docs/security/Security.html)
-- [Governance](https://microsoft.github.io/multi-agent-reference-architecture/docs/governance/Governance.html)
-- [Design options](https://microsoft.github.io/multi-agent-reference-architecture/docs/design-options/Design-Options.html)
-
----
-
-## License / status
-
-Reference **Go** implementation of MARA patterns for the Genie financial copilot. Extend agents and policies incrementally; keep the orchestration platform thin and stable.
+- [Google ADK samples — agent categories](https://github.com/google/adk-samples/tree/main/python/agents)

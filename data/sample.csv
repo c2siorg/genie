@@ -1,0 +1,11 @@
+date,description,category,amount,type
+2026-01-01,Salary,Income,50000,credit
+2026-01-03,Swiggy order,Food,450,debit
+2026-01-05,Swiggy,Food,350,debit
+2026-01-06,Uber ride,Transport,250,debit
+2026-01-08,Electricity bill,Utilities,2200,debit
+2026-01-10,Netflix,Entertainment,649,debit
+2026-01-12,Swiggy,Food,2000,debit
+2026-01-14,Rent payment,Housing,25000,debit
+2026-01-18,Amazon order,Shopping,1899,debit
+2026-01-22,Salary,Income,50000,credit
