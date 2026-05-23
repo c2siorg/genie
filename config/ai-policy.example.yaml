@@ -1,0 +1,56 @@
+# Genie Board-Approved AI Policy (Annexure V mapping from RBI FREE-AI report).
+#
+# This file is owned by the board; engineers ship the loader (pkg/policy), not
+# the values. Bump `version` and `board_approved_on` on every change.
+
+version: "0.1.0"
+board_approved_on: "2025-08-13"
+owner: "Chief Risk Officer"
+purpose: |
+  Genie is an AI financial assistant for retail consumers. AI is used for
+  analysis, recommendation, portfolio fetching, and conversational education.
+  Customer-impact decisions remain advisory only; the user retains final say.
+
+principles:
+  - "Trust is the Foundation"
+  - "People First"
+  - "Innovation over Restraint"
+  - "Fairness and Equity"
+  - "Accountability"
+  - "Understandable by Design"
+  - "Safety, Resilience, and Sustainability"
+
+governance:
+  admin_bypass: true
+  rbac:
+    finance_question:    ["user", "advisor", "admin"]
+    portfolio_request:   ["user", "advisor", "admin"]
+
+risk:
+  max_content_length_bytes: 262144   # 256 KiB
+
+data:
+  retention_days: 180
+  block_pii: true                    # deny obvious PII (cards / emails / phones)
+  block_prompt_injection: true
+
+consumer:
+  ai_disclosure_banner: |
+    This response was produced by an AI pipeline at Genie. It is informational
+    and not a guarantee. You retain final authority over any financial decision.
+
+sovereignty:
+  home_region: "in"
+  allow_cross_border_for_public: true
+
+consent:
+  type_to_category:
+    portfolio_request: "portfolio"
+
+explainability:
+  applies_to:
+    - "recommendations"
+
+limits:
+  required_metadata:
+    finance_question:  ["user_id", "trace_id"]

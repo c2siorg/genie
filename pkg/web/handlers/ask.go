@@ -24,6 +24,11 @@ type Ask struct {
 	Documents  postgres.DocumentRepo
 	Encryptor  *crypto.Encryptor
 	Timeout    time.Duration
+
+	// AIDisclosureBanner is prepended to every response, satisfying Sutra 2
+	// (People First) and Recommendation 18 (Consumer Protection): consumers
+	// must be told when they are interacting with AI.
+	AIDisclosureBanner string
 }
 
 type askRequest struct {
@@ -32,8 +37,9 @@ type askRequest struct {
 }
 
 type askResponse struct {
-	TraceID string `json:"trace_id"`
-	Report  string `json:"report"`
+	TraceID         string `json:"trace_id"`
+	Report          string `json:"report"`
+	AIDisclosure    string `json:"ai_disclosure,omitempty"`
 }
 
 func (h *Ask) Post(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +98,11 @@ func (h *Ask) Post(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case msg := <-ch:
-		respondJSON(w, http.StatusOK, askResponse{TraceID: traceID, Report: msg.Content})
+		respondJSON(w, http.StatusOK, askResponse{
+			TraceID:      traceID,
+			Report:       msg.Content,
+			AIDisclosure: h.AIDisclosureBanner,
+		})
 	case <-time.After(timeout):
 		h.Correlator.Cancel(traceID)
 		http.Error(w, "timed out waiting for report", http.StatusGatewayTimeout)

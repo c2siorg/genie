@@ -1,0 +1,178 @@
+asyncapi: 3.0.0
+info:
+  title: Genie Bus Events
+  version: 0.1.0
+  description: |
+    Bus events Genie publishes between specialist agents. External consumers
+    can subscribe via the CloudEvents envelope (see `pkg/cloudevents`).
+
+defaultContentType: application/cloudevents+json
+
+servers:
+  bus:
+    host: in-process
+    protocol: genie-bus
+    description: In-process pub/sub bus (pkg/comm).
+
+channels:
+  raw_transactions:
+    address: raw_transactions
+    messages:
+      msg: { $ref: "#/components/messages/RawTransactions" }
+  normalized_transactions:
+    address: normalized_transactions
+    messages:
+      msg: { $ref: "#/components/messages/Normalized" }
+  enriched_transactions:
+    address: enriched_transactions
+    messages:
+      msg: { $ref: "#/components/messages/Enriched" }
+  analysis_result:
+    address: analysis_result
+    messages:
+      msg: { $ref: "#/components/messages/Analysis" }
+  recommendations:
+    address: recommendations
+    messages:
+      msg: { $ref: "#/components/messages/Recommendations" }
+  forecast_result:
+    address: forecast_result
+    messages:
+      msg: { $ref: "#/components/messages/Forecast" }
+  anomalies:
+    address: anomalies
+    messages:
+      msg: { $ref: "#/components/messages/Anomalies" }
+  final_report:
+    address: final_report
+    messages:
+      msg: { $ref: "#/components/messages/FinalReport" }
+  portfolio_snapshot:
+    address: portfolio_snapshot
+    messages:
+      msg: { $ref: "#/components/messages/PortfolioSnapshot" }
+
+operations:
+  publishRawTransactions:
+    action: send
+    channel: { $ref: "#/channels/raw_transactions" }
+  receiveFinalReport:
+    action: receive
+    channel: { $ref: "#/channels/final_report" }
+
+components:
+  messages:
+    RawTransactions:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/TransactionsBatch" }
+    Normalized:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/TransactionsBatch" }
+    Enriched:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/TransactionsBatch" }
+    Analysis:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/AnalysisResult" }
+    Recommendations:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/Recommendations" }
+    Forecast:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/Forecast" }
+    Anomalies:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/Anomalies" }
+    FinalReport:
+      contentType: text/plain
+      payload:
+        type: string
+    PortfolioSnapshot:
+      contentType: application/json
+      payload: { $ref: "#/components/schemas/PortfolioSnapshot" }
+
+  schemas:
+    Transaction:
+      type: object
+      required: [transaction_id, date, amount_cents, currency]
+      properties:
+        transaction_id: { type: string }
+        account_id: { type: string }
+        date: { type: string, format: date }
+        amount_cents: { type: integer }
+        currency: { type: string }
+        description: { type: string }
+        merchant: { type: string }
+        category: { type: string }
+        direction: { type: string, enum: [credit, debit] }
+    TransactionsBatch:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items: { $ref: "#/components/schemas/Transaction" }
+    AnalysisResult:
+      type: object
+      properties:
+        total_income_cents: { type: integer }
+        total_expense_cents: { type: integer }
+        net_cents: { type: integer }
+        currency: { type: string }
+        top_overspend: { type: array, items: { type: string } }
+        by_category:
+          type: array
+          items:
+            type: object
+            properties:
+              category: { type: string }
+              amount_cents: { type: integer }
+              count: { type: integer }
+        transactions:
+          type: array
+          items: { $ref: "#/components/schemas/Transaction" }
+    Recommendations:
+      type: object
+      properties:
+        currency: { type: string }
+        recommendations:
+          type: array
+          items:
+            type: object
+            required: [title, rationale]
+            properties:
+              title: { type: string }
+              category: { type: string }
+              impact_cents: { type: integer }
+              confidence: { type: string }
+              action: { type: string }
+              rationale: { type: string }
+              informational: { type: boolean }
+    Forecast:
+      type: object
+      properties:
+        currency: { type: string }
+        monthly_net_cents: { type: integer }
+        horizon_1m_cents: { type: integer }
+        horizon_3m_cents: { type: integer }
+        horizon_6m_cents: { type: integer }
+    Anomalies:
+      type: object
+      properties:
+        anomalies:
+          type: array
+          items:
+            type: object
+            properties:
+              transaction_id: { type: string }
+              category: { type: string }
+              amount_cents: { type: integer }
+              z_score: { type: number }
+              reason: { type: string }
+    PortfolioSnapshot:
+      type: object
+      properties:
+        provider: { type: string }
+        holdings: { type: string }
+        positions: { type: string }
+        fetched_for: { type: string }
+        classification: { type: string }

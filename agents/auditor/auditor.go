@@ -16,7 +16,9 @@ import (
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/llm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 )
 
@@ -29,11 +31,24 @@ const (
 
 // Agent is the registry form (so capability lookups find it). When using the
 // broadcast subscription, you only need NewHandler.
+//
+// LLM-as-judge mode is engaged when both LLM and Constitution are set.
 type Agent struct {
-	Store eval.Store
+	Store        eval.Store
+	LLM          llm.Provider
+	Constitution *constitution.Constitution
+	Model        string
 }
 
 func New(store eval.Store) *Agent { return &Agent{Store: store} }
+
+// WithJudge enables LLM-as-judge scoring against the supplied constitution.
+func (a *Agent) WithJudge(p llm.Provider, c *constitution.Constitution, model string) *Agent {
+	a.LLM = p
+	a.Constitution = c
+	a.Model = model
+	return a
+}
 
 func (a *Agent) ID() string             { return ID }
 func (a *Agent) Name() string           { return "LLM Auditor" }
@@ -48,10 +63,24 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 	if body == "" {
 		body = "ok"
 	}
+
+	metrics := map[string]float64{}
+	// LLM-as-judge: score the candidate output against the constitution.
+	if a.LLM != nil && a.Constitution != nil {
+		if v, err := a.Constitution.Critique(ctx, a.LLM, a.Model, msg.Content); err == nil {
+			metrics["constitution_score"] = float64(v.Score)
+			if v.Score < 6 {
+				flags = append(flags, "constitution_score_low: "+v.Reasoning)
+				body = strings.Join(flags, "; ")
+			}
+		}
+	}
+
 	_ = a.Store.Save(eval.InteractionRecord{
 		ID:        msg.ID,
 		Scenario:  "audit",
 		Success:   len(flags) == 0,
+		Metrics:   metrics,
 		Metadata:  msg.Metadata,
 		StartedAt: time.Now().UTC(),
 		EndedAt:   time.Now().UTC(),

@@ -58,6 +58,10 @@ func (a *Agent) ID() string             { return ID }
 func (a *Agent) Name() string           { return "Spending Recommender" }
 func (a *Agent) Capabilities() []string { return []string{CapRecommend, CapSimulate} }
 
+// RiskLevel — recommender output reaches the customer and influences
+// financial decisions; classified Medium per RBI FREE-AI Rec 14.
+func (a *Agent) RiskLevel() agent.RiskClass { return agent.RiskMedium }
+
 func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
 	if msg.Type != TypeIn {
 		return nil, nil
