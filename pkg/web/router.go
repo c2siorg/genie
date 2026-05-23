@@ -26,6 +26,7 @@ type Deps struct {
 	AIBOM       *handlers.AIBOM
 	Feedback    *handlers.Feedback
 	ChatWS      *handlers.ChatWS
+	UI          *handlers.UI
 	RateLimit   *mid.RateLimit // optional global limiter
 	Logger      mid.Logger
 }
@@ -43,6 +44,12 @@ func NewRouter(d Deps) http.Handler {
 	if d.Disclosures != nil {
 		// Public disclosure surface — no auth, no rate limit needed.
 		r.Get("/v1/disclosures", d.Disclosures.Get)
+	}
+
+	if d.UI != nil {
+		// Mount the embedded single-page UI under /ui/ and redirect root.
+		r.Get("/", d.UI.IndexHTML)
+		r.Mount("/ui", http.StripPrefix("/ui", d.UI))
 	}
 
 	if d.RateLimit != nil {

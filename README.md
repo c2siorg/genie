@@ -1313,6 +1313,50 @@ got, _ := cloudevents.Unwrap(ev)
 
 ---
 
+## Web UI
+
+Genie ships a single-page UI embedded into the binary — no Node, no build
+step. After `make compose-up`, open <http://localhost:8080/> and you get
+redirected to `/ui/`.
+
+```mermaid
+flowchart LR
+    BR[Browser] --> ROOT[GET /]
+    ROOT -- 302 --> UI[/ui/]
+    UI --> APP[index.html + styles.css + app.js]
+    APP -->|fetch /v1/*| API[Genie HTTP API]
+    APP -->|fetch + ReadableStream| SSE[/v1/ask/stream/]
+    APP -. shows .-> EVT[Agent pipeline events]
+    APP -. shows .-> REPORT[Final report]
+```
+
+What the UI covers:
+
+- **Auth** — sign up + sign in flow; JWT stored in localStorage; logout.
+- **Ask** — pick a document, type a question, submit either synchronously
+  (`POST /v1/ask`) or streamed (`POST /v1/ask/stream`). Pipeline events
+  stream into a live event log; the final report renders below.
+- **Documents** — upload a CSV (encrypted server-side via envelope
+  AES-256-GCM before reaching Postgres); pick classification + description.
+- **Governance** — public `/v1/disclosures`; admin-only `/v1/ai-inventory`,
+  `/v1/aibom`, `/v1/incidents`.
+- **Settings** — point the UI at a different Genie instance; live
+  readiness check via `/readyz`.
+
+Plain HTML/CSS/JS — no framework, automatic light/dark mode via
+`prefers-color-scheme`:
+
+- [`pkg/web/handlers/ui/index.html`](pkg/web/handlers/ui/index.html)
+- [`pkg/web/handlers/ui/styles.css`](pkg/web/handlers/ui/styles.css)
+- [`pkg/web/handlers/ui/app.js`](pkg/web/handlers/ui/app.js)
+
+Served by `handlers.NewUI()` which uses `embed.FS` so the assets ship
+inside `genie-api`. To customise without rebuilding the binary, swap
+`embed.FS` for a filesystem-backed `fs.FS` and point it at a local
+directory during dev.
+
+---
+
 ## Live profiling (pprof)
 
 Standard-library pprof under `/debug/pprof/*`, behind JWT auth + the

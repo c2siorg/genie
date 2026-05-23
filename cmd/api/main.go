@@ -306,6 +306,11 @@ func run() error {
 		AIBOM:     &handlers.AIBOM{Reg: reg, Builder: aibom.NewBuilder()},
 		Feedback:  &handlers.Feedback{Store: synth.NewInMemoryFeedbackStore()},
 	}
+	if ui, err := handlers.NewUI(); err == nil {
+		deps.UI = ui
+	} else {
+		logger.Error("ui.embed", "error", err)
+	}
 
 	// Retention purge — runs every 6h (Rec 15).
 	db.StartRetentionJob(ctx, 6*time.Hour, logger.Info)

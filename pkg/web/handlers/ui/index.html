@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Genie — AI Financial Assistant</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧞</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🧞</span>
+      <span class="brand-name">Genie</span>
+      <span class="brand-sub">AI Financial Assistant</span>
+    </div>
+    <nav class="tabs" id="tabs" hidden>
+      <button class="tab active" data-tab="ask">Ask</button>
+      <button class="tab" data-tab="documents">Documents</button>
+      <button class="tab" data-tab="governance">Governance</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+    <div class="user" id="user-chip" hidden>
+      <span class="user-email"></span>
+      <button class="link" id="logout">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============== AUTH ============== -->
+    <section id="view-auth" class="view">
+      <div class="card auth">
+        <h1>Welcome</h1>
+        <p class="muted">Sign in to your Genie account, or create a new one.</p>
+
+        <div class="tabs-inline">
+          <button class="tab-inline active" data-auth="login">Sign in</button>
+          <button class="tab-inline" data-auth="signup">Sign up</button>
+        </div>
+
+        <form id="form-login" class="stack">
+          <label>Email <input type="email" name="email" required autocomplete="email" /></label>
+          <label>Password <input type="password" name="password" required autocomplete="current-password" /></label>
+          <button type="submit" class="primary">Sign in</button>
+        </form>
+
+        <form id="form-signup" class="stack" hidden>
+          <label>Name <input type="text" name="name" autocomplete="name" /></label>
+          <label>Email <input type="email" name="email" required autocomplete="email" /></label>
+          <label>Password
+            <input type="password" name="password" required autocomplete="new-password" minlength="8" />
+            <small class="muted">At least 8 characters.</small>
+          </label>
+          <button type="submit" class="primary">Create account</button>
+        </form>
+
+        <p class="muted small">
+          API base: <code id="api-base">/v1</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== ASK ============== -->
+    <section id="view-ask" class="view" hidden>
+      <div class="grid">
+        <div class="card">
+          <h2>Ask Genie</h2>
+          <p class="muted">Pick a document, type a question, watch the multi-agent pipeline run.</p>
+
+          <label>Document
+            <select id="ask-doc"></select>
+          </label>
+
+          <label>Question
+            <textarea id="ask-question" rows="3" placeholder="Where am I overspending this month?"></textarea>
+          </label>
+
+          <div class="row">
+            <button id="btn-ask" class="primary">Ask</button>
+            <button id="btn-ask-stream" class="secondary">Ask (stream)</button>
+            <button id="btn-stop" class="link" hidden>Stop</button>
+          </div>
+
+          <p class="muted small disclosure" id="ai-disclosure"></p>
+        </div>
+
+        <div class="card">
+          <h2>Agent pipeline</h2>
+          <p class="muted">Live events from the bus.</p>
+          <ol class="events" id="events"></ol>
+        </div>
+      </div>
+
+      <div class="card report" id="report-card" hidden>
+        <h2>Report</h2>
+        <pre class="report-body" id="report-body"></pre>
+      </div>
+    </section>
+
+    <!-- ============== DOCUMENTS ============== -->
+    <section id="view-documents" class="view" hidden>
+      <div class="card">
+        <h2>Upload a transactions CSV</h2>
+        <p class="muted">The file is encrypted end-to-end with envelope AES-256-GCM before reaching Postgres.</p>
+
+        <form id="form-upload" class="stack">
+          <label>CSV file
+            <input type="file" id="upload-file" accept=".csv,text/csv" required />
+          </label>
+          <label>Description (optional)
+            <input type="text" id="upload-desc" placeholder="January statement" />
+          </label>
+          <label>Classification
+            <select id="upload-class">
+              <option value="pii" selected>pii</option>
+              <option value="internal">internal</option>
+              <option value="public">public</option>
+            </select>
+          </label>
+          <button type="submit" class="primary">Upload</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Your documents</h2>
+        <table class="table">
+          <thead><tr><th>ID</th><th>Description</th><th>Classification</th><th>KEK</th></tr></thead>
+          <tbody id="doc-list"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============== GOVERNANCE ============== -->
+    <section id="view-governance" class="view" hidden>
+      <div class="card">
+        <h2>Public disclosures</h2>
+        <pre id="disclosures" class="json"></pre>
+      </div>
+      <div class="card">
+        <h2>AI inventory <span class="badge">admin only</span></h2>
+        <pre id="inventory" class="json">Sign in as admin to view.</pre>
+      </div>
+      <div class="card">
+        <h2>AIBOM (CycloneDX 1.6) <span class="badge">admin only</span></h2>
+        <pre id="aibom" class="json">Sign in as admin to view.</pre>
+      </div>
+      <div class="card">
+        <h2>Recent incidents <span class="badge">admin only</span></h2>
+        <pre id="incidents" class="json">Sign in as admin to view.</pre>
+      </div>
+    </section>
+
+    <!-- ============== SETTINGS ============== -->
+    <section id="view-settings" class="view" hidden>
+      <div class="card">
+        <h2>API base</h2>
+        <p class="muted">Point the UI at a different Genie instance.</p>
+        <div class="row">
+          <input type="text" id="settings-base" placeholder="https://genie.example/v1" />
+          <button id="settings-save" class="primary">Save</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>About</h2>
+        <p>
+          Genie is a Go multi-agent platform aligned with the
+          <a href="https://rbidocs.rbi.org.in/rdocs/PublicationReport/Pdfs/FREEAIR130820250A24FF2D4578453F824C72ED9F5D5851.PDF" target="_blank" rel="noopener">RBI FREE-AI</a>
+          framework. The UI is plain HTML/CSS/JS embedded in the Genie binary —
+          no Node, no build step.
+        </p>
+        <p class="muted small" id="health"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span class="muted small">
+      Genie · MARA + MCP + A2A · OpenTelemetry · RBI FREE-AI aligned ·
+      <a href="https://github.com/c2siorg/genie" target="_blank" rel="noopener">github.com/c2siorg/genie</a>
+    </span>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
