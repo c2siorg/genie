@@ -6,7 +6,7 @@
 > ships **Ollama on-prem** by default, and bundles a full **GenAI engineering**
 > layer (RAG, prompts, reasoning, memory, eval, safety, privacy).
 
-![Go](https://img.shields.io/badge/Go-1.22+-00ADD8)
+![Go](https://img.shields.io/badge/Go-1.25+-00ADD8)
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
 ![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
 ![RBI FREE-AI](https://img.shields.io/badge/RBI-FREE--AI%20aligned-orange)
@@ -20,7 +20,8 @@ Repository: <https://github.com/c2siorg/genie>
 
 - [Why Genie](#why-genie)
 - [System architecture](#system-architecture)
-- [The 20+ specialist agents](#the-20-specialist-agents)
+- [The 40+ specialist agents](#the-40-specialist-agents)
+- [Domain expansion: fraud, lending, tax, treasury, SME](#domain-expansion-fraud-lending-tax-treasury-sme)
 - [End-to-end finance flow](#end-to-end-finance-flow)
 - [Repository layout](#repository-layout)
 - [Quick start (CLI demo)](#quick-start-cli-demo)
@@ -95,7 +96,7 @@ flowchart TB
         BUS[pkg/comm Bus]
         REG[pkg/registry]
         POL[pkg/governance Composite Policy]
-        AGENTS[(20+ specialist agents)]
+        AGENTS[(40+ specialist agents)]
         FB[Fallback agents]
         ORCH --> BUS
         ORCH --> POL
@@ -198,11 +199,11 @@ flowchart TB
 | Incidents | `pkg/incidents` | Annexure VI form + auto-record |
 | Policy | `pkg/policy` | Board-approved AI policy YAML loader |
 | Federated | `pkg/federated` | FedAvg + additive secret-sharing |
-| Agents | `agents/` | 20+ specialist + fallback + hierarchical + MoA + vision |
+| Agents | `agents/` | 40+ specialist + fallback + hierarchical + MoA + vision |
 
 ---
 
-## The 20+ specialist agents
+## The 40+ specialist agents
 
 ```mermaid
 flowchart TB
@@ -261,6 +262,87 @@ flowchart TB
 - **Yellow** — ADK-inspired (educator, currency, macro, rates, loan, auditor).
 - **Green** — India stack (portfolio, AA, voice, tax).
 - **Purple** — vision (receipt OCR).
+
+---
+
+## Domain expansion: fraud, lending, tax, treasury, SME
+
+Beyond the canonical MARA pipeline, Genie ships specialist agents across
+every retail-and-institutional banking surface. Each is **deterministic-first**
+so the routing logic is auditable from source code (RBI Rec 25 — explainability).
+LLM rationale can be layered on top via `agents/reporter` when probabilistic
+explanation is wanted.
+
+### Fraud & financial crime (5)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/fraud` | Velocity bursts, impossible-travel, after-hours large debits, high-risk merchant categories | Medium |
+| `agents/mule` | Pass-through, fan-in/fan-out, post-credit burst — graph-pattern mule detection | High |
+| `agents/aml_monitor` | FIU-IND STR generator: CTR (₹10L cash), LTR (₹50L wire), 7-day structuring, sanctions/PEP match | High |
+| `agents/phishing_classifier` | URL + SMS + UPI VPA scorer: IP-literal, punycode, brand impersonation, OTP-share lures | Medium |
+| `agents/synthetic_identity` | KYC anomaly stack: thin file, address velocity, PAN/Aadhaar name mismatch, PAN 5th-char check | High |
+
+### Lending & credit (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/cashflow_underwriter` | Alt-data credit score (300–900 CIBIL-comparable) from 6 explainable signals | High |
+| `agents/debt_optimizer` | Month-by-month avalanche/snowball payoff simulator with time-to-freedom | Medium |
+| `agents/prepayment_advisor` | Ranks loans by tax-adjusted effective APR; flags fixed-rate foreclosure penalty | Medium |
+
+### Personal finance & behaviour (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/subscription_detector` | Periodicity + amount-consistency finder; surfaces zombie subscriptions on price hikes | Low |
+| `agents/goal_planner` | Monte-Carlo goal probability with p10/p50/p90 corpus envelope | Medium |
+| `agents/emergency_fund` | Median-expense × 3/6/9-month coverage profile → gap + months-to-target | Low |
+
+### Tax (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/tax_harvester` | Indian STCL/LTCL harvester for FY 2024-25; ₹1.25L LTCG exemption, set-off rules | Medium |
+| `agents/deductions_optimizer` | Old-regime Chapter VI-A ceiling fills (80C / 80CCD-1B / 80D / 80TTA) | Medium |
+| `agents/advance_tax_planner` | Quarterly instalments per sec 211; sec 234B/234C shortfall warnings | Medium |
+
+### Investments (4)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/mf_screener` | Composite score (40 % CAGR, 25 % Sharpe, 20 % expense, 15 % consistency) | Medium |
+| `agents/asset_allocator` | 100-age equity rule with risk/horizon adjustments + Buy/Sell rupee deltas | Medium |
+| `agents/sip_vs_lumpsum` | Monte-Carlo comparator with regret probability | Medium |
+| `agents/options_explainer` | Black-Scholes greeks (delta/gamma/theta/vega/rho) + 21-point payoff curve | Medium |
+| `agents/dividend_planner` | DRIP simulator with net-of-tax projection + yield-on-cost | Low |
+
+### SME banking (2)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/working_capital` | DSO + DIO − DPO cycle; monthly forecast + runway months; TReDS hint when CCC >90d | Medium |
+| `agents/invoice_discounter` | Greedy cheapest-effective-APR selector; rating premium AAA…BBB | Medium |
+
+### Institutional risk / treasury (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/var_calculator` | Historical + parametric VaR with Expected Shortfall (CVaR); √horizon scaling | High |
+| `agents/lcr_projector` | Basel III LCR with RBI run-off factors; L2A 85 % / L2B 50 % haircuts; ≥100 % compliance flag | High |
+| `agents/alm_agent` | 9-bucket asset-liability gap (1-7d through >5y); breach at ±15 %; NII shock under parallel rate move | High |
+
+### Customer service & sustainability (2)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/complaint_triage` | RBI Integrated Ombudsman Scheme 2021 classifier; drafts Annexure VI incident form | Medium |
+| `agents/carbon_estimator` | Per-category kgCO₂e + MoM trend + top-3 reduction suggestions | Low |
+
+All 26 new agents above are documented in `agents/<name>/<name>.go` headers
+with the rules, thresholds, and rate sources baked in. Each one has its own
+`_test.go` (5–8 cases) — together they add **133 unit tests** that run
+under the same `make test` / `go test ./agents/...` command as the rest.
 
 ---
 
@@ -359,7 +441,7 @@ genie/
 │   ├── demo/          # toy planner/executor/coordinator demo
 │   ├── red-team/      # adversarial probe corpus runner
 │   └── scaffold/      # generates a new agent skeleton
-├── agents/            # 20+ specialist + fallback + hierarchical + MoA + vision
+├── agents/            # 40+ specialist + fallback + hierarchical + MoA + vision
 ├── pkg/
 │   ├── protocol/      # Message + Classification + metadata keys
 │   ├── agent/         # Agent + Environment + RiskClass
@@ -1464,7 +1546,7 @@ small, swappable, and behind a stable interface.
 | Phase | Status |
 | --- | --- |
 | MARA platform (orchestrator, bus, registry, governance) | ✅ |
-| 20+ specialist agents | ✅ |
+| 40+ specialist agents | ✅ |
 | OTel traces + metrics + OpenInference | ✅ |
 | HTTP API + JWT + RBAC | ✅ |
 | Postgres persistence | ✅ |
