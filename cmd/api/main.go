@@ -258,7 +258,7 @@ func run() error {
 			Correlator:         corr,
 			Documents:          docRepo,
 			Encryptor:          enc,
-			Timeout:            8 * time.Second,
+			Timeout:            time.Duration(envInt("GENIE_ASK_TIMEOUT", 60)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		AskStream: &handlers.AskStream{
@@ -266,7 +266,7 @@ func run() error {
 			Tap:                eventTap,
 			Documents:          docRepo,
 			Encryptor:          enc,
-			Timeout:            10 * time.Second,
+			Timeout:            time.Duration(envInt("GENIE_STREAM_TIMEOUT", 90)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		ChatWS: &handlers.ChatWS{
@@ -274,7 +274,7 @@ func run() error {
 			Tap:                eventTap,
 			Documents:          docRepo,
 			Encryptor:          enc,
-			Timeout:            12 * time.Second,
+			Timeout:            time.Duration(envInt("GENIE_CHATWS_TIMEOUT", 120)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		Health: &handlers.Health{Ready: func() error {

@@ -39,63 +39,65 @@ func NewRouter(d Deps) http.Handler {
 	r.Use(mid.AccessLog(d.Logger))
 	r.Use(mid.Trace("github.com/c2siorg/genie/pkg/web"))
 
-	r.Get("/healthz", d.Health.Live)
-	r.Get("/readyz", d.Health.Readiness)
-	if d.Disclosures != nil {
-		// Public disclosure surface — no auth, no rate limit needed.
-		r.Get("/v1/disclosures", d.Disclosures.Get)
-	}
-
-	if d.UI != nil {
-		// Mount the embedded single-page UI under /ui/ and redirect root.
-		r.Get("/", d.UI.IndexHTML)
-		r.Mount("/ui", http.StripPrefix("/ui", d.UI))
-	}
-
-	if d.RateLimit != nil {
-		r.Use(d.RateLimit.Middleware)
-	}
+	// Public routes — no rate limit (k8s probes and disclosure surface
+	// must not be throttled).
+	r.Group(func(r chi.Router) {
+		r.Get("/healthz", d.Health.Live)
+		r.Get("/readyz", d.Health.Readiness)
+		if d.Disclosures != nil {
+			r.Get("/v1/disclosures", d.Disclosures.Get)
+		}
+		if d.UI != nil {
+			r.Get("/", d.UI.IndexHTML)
+			r.Mount("/ui", http.StripPrefix("/ui", d.UI))
+		}
+	})
 
 	MountPprof(r, d.Issuer)
 
-	r.Route("/v1", func(r chi.Router) {
-		r.Post("/users", d.Users.Signup)
-		r.Post("/users/login", d.Users.Login)
+	r.Group(func(r chi.Router) {
+		if d.RateLimit != nil {
+			r.Use(d.RateLimit.Middleware)
+		}
+		r.Route("/v1", func(r chi.Router) {
+			r.Post("/users", d.Users.Signup)
+			r.Post("/users/login", d.Users.Login)
 
-		r.Group(func(r chi.Router) {
-			r.Use(mid.Auth(d.Issuer))
+			r.Group(func(r chi.Router) {
+				r.Use(mid.Auth(d.Issuer))
 
-			r.Get("/users/me", d.Users.Me)
-			r.Get("/accounts", d.Accounts.List)
-			r.Post("/accounts", d.Accounts.Create)
-			r.Post("/documents", d.Documents.Upload)
-			r.Get("/documents", d.Documents.Get)
-			r.Post("/ask", d.Ask.Post)
-			if d.AskStream != nil {
-				r.Post("/ask/stream", d.AskStream.Post)
-			}
-			if d.MCPTokens != nil {
-				r.Post("/mcp/tokens", d.MCPTokens.Store)
-			}
-			if d.Incidents != nil {
-				// Reporting is open to any authenticated user (the form is
-				// meant to encourage timely disclosure — para 4.4.63). Listing
-				// is admin-only.
-				r.Post("/incidents", d.Incidents.Create)
-				r.With(mid.RequireRole(auth.RoleAdmin)).Get("/incidents", d.Incidents.List)
-			}
-			if d.Inventory != nil {
-				r.With(mid.RequireRole(auth.RoleAdmin)).Get("/ai-inventory", d.Inventory.List)
-			}
-			if d.AIBOM != nil {
-				r.With(mid.RequireRole(auth.RoleAdmin)).Get("/aibom", d.AIBOM.Get)
-			}
-			if d.Feedback != nil {
-				r.Post("/feedback", d.Feedback.Submit)
-			}
-			if d.ChatWS != nil {
-				r.Get("/chat/ws", d.ChatWS.Serve)
-			}
+				r.Get("/users/me", d.Users.Me)
+				r.Get("/accounts", d.Accounts.List)
+				r.Post("/accounts", d.Accounts.Create)
+				r.Post("/documents", d.Documents.Upload)
+				r.Get("/documents", d.Documents.Get)
+				r.Post("/ask", d.Ask.Post)
+				if d.AskStream != nil {
+					r.Post("/ask/stream", d.AskStream.Post)
+				}
+				if d.MCPTokens != nil {
+					r.Post("/mcp/tokens", d.MCPTokens.Store)
+				}
+				if d.Incidents != nil {
+					// Reporting is open to any authenticated user (the form is
+					// meant to encourage timely disclosure — para 4.4.63). Listing
+					// is admin-only.
+					r.Post("/incidents", d.Incidents.Create)
+					r.With(mid.RequireRole(auth.RoleAdmin)).Get("/incidents", d.Incidents.List)
+				}
+				if d.Inventory != nil {
+					r.With(mid.RequireRole(auth.RoleAdmin)).Get("/ai-inventory", d.Inventory.List)
+				}
+				if d.AIBOM != nil {
+					r.With(mid.RequireRole(auth.RoleAdmin)).Get("/aibom", d.AIBOM.Get)
+				}
+				if d.Feedback != nil {
+					r.Post("/feedback", d.Feedback.Submit)
+				}
+				if d.ChatWS != nil {
+					r.Get("/chat/ws", d.ChatWS.Serve)
+				}
+			})
 		})
 	})
 

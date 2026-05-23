@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS rag_embeddings (
     PRIMARY KEY (namespace, chunk_id)
 );
 
--- ivfflat is fine for medium scale; for >1M rows switch to hnsw.
-CREATE INDEX IF NOT EXISTS idx_rag_embeddings_cosine
-    ON rag_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+-- No ANN index by default — Genie supports multiple embedder dimensions
+-- (HashEmbedder=256, Ollama nomic-embed-text=768) and ivfflat / hnsw require
+-- the column to declare a fixed dimension. Sequential scan is fine for demo
+-- corpora; once you standardize on one embedder, ALTER the column to
+-- vector(N) and add e.g.:
+--   CREATE INDEX idx_rag_embeddings_cosine ON rag_embeddings
+--     USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
