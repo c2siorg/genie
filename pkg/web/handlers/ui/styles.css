@@ -1,0 +1,336 @@
+/* Genie UI — single stylesheet, no framework. Pairs with index.html + app.js. */
+
+:root {
+  --bg: #0c0e12;
+  --surface: #14181f;
+  --surface-2: #1a1f29;
+  --border: #232a36;
+  --text: #e6e9ef;
+  --text-dim: #98a1b1;
+  --accent: #7c5cff;
+  --accent-dim: #5b3eb1;
+  --good: #2bbf6a;
+  --warn: #e0a93b;
+  --bad: #e25c5c;
+  --code-bg: #0a0d12;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --gap: 16px;
+  --gap-sm: 8px;
+  --shadow: 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.35);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", "Roboto Mono", monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafbfd;
+    --surface: #ffffff;
+    --surface-2: #f3f5f9;
+    --border: #e3e7ee;
+    --text: #1a1f29;
+    --text-dim: #5b6678;
+    --code-bg: #f3f5f9;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.logo { font-size: 22px; }
+.brand-name { font-weight: 700; letter-spacing: -0.01em; }
+.brand-sub { color: var(--text-dim); font-size: 13px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  cursor: pointer;
+}
+.tab:hover { color: var(--text); background: var(--surface-2); }
+.tab.active { color: var(--text); border-color: var(--border); background: var(--surface-2); }
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-email { color: var(--text-dim); font-size: 13px; }
+
+/* ---------- layout ---------- */
+
+main {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 24px;
+}
+
+.view { display: block; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+@media (max-width: 800px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: var(--gap);
+}
+
+.card h1, .card h2 {
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+.card h2 { font-size: 17px; }
+.card > p { margin: 0 0 16px; }
+
+footer {
+  border-top: 1px solid var(--border);
+  padding: 16px 24px;
+  margin-top: 32px;
+  text-align: center;
+  background: var(--surface);
+}
+
+/* ---------- forms ---------- */
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+label small { font-weight: normal; }
+
+input, textarea, select {
+  font: inherit;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+}
+
+button {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+button:hover { background: var(--surface); }
+
+button.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+button.primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); }
+
+button.secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+button.link {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  padding: 4px 6px;
+}
+button.link:hover { text-decoration: underline; background: transparent; }
+
+.row {
+  display: flex;
+  gap: var(--gap-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tabs-inline {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.tab-inline {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.tab-inline.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* ---------- auth card ---------- */
+
+.auth { max-width: 420px; margin: 64px auto; }
+
+/* ---------- events list ---------- */
+
+.events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--code-bg);
+}
+.events li {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.events li:last-child { border-bottom: none; }
+.event-kind {
+  color: var(--accent);
+  text-transform: lowercase;
+  flex: 0 0 auto;
+  min-width: 110px;
+}
+.event-data {
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.event-report .event-kind { color: var(--good); }
+.event-error .event-kind { color: var(--bad); }
+
+/* ---------- report ---------- */
+
+.report-body {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.disclosure {
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+  margin-top: 12px;
+}
+
+/* ---------- table ---------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th, .table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.table th { color: var(--text-dim); font-weight: 500; }
+.table tr:hover td { background: var(--surface-2); }
+.table code { font-size: 12px; }
+
+/* ---------- json blocks ---------- */
+
+pre.json {
+  max-height: 360px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 1px 8px;
+  border-radius: 999px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* ---------- utilities ---------- */
+
+.muted { color: var(--text-dim); }
+.small { font-size: 12px; }
