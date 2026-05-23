@@ -6,7 +6,7 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.25
     resource_class: medium
     steps:
       - checkout
@@ -25,7 +25,7 @@ jobs:
 
   docker-build:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.25
     steps:
       - checkout
       - setup_remote_docker:

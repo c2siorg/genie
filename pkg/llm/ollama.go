@@ -38,9 +38,15 @@ func (p *OllamaProvider) Name() string   { return "ollama" }
 func (p *OllamaProvider) Region() string { return "on-prem" }
 
 type ollamaMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string   `json:"role"`
+	Content string   `json:"content"`
+	Images  []string `json:"images,omitempty"` // base64 strings — Ollama vision shape
 }
+
+// SupportsVision reports true. Ollama vision models (llava, gemma3-vision,
+// minicpm-v) accept base64 images directly via the chat API; the request
+// builder passes them through.
+func (p *OllamaProvider) SupportsVision() bool { return true }
 
 type ollamaRequest struct {
 	Model    string          `json:"model"`
@@ -77,7 +83,14 @@ func (p *OllamaProvider) Complete(ctx context.Context, req CompletionRequest) (C
 		Stream: false,
 	}
 	for _, m := range req.Messages {
-		body.Messages = append(body.Messages, ollamaMessage{Role: string(m.Role), Content: m.Content})
+		om := ollamaMessage{Role: string(m.Role), Content: m.Content}
+		if len(m.Images) > 0 {
+			om.Images = make([]string, len(m.Images))
+			for i, img := range m.Images {
+				om.Images[i] = img.Base64
+			}
+		}
+		body.Messages = append(body.Messages, om)
 	}
 	if req.MaxTokens > 0 || req.Temperature > 0 {
 		body.Options = map[string]any{}

@@ -258,7 +258,7 @@ func run() error {
 			Correlator:         corr,
 			Documents:          docRepo,
 			Encryptor:          enc,
-			Timeout:            8 * time.Second,
+			Timeout:            time.Duration(envInt("GENIE_ASK_TIMEOUT", 60)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		AskStream: &handlers.AskStream{
@@ -266,7 +266,7 @@ func run() error {
 			Tap:                eventTap,
 			Documents:          docRepo,
 			Encryptor:          enc,
-			Timeout:            10 * time.Second,
+			Timeout:            time.Duration(envInt("GENIE_STREAM_TIMEOUT", 90)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		ChatWS: &handlers.ChatWS{
@@ -274,7 +274,7 @@ func run() error {
 			Tap:                eventTap,
 			Documents:          docRepo,
 			Encryptor:          enc,
-			Timeout:            12 * time.Second,
+			Timeout:            time.Duration(envInt("GENIE_CHATWS_TIMEOUT", 120)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		Health: &handlers.Health{Ready: func() error {
@@ -305,6 +305,11 @@ func run() error {
 		RateLimit: mid.NewRateLimit(60, 1.0), // 60-req burst, 1/sec refill
 		AIBOM:     &handlers.AIBOM{Reg: reg, Builder: aibom.NewBuilder()},
 		Feedback:  &handlers.Feedback{Store: synth.NewInMemoryFeedbackStore()},
+	}
+	if ui, err := handlers.NewUI(); err == nil {
+		deps.UI = ui
+	} else {
+		logger.Error("ui.embed", "error", err)
 	}
 
 	// Retention purge — runs every 6h (Rec 15).
