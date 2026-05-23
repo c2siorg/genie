@@ -1,15 +1,15 @@
 # Genie — AI Financial Assistant (Go)
 
 > Open-source **AI financial assistant** in Go, built on Microsoft's
-> [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/index.html).
-> A thin HTTP edge gates requests with JWT + RBAC, persists encrypted
-> documents in Postgres, and routes finance questions through a
-> message-driven pipeline of specialist agents — fully traced via
-> OpenTelemetry.
+> [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/index.html)
+> and aligned with the **RBI FREE-AI** report. Speaks **MCP** and **A2A**,
+> ships **Ollama on-prem** by default, and bundles a full **GenAI engineering**
+> layer (RAG, prompts, reasoning, memory, eval, safety, privacy).
 
 ![Go](https://img.shields.io/badge/Go-1.22+-00ADD8)
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
 ![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
+![RBI FREE-AI](https://img.shields.io/badge/RBI-FREE--AI%20aligned-orange)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Repository: <https://github.com/c2siorg/genie>
@@ -20,85 +20,141 @@ Repository: <https://github.com/c2siorg/genie>
 
 - [Why Genie](#why-genie)
 - [System architecture](#system-architecture)
+- [The 20+ specialist agents](#the-20-specialist-agents)
 - [End-to-end finance flow](#end-to-end-finance-flow)
 - [Repository layout](#repository-layout)
 - [Quick start (CLI demo)](#quick-start-cli-demo)
-- [Run the HTTP API with docker-compose](#run-the-http-api-with-docker-compose)
+- [Run the full stack via docker-compose](#run-the-full-stack-via-docker-compose)
 - [HTTP API: signup → upload → ask](#http-api-signup--upload--ask)
 - [Authentication & Authorization](#authentication--authorization)
 - [Document encryption](#document-encryption)
 - [Governance & policies](#governance--policies)
 - [Observability: traces, metrics, logs](#observability-traces-metrics-logs)
+- [LLM providers](#llm-providers)
+- [Vision adapter + receipt OCR](#vision-adapter--receipt-ocr)
+- [Retrieval: hybrid RAG + GraphRAG + pgvector](#retrieval-hybrid-rag--graphrag--pgvector)
+- [Reasoning patterns](#reasoning-patterns)
+- [Memory: semantic + episodic + summarisation](#memory-semantic--episodic--summarisation)
+- [Evaluation](#evaluation)
+- [Safety](#safety)
+- [Workflow: DAG + Saga + HITL](#workflow-dag--saga--hitl)
+- [MCP integration (Zerodha Kite)](#mcp-integration-zerodha-kite)
+- [Agent-to-Agent (A2A) protocol](#agent-to-agent-a2a-protocol)
+- [OAuth device flow for MCP onboarding](#oauth-device-flow-for-mcp-onboarding)
+- [OAuth 2.1 + WebAuthn passwordless login](#oauth-21--webauthn-passwordless-login)
+- [Sovereign AI: data residency + on-prem inference](#sovereign-ai-data-residency--on-prem-inference)
+- [RBI FREE-AI alignment](#rbi-free-ai-alignment)
+- [Federated learning + secure aggregation](#federated-learning--secure-aggregation)
+- [AIBOM + CycloneDX + Sigstore signing](#aibom--cyclonedx--sigstore-signing)
+- [Identity: DIDs + Verifiable Credentials](#identity-dids--verifiable-credentials)
+- [CloudEvents + AsyncAPI + OpenInference](#cloudevents--asyncapi--openinference)
+- [Live profiling (pprof)](#live-profiling-pprof)
 - [Scaffolding a new agent](#scaffolding-a-new-agent)
-- [Testing](#testing)
+- [Testing & quality gates](#testing--quality-gates)
 - [Configuration reference](#configuration-reference)
+- [AI concept inventory](#ai-concept-inventory)
 - [Roadmap](#roadmap)
+- [References](#references)
 
 ---
 
 ## Why Genie
 
 Genie answers *"What should I do with my money?"* by combining deterministic
-finance logic with specialist agents (ingestion, normalization, analysis,
-forecasting, anomaly detection, recommendations). Every step is a message on
-a bus, every message passes through governance, and every hop is traced.
+finance logic with specialist agents (ingestion → normalisation → analysis →
+forecasting → anomaly detection → recommendations). Every step is a message
+on a bus, every message passes through governance, every hop is traced.
 
 The same shape — orchestrator + registry + bus + governance + memory +
-observability + evaluation — is what MARA describes for production-grade
-multi-agent systems.
+observability + evaluation — is what MARA prescribes for production-grade
+multi-agent systems, and what the RBI FREE-AI report (Aug 2025) maps to its
+7 Sutras + 6 Pillars + 26 Recommendations.
 
 ---
 
 ## System architecture
 
 ```mermaid
-flowchart LR
-    subgraph Client
+flowchart TB
+    subgraph Clients
         UA[CLI / curl / SDK]
+        BR[Browser / Passkey]
     end
 
-    subgraph Edge["pkg/web (HTTP + Middleware)"]
-        H[chi router]
-        MW1[RequestID]
-        MW2[Recovery]
-        MW3[AccessLog]
-        MW4[OTel Trace]
-        MW5[JWT Auth]
-        H --> MW1 --> MW2 --> MW3 --> MW4 --> MW5
+    subgraph Edge["pkg/web — HTTP + WebSocket"]
+        direction TB
+        MW[chi router + middleware<br/>RequestID · Recovery · Log<br/>OTel · JWT Auth · RBAC · RateLimit]
+        SSE[/v1/ask/stream SSE/]
+        WS[/v1/chat/ws WebSocket/]
+        OAUTH[/v1/oauth · /v1/webauthn/]
+        MCPEP[/mcp JSON-RPC/]
     end
 
-    subgraph Domain["Multi-Agent Platform (MARA)"]
+    subgraph Platform["MARA platform"]
         ORCH[pkg/orchestration]
         BUS[pkg/comm Bus]
         REG[pkg/registry]
-        POL[pkg/governance Policies]
-        AGENTS[(15 specialist agents)]
+        POL[pkg/governance Composite Policy]
+        AGENTS[(20+ specialist agents)]
+        FB[Fallback agents]
         ORCH --> BUS
         ORCH --> POL
         REG --> ORCH
         BUS --> AGENTS
+        AGENTS --> FB
     end
 
-    subgraph Storage
-        PG[(Postgres)]
-        KV[(In-mem KV / Sessions)]
-        DOCS[(Encrypted Documents)]
+    subgraph AI["GenAI layer"]
+        LLM[pkg/llm<br/>Mock · Ollama · Anthropic<br/>OpenAI · Gemini]
+        RAG[pkg/rag<br/>hybrid · pgvector · rerank<br/>Self-RAG · CRAG]
+        GRAG[pkg/graphrag<br/>entity graph]
+        REAS[pkg/reasoning<br/>CoT · ReAct · Reflexion<br/>CoV · Step-Back]
+        MEM[pkg/memory<br/>semantic + episodic]
+        CONST[pkg/constitution<br/>7 Sutras]
+        TOOL[pkg/toolkit · pkg/eval]
+        SAFE[pkg/safety]
+    end
+
+    subgraph Data
+        PG[(Postgres<br/>users · documents · incidents<br/>consents · mcp_tokens · pgvector)]
+        VAULT[(Encrypted at rest<br/>pkg/crypto envelope)]
     end
 
     subgraph Observability
         OTLP[OTel Collector]
-        TEMPO[Tempo]
+        TEMPO[(Tempo)]
         GRAF[Grafana]
         OTLP --> TEMPO --> GRAF
     end
 
-    UA -->|REST + Bearer JWT| H
-    MW5 --> |Publish msg| BUS
-    AGENTS --> |Persist| PG
-    PG --> DOCS
-    AGENTS --> |Spans + Metrics| OTLP
-    H --> |Spans| OTLP
-    BUS --> |Spans| OTLP
+    subgraph External
+        KITE[Zerodha Kite MCP]
+        AA[Sahamati AA]
+        OLLAMA[Ollama runtime]
+    end
+
+    UA -->|REST + Bearer JWT| MW
+    BR -->|Passkey| OAUTH
+    MW --> SSE
+    MW --> WS
+    MW -->|Publish| BUS
+    AGENTS --> LLM
+    AGENTS --> RAG
+    AGENTS --> GRAG
+    AGENTS --> MEM
+    LLM --> OLLAMA
+    AGENTS --> KITE
+    AGENTS --> AA
+    AGENTS --> PG
+    PG --> VAULT
+    AGENTS --> OTLP
+    MW --> OTLP
+    LLM --> OTLP
+    POL -.audit.-> AGENTS
+    REAS -.via.-> LLM
+    SAFE -.via.-> POL
+    TOOL -.via.-> POL
+    CONST -.via.-> POL
 ```
 
 ### What lives where
@@ -106,25 +162,52 @@ flowchart LR
 | Layer | Package | Role |
 | --- | --- | --- |
 | Wire format | `pkg/protocol` | `Message`, `Classification`, metadata keys |
-| Worker interface | `pkg/agent` | `Agent` + `Environment` |
+| Worker interface | `pkg/agent` | `Agent` + `Environment` + `RiskClass` |
 | Discovery | `pkg/registry` | In-memory registry; capability lookup |
 | Transport | `pkg/comm` | Pub/sub bus (in-mem; swap for Kafka/NATS) |
-| Coordination | `pkg/orchestration` | Subscribes agents, enforces policy, traces |
-| Safety | `pkg/governance` | Content length, required metadata, RBAC, classification, PII, prompt-injection |
-| Memory | `pkg/memory` | Pluggable KV — local for sessions |
-| Persistence | `pkg/storage/postgres` | pgx repos: users, accounts, encrypted documents, eval records |
+| Coordination | `pkg/orchestration` | Subscribes agents, enforces policy, traces, fallback |
+| Safety | `pkg/governance` | Composite: length, metadata, RBAC, classification, residency, consent, PII, injection, schema, explainability |
+| Memory | `pkg/memory` | Pluggable KV + semantic + episodic + LLM summariser |
+| Persistence | `pkg/storage/postgres` | pgx repos: users, accounts, documents, mcp_tokens, incidents, consents, audit_log, rag_embeddings |
 | Crypto | `pkg/crypto` | Envelope AES-256-GCM + KEK resolvers |
-| Auth | `pkg/auth` | JWT (HS256, stdlib), bcrypt, roles, claims |
-| Observability | `pkg/observability` | slog + OTel traces/metrics; stdout or OTLP exporters |
-| HTTP edge | `pkg/web` | chi router, middleware, handlers |
-| Bus ↔ HTTP | `pkg/busio` | Correlator (await response by trace_id) |
-| Agents | `agents/` | 15 specialists (see below) |
+| Auth | `pkg/auth` | JWT + bcrypt + OAuth 2.1 + Device flow + WebAuthn |
+| Observability | `pkg/observability` | slog + OTel; stdout/OTLP exporters; OpenInference attrs |
+| HTTP edge | `pkg/web` | chi router + middleware + handlers + SSE + WebSocket + pprof |
+| Bus ↔ HTTP | `pkg/busio` | Correlator + EventTap for streaming |
+| LLM | `pkg/llm` | Provider + 5 impls + Cost/Cache/Router/Shadow/Circuit/Deadline/Budget wrappers |
+| RAG | `pkg/rag` (+ `pgvector`, `rerank`) | Hybrid retrieval, parent-child, time-decay, HyDE, Self-RAG, CRAG |
+| Graph | `pkg/graphrag` | Entity graph over transactions/merchants |
+| Reasoning | `pkg/reasoning` | CoT, ReAct, Reflexion, CoV, Step-Back, Semantic Router |
+| Prompts | `pkg/prompt` | Versioned registry + few-shot + Thompson bandit |
+| Constitution | `pkg/constitution` | 7-Sutra system prompt + LLM-as-judge critique |
+| Schema | `pkg/schema` | JSON-Schema validator |
+| Eval | `pkg/eval/{ragas,checklist,drift,hallucination,elo}` | Quality metrics |
+| Safety | `pkg/safety` | Jailbreak, topic, toxicity, bias |
+| Synth + Feedback | `pkg/synth` + `pkg/dpo` | LLM-driven synth + RLAIF feedback + JSONL export |
+| Loaders | `pkg/loader` | PDF/HTML/DOCX + entity extraction |
+| Toolkit | `pkg/toolkit` | 7-Sutra compliance Scorecard |
+| Workflow | `pkg/workflow` | DAG + Saga + HITL + event-sourced log |
+| Privacy | `pkg/privacy` | HMAC tokenisation + Laplace/Gaussian DP noise |
+| Identity | `pkg/identity` | did:key + W3C Verifiable Credentials |
+| AIBOM | `pkg/aibom` | Manifest + CycloneDX 1.6 + Ed25519 signing |
+| MCP | `pkg/mcp` | Client + server (JSON-RPC streamable HTTP) |
+| A2A | `pkg/a2a` | Agent-to-Agent client + server |
+| CloudEvents | `pkg/cloudevents` | CloudEvents 1.0 envelope |
+| Sovereignty | `pkg/sovereignty` | Region tags + provider registry |
+| Compliance | `pkg/compliance` | Consent ledger + tamper-evident audit log + graded liability |
+| Incidents | `pkg/incidents` | Annexure VI form + auto-record |
+| Policy | `pkg/policy` | Board-approved AI policy YAML loader |
+| Federated | `pkg/federated` | FedAvg + additive secret-sharing |
+| Agents | `agents/` | 20+ specialist + fallback + hierarchical + MoA + vision |
 
-### The 15 specialists
+---
+
+## The 20+ specialist agents
 
 ```mermaid
 flowchart TB
     SUP[financial_supervisor]
+    HSUP[h_supervisor<br/>semantic router]
     ING[ingestor]
     NORM[normalizer]
     ENR[enricher]
@@ -132,31 +215,52 @@ flowchart TB
     FC[forecaster]
     AD[anomaly_detector]
     REC[recommender]
+    MOA[moa_recommender<br/>Mixture-of-Agents]
     REP[reporter]
+    OCR[receipt_ocr<br/>vision]
 
     CUR[currency_converter]
-    EDU[financial_educator]
+    EDU[financial_educator<br/>+RAG citations]
     MAC[macro_research]
     RAT[rate_watcher]
     LOA[loan_advisor]
-    AUD[llm_auditor]
+    TAX[tax_estimator<br/>FY 2024-25]
+    AUD[llm_auditor<br/>LLM-as-judge]
 
+    PA[portfolio_advisor<br/>Zerodha Kite MCP]
+    AAF[aa_fetcher<br/>Sahamati AA]
+    VO[voice<br/>Bhashini-shaped]
+
+    FB[fallback agents]
+
+    HSUP -.routes.-> SUP
+    HSUP -.routes.-> TAX
+    HSUP -.routes.-> PA
+
+    OCR -->|raw_transactions| NORM
     SUP -->|kicks off| ING --> NORM --> ENR --> AN
     AN --> FC --> SUP
     AN --> AD --> SUP
     AN --> REC --> SUP
     AN --> SUP
     SUP --> REP
+    AAF --> SUP
 
-    AUD -. "broadcast subscriber, audits every msg" .-> SUP
+    AUD -. "broadcast subscriber" .-> SUP
+    REC -. fail .-> FB
 
     classDef adk fill:#fef6dd,stroke:#d99e2c
+    classDef india fill:#dffce9,stroke:#249e57
+    classDef vision fill:#e7e3ff,stroke:#5b3eb1
     class CUR,EDU,MAC,RAT,LOA,AUD adk
+    class PA,AAF,VO,TAX india
+    class OCR vision
 ```
 
-Yellow agents are the ADK-inspired adjacent specialists (currency, educator,
-macro, rate-watcher, loan-advisor, auditor). They are first-class citizens in
-the registry but the standard "ask" flow uses the main grey pipeline.
+- **Grey** — canonical MARA pipeline.
+- **Yellow** — ADK-inspired (educator, currency, macro, rates, loan, auditor).
+- **Green** — India stack (portfolio, AA, voice, tax).
+- **Purple** — vision (receipt OCR).
 
 ---
 
@@ -168,11 +272,11 @@ What happens when a user uploads a CSV and asks *"Where am I overspending?"*:
 sequenceDiagram
     autonumber
     actor U as User
-    participant API as cmd/api (HTTP)
+    participant API as cmd/api
     participant DB as Postgres
     participant ENC as pkg/crypto
     participant BUS as comm.Bus
-    participant POL as Governance
+    participant POL as Governance Composite
     participant SUP as supervisor
     participant ING as ingestor
     participant N as normalizer
@@ -182,46 +286,65 @@ sequenceDiagram
     participant AD as anomaly
     participant REC as recommender
     participant REP as reporter
+    participant AUDIT as llm_auditor
 
-    U->>API: POST /v1/users/login (email,password)
-    API->>DB: SELECT user by email
-    API->>U: 200 {token, user}
+    U->>API: POST /v1/users/login
+    API->>DB: SELECT user
+    API->>U: 200 {token}
 
-    U->>API: POST /v1/documents (CSV body, Bearer JWT)
-    API->>ENC: Encrypt(csv) -> EncryptedPayload
-    API->>DB: INSERT documents (payload JSONB)
+    U->>API: POST /v1/documents (CSV body, JWT)
+    API->>ENC: Encrypt(csv)
+    API->>DB: INSERT documents (envelope JSONB)
     API->>U: 201 {id, classification, kek_id}
 
     U->>API: POST /v1/ask {question, document_id}
     API->>DB: SELECT documents WHERE id=?
     API->>ENC: Decrypt(payload)
-    API->>BUS: Publish finance_question (with trace_id, roles, classification)
-    BUS->>POL: Evaluate (length, metadata, RBAC, classification, injection)
+    API->>BUS: Publish finance_question
+
+    BUS->>POL: Evaluate (length, RBAC, classification,<br/>residency, consent, PII, injection, schema)
     POL-->>BUS: allow
     BUS->>SUP: HandleMessage
-    SUP->>BUS: To=ingestor (ingest_csv)
+    SUP->>BUS: ingest_csv → ingestor
+
     BUS->>ING: HandleMessage
     ING->>BUS: raw_transactions
     BUS->>N: HandleMessage
     N->>BUS: normalized_transactions
     BUS->>EN: HandleMessage
     EN->>BUS: enriched_transactions
+
     BUS->>AN: HandleMessage
-    AN->>BUS: 4× analysis_result fan-out
-    BUS->>FC: forecast_result -> SUP
-    BUS->>AD: anomalies -> SUP
-    BUS->>REC: recommendations -> SUP
-    BUS->>SUP: 4 fan-outs collected
-    SUP->>BUS: final_report_request
+    par
+        AN->>BUS: → forecaster
+    and
+        AN->>BUS: → anomaly_detector
+    and
+        AN->>BUS: → recommender
+    and
+        AN->>BUS: → supervisor (snapshot)
+    end
+
+    BUS->>FC: HandleMessage
+    FC->>BUS: forecast_result → supervisor
+    BUS->>AD: HandleMessage
+    AD->>BUS: anomalies → supervisor
+    BUS->>REC: HandleMessage
+    REC->>BUS: recommendations → supervisor
+
+    BUS->>SUP: 4 fan-ins collected
+    SUP->>BUS: final_report_request → reporter
     BUS->>REP: HandleMessage
-    REP->>BUS: To=user (final_report)
+    REP->>BUS: final_report → user
     BUS-->>API: Correlator wakes the waiting handler
-    API->>U: 200 {trace_id, report}
+    API->>U: 200 {trace_id, report, ai_disclosure}
+
+    AUDIT-->>BUS: (broadcast) scores every message<br/>against constitution
 ```
 
 Trace context propagates across goroutines via `Message.Metadata` — the W3C
 `traceparent` header is injected on publish and re-extracted by the
-orchestrator before each agent runs, so the entire flow shows up as one
+orchestrator before each agent runs, so the entire flow appears as one
 distributed trace in Tempo.
 
 ---
@@ -231,32 +354,63 @@ distributed trace in Tempo.
 ```
 genie/
 ├── cmd/
-│   ├── api/           # HTTP service-edge binary (auth + RBAC + Postgres + OTLP)
+│   ├── api/           # HTTP service-edge binary (auth + RBAC + Postgres + OTLP + Ollama factory)
 │   ├── genie/         # CLI that runs the bus pipeline end-to-end in-process
-│   ├── demo/          # original toy planner/executor/coordinator demo
+│   ├── demo/          # toy planner/executor/coordinator demo
+│   ├── red-team/      # adversarial probe corpus runner
 │   └── scaffold/      # generates a new agent skeleton
-├── agents/            # 15 specialist agents
+├── agents/            # 20+ specialist + fallback + hierarchical + MoA + vision
 ├── pkg/
-│   ├── protocol/      # Message + Classification
-│   ├── agent/         # Agent + Environment
+│   ├── protocol/      # Message + Classification + metadata keys
+│   ├── agent/         # Agent + Environment + RiskClass
 │   ├── registry/      # in-memory registry
-│   ├── comm/          # in-memory pub/sub bus (with OTEL spans)
-│   ├── orchestration/ # orchestrator (governance + tracing in the critical path)
-│   ├── governance/    # policies: length, metadata, RBAC, classification, PII, injection
-│   ├── memory/        # KV store interface + in-mem impl
-│   ├── observability/ # slog + OTel (stdout or OTLP)
-│   ├── eval/          # interaction records
-│   ├── auth/          # JWT (stdlib), bcrypt, roles, claims
-│   ├── crypto/        # envelope AES-GCM, KEK resolvers
-│   ├── storage/postgres/ # pgxpool + migrations + repos
-│   ├── busio/         # Correlator: await bus response by trace_id
-│   └── web/           # chi router + middleware + HTTP handlers
+│   ├── comm/          # in-memory pub/sub bus (with OTel spans)
+│   ├── orchestration/ # orchestrator (governance + tracing + fallback)
+│   ├── governance/    # composite policy
+│   ├── memory/        # KV + SemanticMemory + EpisodicMemory + Summariser
+│   ├── observability/ # slog + OTel + OpenInference semconv
+│   ├── eval/          # records + ragas/ + checklist/ + drift/ + hallucination/ + elo/
+│   ├── auth/          # JWT + bcrypt + oauth_device/ + oauth2/ + webauthn/
+│   ├── crypto/        # envelope AES-GCM + EnvKeyResolver + KMSKeyResolver
+│   ├── storage/postgres/ # pgxpool + embedded migrations + repos
+│   ├── busio/         # Correlator + EventTap (SSE/WS)
+│   ├── web/           # chi router + middleware + handlers + pprof
+│   ├── mcp/           # MCP client + server
+│   ├── a2a/           # A2A client + server
+│   ├── cloudevents/   # CloudEvents 1.0 envelope
+│   ├── policy/        # board-approved AI policy YAML loader
+│   ├── incidents/     # Annexure VI form + auto-record
+│   ├── compliance/    # consent ledger + hash-chained audit log
+│   ├── sovereignty/   # region tags + provider registry
+│   ├── llm/           # Provider + 5 impls + wrappers
+│   ├── rag/           # vector + BM25 + RRF + rerank + HyDE + Self-RAG + CRAG
+│   │   └── pgvector/  # pgvector-backed VectorStore
+│   ├── graphrag/      # entity graph + traversal
+│   ├── reasoning/     # CoT + ReAct + Reflexion + CoV + Step-Back + Semantic Router
+│   ├── prompt/        # versioned registry + few-shot + Thompson bandit
+│   ├── constitution/  # 7-Sutra system prompt + Critique
+│   ├── schema/        # JSON-Schema validator + SchemaPolicy
+│   ├── safety/        # jailbreak + topic + toxicity + bias scorer
+│   ├── synth/         # synth data generator + RLAIF feedback store
+│   ├── dpo/           # export feedback to DPO/RLAIF JSONL pairs
+│   ├── loader/        # PDF/HTML/DOCX + entity extraction
+│   ├── toolkit/       # 7-Sutra compliance Scorecard
+│   ├── workflow/      # DAG + Saga + HITL + event-sourced sink
+│   ├── privacy/       # HMAC tokenisation + DP noise
+│   ├── identity/      # did:key + W3C Verifiable Credentials
+│   ├── aibom/         # Manifest + CycloneDX 1.6 + Ed25519 signing
+│   └── federated/     # FedAvg + additive secret-sharing
+├── config/
+│   ├── ai-policy.example.yaml      # Annexure V board policy
+│   └── constitution.yaml            # 7 Sutras
 ├── data/sample.csv
 ├── deploy/local/      # tempo + otel-collector + grafana configs
-├── docs/openapi.yaml  # full HTTP spec
+├── docs/
+│   ├── openapi.yaml   # full HTTP spec
+│   └── asyncapi.yaml  # bus event spec
 ├── tests/             # end-to-end integration test
 ├── Dockerfile
-├── docker-compose.yaml
+├── docker-compose.yaml # postgres + tempo + grafana + otel-collector + ollama + genie-api
 ├── Makefile
 └── .circleci/config.yml
 ```
@@ -267,16 +421,22 @@ genie/
 
 ## Quick start (CLI demo)
 
-No Postgres, no HTTP server. Runs the full bus pipeline in-process with
+Zero external dependencies. Runs the full bus pipeline in-process with
 stdout OTel exporters.
 
 ```bash
-go run ./cmd/genie
+git clone https://github.com/c2siorg/genie.git
+cd genie
+go test ./...                       # 57 packages all green
+go run ./cmd/genie                  # full pipeline → console
 ```
 
-You should see structured logs and:
+Expected output (final lines):
 
 ```text
+[supervisor] all fan-outs received for trace=tr-...; dispatching reporter
+[reporter] final report ready (1093 bytes)
+
 === FINAL REPORT ===
 Genie Financial Report
 Question: Where am I overspending vs last month?
@@ -286,15 +446,16 @@ Expense: 3279800 (minor units)
 Net:     6720200 (minor units)
 Top categories: housing:rent, food:delivery, Utilities
 Forecast: {...}
+Anomalies: {...}
 Recommendations: {...}
 ```
 
-A `genie-traces.json` file is produced alongside the binary; it's a stream of
-JSON-encoded OTel spans that mirror the sequence diagram above.
+A `genie-traces.json` file is produced alongside the binary — a stream of
+OTel spans mirroring the sequence diagram above.
 
 ---
 
-## Run the HTTP API with docker-compose
+## Run the full stack via docker-compose
 
 ```bash
 make compose-up
@@ -306,13 +467,17 @@ Brings up:
 | --- | --- | --- |
 | `genie-api` | <http://localhost:8080> | the service |
 | `postgres` | localhost:5432 | persistence (genie/genie/genie) |
-| `otel-collector` | grpc :4317, http :4318 | receives OTLP |
+| `ollama` | localhost:11434 | on-prem LLM runtime |
+| `ollama-pull` | (one-shot) | warms `llama3.2:1b` + `nomic-embed-text` |
+| `otel-collector` | grpc :4317 | OTLP receiver |
 | `tempo` | <http://localhost:3200> | trace backend |
 | `grafana` | <http://localhost:3000> | UI (anonymous admin) |
 
-In Grafana, open **Explore → Tempo** and run a trace search by service name
-`genie-api`. Each Ask request appears as one distributed trace spanning the
-HTTP server, the bus, governance, and every agent that handled a message.
+In Grafana, open **Explore → Tempo** and search by service name
+`genie-api`. Each `/v1/ask` request appears as one distributed trace
+spanning the HTTP server, the bus, governance, and every agent that
+handled a message — plus LLM spans tagged with OpenInference semantic
+conventions.
 
 Stop everything with `make compose-down`.
 
@@ -333,96 +498,85 @@ DOC_ID=$(curl -s -X POST 'localhost:8080/v1/documents?description=Jan%20statemen
   --data-binary @data/sample.csv \
   | jq -r .id)
 
-# 3) Ask Genie
+# 3) Ask Genie (synchronous)
 curl -s -X POST localhost:8080/v1/ask \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d "{\"question\":\"Where am I overspending?\",\"document_id\":\"$DOC_ID\"}" | jq .
+
+# 3b) Ask Genie (Server-Sent Events stream)
+curl -N -X POST localhost:8080/v1/ask/stream \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d "{\"question\":\"Where am I overspending?\",\"document_id\":\"$DOC_ID\"}"
+# event: ai_disclosure
+# data: This response was produced by an AI pipeline...
+#
+# event: trace
+# data: tr-1779514412090640000
+#
+# event: agent.handle
+# data: {"from":"ingestor","to":"normalizer","type":"raw_transactions",...}
+# ...
+# event: report
+# data: Genie Financial Report ...
+
+# 3c) Bidirectional chat (WebSocket)
+wscat -c "ws://localhost:8080/v1/chat/ws" \
+      -H "Authorization: Bearer $TOKEN"
+> {"question":"What's my biggest expense?","document_id":"<id>"}
 ```
 
-Sample response:
-
-```json
-{
-  "trace_id": "tr-1779514412090640000",
-  "report": "Genie Financial Report\nQuestion: Where am I overspending?\nCurrency: INR\nIncome:  10000000 ...\n"
-}
-```
-
-Full spec: [`docs/openapi.yaml`](docs/openapi.yaml). Render in any
-OpenAPI viewer (Swagger UI, Redoc) for the interactive form.
+Full spec: [`docs/openapi.yaml`](docs/openapi.yaml).
+Bus event catalogue: [`docs/asyncapi.yaml`](docs/asyncapi.yaml).
 
 ---
 
 ## Authentication & Authorization
 
-### Token lifecycle
-
 ```mermaid
 sequenceDiagram
     actor U as User
-    participant API
+    participant API as cmd/api
     participant Repo as UserRepo (Postgres)
     participant JWT as auth.Issuer (HS256)
+    participant Bus
+    participant POL as RBACPolicy
+    participant AG as agent
 
+    Note over U,Repo: Signup / Login
     U->>API: POST /v1/users {email,name,password}
     API->>API: bcrypt(password)
-    API->>Repo: INSERT users (...)
+    API->>Repo: INSERT users
     API->>JWT: Issue(subject, email, [user])
-    API->>U: {token, expires_at, user}
+    API->>U: {token, expires_at}
 
-    Note over U: subsequent requests
+    Note over U,AG: Subsequent calls
     U->>API: GET /v1/users/me<br/>Authorization: Bearer <token>
     API->>JWT: Verify(token)
     JWT-->>API: claims{sub, roles, exp}
-    API->>Repo: SELECT user
-    API->>U: {id, email, roles, ...}
+
+    U->>API: POST /v1/ask
+    API->>Bus: Publish (user_roles in metadata)
+    Bus->>POL: Evaluate
+    POL-->>Bus: allow (role satisfied)
+    Bus->>AG: HandleMessage
 ```
 
-- **JWT**: HS256 signed by `GENIE_JWT_SECRET`. Issued for 60 minutes.
-  Implemented in stdlib (`pkg/auth/jwt.go`) to keep the security surface
-  small and auditable — no third-party JWT library.
-- **Passwords**: bcrypt via `golang.org/x/crypto/bcrypt`, default cost (10).
-- **Roles**: `user` (default), `advisor`, `admin`. Stored as a Postgres
-  `TEXT[]` column on `users`.
-
-### Authorization at two layers
-
-Genie enforces authz in two places — **before** the HTTP handler and
-**before** the agent sees the message:
-
-```mermaid
-flowchart LR
-    REQ[Bearer JWT request] --> MW{mid.Auth}
-    MW -- invalid --> R401[401]
-    MW -- valid --> RR{mid.RequireRole?<br/>route gate}
-    RR -- no match --> R403[403]
-    RR -- ok --> HANDLE[Handler]
-    HANDLE --> PUB[bus.Publish<br/>user_roles in metadata]
-    PUB --> POL{governance.RBACPolicy}
-    POL -- deny --> DROP[message dropped<br/>span marked Error]
-    POL -- allow --> AGENT[Agent.HandleMessage]
-```
-
-- `pkg/web/mid.Auth` verifies the JWT and pins `auth.Claims` onto the
-  request context.
-- `pkg/web/mid.RequireRole(roles...)` is an optional route-level gate.
-- `pkg/governance.RBACPolicy` runs on the bus. It reads
-  `metadata["user_roles"]` (set by the HTTP layer) and denies messages
-  whose required roles are not held.
-- `AdminBypass: true` lets `admin` skip every RBAC denial.
-
-This means a compromised handler can't sneak data to an agent it isn't
-authorized to talk to — the bus policy is still the gate.
+- **JWT** — HS256 signed by `GENIE_JWT_SECRET`. 60-minute TTL. Implemented in
+  stdlib (`pkg/auth/jwt.go`) so the security surface stays small.
+- **Passwords** — bcrypt via `golang.org/x/crypto/bcrypt`.
+- **Roles** — `user` (default), `advisor`, `admin`. Stored as a Postgres
+  `TEXT[]` on `users`.
+- **Two-layer authz**:
+  - `pkg/web/mid.Auth` verifies the JWT, pins `auth.Claims` onto the request.
+  - `pkg/web/mid.RequireRole(roles...)` is an optional route-level gate.
+  - `pkg/governance.RBACPolicy` runs on the **bus** before any agent runs —
+    so even a compromised handler can't sneak data past authz.
 
 ---
 
 ## Document encryption
-
-CSV uploads are encrypted before they reach Postgres. Genie uses an
-**envelope encryption** scheme: each document gets a fresh data encryption
-key (DEK), the DEK is wrapped with the active key encryption key (KEK), and
-the wrapped DEK + ciphertext are stored together.
 
 ```mermaid
 flowchart LR
@@ -431,7 +585,7 @@ flowchart LR
     KEK[(KEK<br/>env / KMS)]
     CT[ciphertext]
     WDEK[wrapped DEK]
-    JSON[EncryptedPayload JSON<br/>{kek_id, wrapped_dek, nonce, ciphertext}]
+    JSON[EncryptedPayload<br/>kek_id · wrapped_dek<br/>nonce · ciphertext]
 
     PT --AES-256-GCM--> CT
     DEK --AES-256-GCM--> WDEK
@@ -441,26 +595,21 @@ flowchart LR
     JSON --> PG[(documents.payload JSONB)]
 ```
 
-- **Algorithm**: AES-256-GCM for both DEK encryption of the document and
-  KEK wrapping of the DEK.
-- **Local**: `pkg/crypto.EnvKeyResolver` reads the KEK from
-  `GENIE_KEK_BASE64` (32 bytes, base64 encoded — generate with
-  `openssl rand -base64 32`).
-- **Production**: `pkg/crypto.KMSKeyResolver` is the production shape. Plug
-  in any KMS by implementing the `KMSClient` interface (AWS KMS, GCP KMS,
-  HashiCorp Vault Transit). Genie never sees the raw KEK in the prod path.
-- **Storage**: `EncryptedPayload` is stored in `documents.payload` as
-  JSONB. Decryption happens *only* in the `/v1/ask` flow, in memory, and
-  the plaintext exits the process boundary on the bus marked
-  `classification=pii`.
-- **Description**: an arbitrary user-supplied label and a
-  `classification` query parameter (`public | internal | pii | secret`) are
-  stored alongside each document, so audits and governance policies can
-  reason about content sensitivity without ever decrypting.
-
-Key rotation is a future feature — the schema already accommodates it
-(`kek_id` per row); decryption first asks the resolver if it can serve that
-KEK id, otherwise rejects.
+- Each upload gets a fresh **data encryption key (DEK)**, wrapped by the
+  active **key encryption key (KEK)**.
+- **Local** — `pkg/crypto.EnvKeyResolver` reads the KEK from
+  `GENIE_KEK_BASE64` (32 bytes, base64-encoded). Generate with
+  `openssl rand -base64 32`.
+- **Production** — `pkg/crypto.KMSKeyResolver` is the production shape.
+  Plug AWS KMS / GCP KMS / HashiCorp Vault Transit by implementing the
+  `KMSClient` interface. Genie never sees the raw KEK in the prod path.
+- **Storage** — `EncryptedPayload` is stored in `documents.payload` as
+  JSONB. Decryption only happens in `/v1/ask`, in memory, and the
+  plaintext crosses the bus marked `classification=pii`.
+- **Retention** — `expires_at` columns + `db.StartRetentionJob` purge
+  expired rows every 6h (RBI Rec 15).
+- **Key rotation** — schema accommodates it (`kek_id` per row); rotation
+  logic is on the roadmap.
 
 ---
 
@@ -471,31 +620,70 @@ Every message that crosses the bus is evaluated by a composite policy
 
 ```mermaid
 flowchart TB
-    MSG[Message] --> C[CompositePolicy]
+    MSG[Message] --> C[governance.CompositePolicy]
     C --> P1[MaxContentLengthPolicy]
-    C --> P2[RequiredMetadataPolicy<br/>e.g. trace_id, user_id]
+    C --> P2[RequiredMetadataPolicy<br/>trace_id, user_id]
     C --> P3[RBACPolicy<br/>roles vs message type]
-    C --> P4[ClassificationPolicy<br/>recipient ceiling vs msg class]
-    C --> P5[PIIBlockPolicy<br/>regex on content]
-    C --> P6[PromptInjectionPolicy<br/>known marker phrases]
-    P1 & P2 & P3 & P4 & P5 & P6 --> D{any deny?}
-    D -- yes --> SP[span.Error +<br/>denial counter +<br/>drop msg]
+    C --> P4[ClassificationPolicy<br/>recipient ceiling]
+    C --> P5[DataResidencyPolicy<br/>region tags]
+    C --> P6[ConsentPolicy<br/>type → category]
+    C --> P7[ExplainabilityPolicy<br/>requires rationale]
+    C --> P8[PIIBlockPolicy<br/>regex]
+    C --> P9[PromptInjectionPolicy<br/>known markers]
+    C --> P10[SchemaPolicy<br/>JSON schema]
+    P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10 --> D{any deny?}
+    D -- yes --> SP[span.Error<br/>denials counter<br/>auto-incident<br/>msg dropped]
     D -- no --> A[agent.HandleMessage]
 ```
 
-Policies are deliberately small and composable. The composite denies on the
-first deny and reports the reason via OTel span attributes and the
-`genie.governance.denials` counter.
+The stack is loaded from a **board-approved YAML**
+([`config/ai-policy.example.yaml`](config/ai-policy.example.yaml)):
 
-To add a policy, implement:
+```yaml
+version: "0.1.0"
+board_approved_on: "2025-08-13"
+owner: "Chief Risk Officer"
+principles: ["Trust is the Foundation", "People First", ...]
 
-```go
-type Policy interface {
-    Evaluate(ctx context.Context, msg protocol.Message) (PolicyResult, error)
-}
+governance:
+  admin_bypass: true
+  rbac:
+    finance_question:  ["user", "advisor", "admin"]
+    portfolio_request: ["user", "advisor", "admin"]
+
+risk:
+  max_content_length_bytes: 262144
+
+data:
+  retention_days: 180
+  block_pii: true
+  block_prompt_injection: true
+
+consumer:
+  ai_disclosure_banner: |
+    This response was produced by an AI pipeline at Genie...
+
+sovereignty:
+  home_region: "in"
+  allow_cross_border_for_public: true
+
+consent:
+  type_to_category:
+    portfolio_request: "portfolio"
+
+explainability:
+  applies_to: ["recommendations"]
 ```
 
-and put it into the composite at startup.
+The board owns the values. Engineers ship the loader (`pkg/policy`) and the
+individual policies (`pkg/governance`).
+
+Run the adversarial probe corpus against the active policy:
+
+```bash
+make red-team
+# OK: all probes denied / allowed as expected.
+```
 
 ---
 
@@ -507,74 +695,672 @@ flowchart LR
     COL --> TEMPO[(Tempo)]
     APP --slog JSON--> STDOUT[(stdout / Loki)]
     TEMPO --datasource--> GRAF[Grafana]
+
+    APP -.OpenInference attrs.-> PHX[(Arize Phoenix<br/>Langfuse)]
 ```
 
-- **Traces**: spans around `http <method> <path>`, `governance.evaluate`,
-  `bus.publish`, `agent.handle`. Trace context is propagated through
-  `Message.Metadata` so async hops stay linked.
+- **Traces** — spans around `http <method> <path>`, `governance.evaluate`,
+  `bus.publish`, `agent.handle`, `llm.complete`. Trace context propagates
+  through `Message.Metadata` so async hops stay linked.
 - **Metrics**:
   - `genie.bus.messages_published`
   - `genie.agent.messages_handled`
   - `genie.governance.denials`
   - `genie.agent.errors`
   - `genie.agent.handle_duration_ms` (histogram)
-- **Logs**: structured slog (`pkg/observability.SlogLogger`). Use the
-  `LogAttrs` method for hot paths.
+  - `genie.llm.tokens` · `cost_micros` · `latency_ms`
+- **Logs** — structured slog (`pkg/observability.SlogLogger`).
+- **OpenInference** — LLM spans carry `llm.provider`, `llm.model_name`,
+  `llm.token_count.prompt` etc. — picked up unchanged by Arize Phoenix,
+  Langfuse, and other LLM-aware observability platforms.
 
-Switch between exporters:
+---
 
-| Mode | When | Set |
+## LLM providers
+
+`pkg/llm.Provider` is the abstract surface. Five implementations ship.
+
+| Provider | Where | Region | Use |
+| --- | --- | --- | --- |
+| **Mock** | `pkg/llm/llm.go` | `on-prem` | Tests, CI, CLI demo |
+| **Ollama** | `pkg/llm/ollama.go` | `on-prem` | Local dev, PII residency |
+| **Anthropic** | `pkg/llm/anthropic.go` | `us` | Production reasoning |
+| **OpenAI** | `pkg/llm/openai.go` | `us` | Production / Azure OpenAI |
+| **Gemini** | `pkg/llm/gemini.go` | `us` | Google / Vertex AI |
+
+Each provider respects the residency envelope — if the request says
+`Residency{Region:"in", AllowCrossBorder:false}` and the provider's region
+is `us`, it returns `ErrResidencyDenied` without making the network call.
+
+Production wrapper chain (configured in [`cmd/api/llmstack.go`](cmd/api/llmstack.go)):
+
+```
+Provider → CostObserver → CachedProvider → BudgetedProvider
+        → DeadlineProvider → CircuitProvider
+```
+
+| Wrapper | Behaviour |
+| --- | --- |
+| `CostObserver` | OTel spans + metrics for tokens/latency/cost |
+| `CachedProvider` | Exact-match cache keyed by SHA-256(model+messages+temp) |
+| `BudgetedProvider` | Daily per-principal token cap; `ErrBudgetExceeded` |
+| `DeadlineProvider` | Per-call timeout |
+| `CircuitProvider` | Closed/Open/HalfOpen breaker after N consecutive errors |
+| `ShadowProvider` | Fires Secondary in background; collects results for offline compare |
+| `ChainProvider` | Try Primary; fall back to Secondary on error |
+
+```bash
+# Switch the API to a real LLM via env:
+export GENIE_LLM=ollama
+make compose-up
+# Or for hosted:
+export ANTHROPIC_API_KEY=sk-ant-...   # plug via cmd/api/llmstack.go
+```
+
+---
+
+## Vision adapter + receipt OCR
+
+`pkg/llm.VisionProvider` is the optional capability marker. `OllamaProvider`
+implements it. `agents/receipt_ocr` reads a photographed receipt and emits a
+canonical `finance.Transaction` ready for the normalizer.
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant API as cmd/api
+    participant OCR as receipt_ocr
+    participant VIS as Vision Provider<br/>Ollama llava
+    participant NORM as normalizer
+    participant SUP as supervisor
+
+    U->>API: POST /v1/documents (image/jpeg)
+    API->>OCR: receipt_ocr_request<br/>base64 image
+    OCR->>VIS: Complete + ImagePart
+    VIS-->>OCR: JSON {date, merchant, amount_cents, ...}
+    OCR->>NORM: raw_transactions<br/>(classification=pii)
+    NORM->>SUP: normalized → ... → final_report
+```
+
+```bash
+# After pulling a vision-capable model:
+ollama pull llava
+
+# Then upload + ask:
+curl -X POST localhost:8080/v1/documents -H "Authorization: Bearer $TOKEN" \
+     --data-binary @receipt.jpg -H 'Content-Type: image/jpeg'
+curl -X POST localhost:8080/v1/ask \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"question":"Categorise the attached receipt","document_id":"<image-doc-id>"}'
+```
+
+---
+
+## Retrieval: hybrid RAG + GraphRAG + pgvector
+
+```mermaid
+flowchart TB
+    Q[User query]
+    Q --> SR{Self-RAG<br/>need retrieval?}
+    SR -- no --> ANS[Direct answer]
+    SR -- yes --> QR[Query rewrite<br/>HyDE optional]
+    QR --> VEC[Vector search<br/>pgvector / in-mem]
+    QR --> BM25[BM25 keyword search]
+    VEC --> RRF[Reciprocal Rank Fusion]
+    BM25 --> RRF
+    RRF --> RR[Cross-encoder rerank<br/>LLMReranker]
+    RR --> CRAG{CRAG grade<br/>per-chunk relevance}
+    CRAG --> KEEP[Kept chunks]
+    CRAG --> DROP[Dropped]
+    KEEP --> REORDER[Lost-in-middle reorder]
+    REORDER --> CTX[Final context]
+    CTX --> LLM[LLM call]
+    LLM --> OUT[Answer + citations]
+```
+
+**Retrieval primitives** (`pkg/rag`):
+
+- `HashEmbedder` (deterministic, dependency-free) + `OllamaEmbedder`
+  (real embeddings via `/api/embeddings`).
+- `MemoryStore` (in-process cosine) + `pgvector.Store` (pgvector with
+  `vector_cosine_ops`, namespace isolation).
+- `BM25Store` (k1=1.5, b=0.75) + `HybridSearch(vec, bm, q, topK)` with
+  Reciprocal Rank Fusion (k=60).
+- `LLMReranker` — cross-encoder-shaped reranking via one LLM call.
+- `HyDE` + `LLMQueryRewriter` — boost recall on terse queries.
+- `SelfRAG.Should(q)` — model decides whether to retrieve.
+- `CRAG.Grade(q, chunks)` — drop low-relevance chunks, returns confidence.
+- `LostInMiddleReorder(chunks)` — head/tail-biased ordering.
+- `SplitParentChild(text, parent, child)` — precision-vs-context split.
+- `TimeDecay(chunks, λ, ageOf)` — recency bias for transactions.
+
+**Entity graph** (`pkg/graphrag`):
+
+```mermaid
+flowchart LR
+    U[(User<br/>alice)]
+    A[(Account<br/>acct-1)]
+    T1[(Transaction<br/>txn-1)]
+    T2[(Transaction<br/>txn-2)]
+    M1[(Merchant<br/>swiggy)]
+    M2[(Merchant<br/>rent)]
+    C1[(Category<br/>food:delivery)]
+    C2[(Category<br/>housing:rent)]
+
+    U --OWNS--> A
+    A --HAS_TXN--> T1
+    A --HAS_TXN--> T2
+    T1 --PAID_TO--> M1
+    T2 --PAID_TO--> M2
+    T1 --CATEGORISED_AS--> C1
+    T2 --CATEGORISED_AS--> C2
+```
+
+`Graph.IngestTransactions(userID, txns)` builds this automatically from
+canonical `finance.Transaction` records. `Graph.Neighborhood(seed, hops)`
+walks k hops bidirectionally. The recommender uses
+`ExplainSpending(userID, 3)` to ground recommendations in specific paths
+— citation-style explainability instead of vector vibes.
+
+---
+
+## Reasoning patterns
+
+| Pattern | Where | Use case |
 | --- | --- | --- |
-| stdout | CLI demo (`cmd/genie`) | nothing — default |
-| OTLP gRPC | service (`cmd/api`) | `OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317` (compose does this for you) |
+| **Chain-of-Thought** | `reasoning.CoTPrompt`, `SplitCoT` | Force step-by-step thinking |
+| **ReAct** | `reasoning.ReAct(...)` | Interleave reasoning with MCP tool calls |
+| **Reflexion** | `reasoning.Reflexion(...)` | Initial → Critique → Refined with self-memory |
+| **Chain-of-Verification** | `reasoning.CoV(...)` | Initial → verifying questions → answer each → consolidate |
+| **Step-Back** | `reasoning.StepBack(...)` | Abstract the question before answering |
+| **Self-consistency / MoA** | `agents/moa_recommender` | N panellists vote |
+| **Semantic Router** | `reasoning.SemanticRouter` | Classify a query to the right specialist via embedding similarity |
+
+```go
+// ReAct loop with one tool.
+result, _ := reasoning.ReAct(ctx, provider, "model", "rate finder", "rate?",
+    []reasoning.Tool{{
+        Name: "rate",
+        Run:  func(_ context.Context, _ string) (string, error) { return "83.0", nil },
+    }}, 3)
+
+// Reflexion with persistent self-memory.
+trace, _ := reasoning.Reflexion(ctx, provider, "model", system, user, memory.Recent)
+
+// Chain-of-Verification — three-call hallucination cutter.
+res, _ := reasoning.CoV(ctx, provider, "model", system, user)
+// res.Final has been corrected by the verifications.
+```
+
+---
+
+## Memory: semantic + episodic + summarisation
+
+```mermaid
+flowchart LR
+    subgraph PerUser[per-user memory layers]
+        ST[Short-term<br/>conversation buffer]
+        EM[Episodic<br/>chronological + summary]
+        LT[Long-term semantic<br/>vector store]
+    end
+
+    Q[Query] --> ST
+    Q --> EM
+    Q --> LT
+    ST --> PR[Prompt context]
+    EM --> PR
+    LT --> PR
+    PR --> LLM
+
+    EM -. consolidate .-> SUMM[LLM Summariser]
+    SUMM --> EM
+```
+
+- `pkg/memory.SemanticMemory` — per-user `rag.MemoryStore`; strict user
+  isolation; embed-and-search via the configured embedder.
+- `pkg/memory.EpisodicMemory` — rolling buffer of `Episode{Role, Content,
+  OccurredAt}`. When the buffer exceeds threshold, the oldest half is
+  consolidated into a summary via the configured `Summariser`.
+
+---
+
+## Evaluation
+
+```mermaid
+flowchart LR
+    OUT[Agent output] --> J[LLM-as-judge<br/>constitution.Critique]
+    OUT --> RAGAS[ragas.Evaluator<br/>faithfulness · relevance<br/>context precision]
+    OUT --> HAL[hallucination.Detect<br/>per-sentence labels]
+    OUT --> CHK[checklist.Run<br/>behavioral suite]
+    OUT --> DRIFT[drift.KL<br/>output distribution]
+    OUT --> ELO[elo.Ratings<br/>pairwise]
+    J & RAGAS & HAL & CHK & DRIFT & ELO --> STORE[(eval.Store)]
+```
+
+| Package | Measures |
+| --- | --- |
+| `pkg/eval/ragas` | Faithfulness / answer-relevance / context-precision via LLM |
+| `pkg/eval/checklist` | Canonical input → expected substring / no errors |
+| `pkg/eval/drift` | KL divergence between baseline and recent distribution |
+| `pkg/eval/hallucination` | Per-sentence supported/unsupported/contradicted |
+| `pkg/eval/elo` | Pairwise comparison + ranking of prompt or model versions |
+| `pkg/toolkit` | 7-Sutra Scorecard — one default check per Sutra |
+
+---
+
+## Safety
+
+| Check | Where | Mode |
+| --- | --- | --- |
+| Jailbreak detection | `safety.HeuristicJailbreak` + `safety.LLMJailbreak` | Heuristic first, LLM if heuristic passes |
+| Prompt-injection patterns | `governance.PromptInjectionPolicy` | Regex on inbound message content |
+| PII block / redact | `governance.PIIBlockPolicy` | Card numbers, emails, phone numbers |
+| Topic guardrail | `safety.TopicGuardrail` | Allowlist of terms |
+| Toxicity heuristic | `safety.ToxicityHeuristic` | Banned-term match |
+| Bias scorer | `safety.ComputeDemographicParity` | Group-rate gap |
+| Output schema | `governance.SchemaPolicy` | JSON Schema validation |
+| Explainability | `governance.ExplainabilityPolicy` | Requires `rationale` on recommender output |
+| Red teaming | `cmd/red-team` | Probe corpus vs composite policy |
+
+---
+
+## Workflow: DAG + Saga + HITL
+
+```mermaid
+flowchart TB
+    START[Run] --> A[Step A<br/>load CSV]
+    A -->|completed| B[Step B<br/>compute analysis]
+    B --> C{Step C<br/>RequireApproval}
+    C -.awaiting.-> APR[POST /v1/approvals]
+    APR --> CRUN[Step C runs<br/>commit decision]
+    CRUN -->|completed| D[Step D<br/>notify user]
+
+    A -. fail .-> X{Failure}
+    B -. fail .-> X
+    C -. fail .-> X
+    D -. fail .-> X
+    X --> COMP[Run compensations<br/>in reverse]
+```
+
+`pkg/workflow.Workflow`:
+
+- Topological execution with cycle detection.
+- `Step.Compensate` runs in reverse for already-completed steps on failure.
+- `Step.RequireApproval` pauses until `ApproveStep(id)` is called.
+- Event-sourced `Sink` records every transition (`started`, `completed`,
+  `failed`, `awaiting_approval`, `approved`, `compensated`).
+
+```go
+w := workflow.New(workflow.NewInMemorySink())
+w.Add(workflow.Step{ID: "load", Run: load})
+w.Add(workflow.Step{ID: "analyse", DependsOn: []string{"load"}, Run: analyse,
+    Compensate: rollbackAnalysis})
+w.Add(workflow.Step{ID: "commit", DependsOn: []string{"analyse"},
+    RequireApproval: true, Run: commit})
+_ = w.Run(ctx, workflow.State{})
+```
+
+---
+
+## MCP integration (Zerodha Kite)
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant API as cmd/api
+    participant DB as Postgres mcp_tokens
+    participant ADV as portfolio_advisor
+    participant KITE as mcp.kite.trade
+
+    U->>API: POST /v1/mcp/tokens<br/>{provider, endpoint, token}
+    API->>DB: encrypt(token) → mcp_tokens
+    Note over U: Later, in /v1/ask
+    API->>ADV: bus → portfolio_request
+    ADV->>DB: SELECT mcp_tokens
+    ADV->>API: Decrypt(payload) → bearer
+    ADV->>KITE: initialize<br/>tools/call get_holdings<br/>tools/call get_positions
+    KITE-->>ADV: snapshot
+    ADV->>API: portfolio_snapshot (classification=pii)
+```
+
+- `pkg/mcp/client` — JSON-RPC over streamable HTTP. Compatible with the
+  Zerodha hosted server at `https://mcp.kite.trade/mcp`.
+- `pkg/mcp/server` — Genie exposes its own read-only agents
+  (`financial_educator`, `macro_research`, `rate_watcher`) as MCP tools at
+  `/mcp` so Claude Desktop / Cursor can drive Genie.
+
+---
+
+## Agent-to-Agent (A2A) protocol
+
+```mermaid
+sequenceDiagram
+    participant G1 as Genie A
+    participant G2 as Genie B<br/>(remote agent)
+
+    G1->>G2: agent/getCard
+    G2-->>G1: AgentCard{skills: [...]}
+    G1->>G2: task/submit {skill_id, input}
+    G2-->>G1: TaskResult{status: completed, output}
+```
+
+`pkg/a2a` lets one Genie instance call another (or any A2A-compliant peer)
+as a first-class peer agent. Symmetric to `pkg/mcp` but at the agent
+granularity instead of per-tool.
+
+```go
+client := a2a.NewClient("https://peer-genie.example/a2a")
+card, _ := client.GetAgentCard(ctx)
+result, _ := client.SubmitTask(ctx, a2a.Task{
+    SkillID: "explain_finance",
+    Input:   map[string]any{"query": "what is a SIP?"},
+})
+```
+
+---
+
+## OAuth device flow for MCP onboarding
+
+Replaces the manual paste of Zerodha session tokens with the standard
+RFC 8628 device authorisation grant.
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant CLI as Genie Client
+    participant IDP as Zerodha (or any IdP)
+
+    CLI->>IDP: device_authorization
+    IDP-->>CLI: device_code · user_code "WDJF-K9X3"<br/>verification_uri · interval 5s
+    CLI->>U: "Visit <uri> and enter WDJF-K9X3"
+    U->>IDP: opens uri, types code, logs in
+    loop every interval seconds
+        CLI->>IDP: token?
+        IDP-->>CLI: authorization_pending
+    end
+    Note over IDP: user approves
+    CLI->>IDP: token?
+    IDP-->>CLI: {access_token, token_type, expires_in}
+    CLI->>CLI: store token (encrypted)
+```
+
+User codes use a Crockford-style base32 (`WDJF-K9X3`) to avoid 0/1/8/O
+confusion.
+
+---
+
+## OAuth 2.1 + WebAuthn passwordless login
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant BR as Browser
+    participant API as cmd/api
+    participant WA as webauthn.Service
+    participant JWT as auth.Issuer
+
+    Note over U,BR: First-time registration
+    BR->>API: POST /v1/webauthn/register/begin
+    API->>WA: BeginRegistration(userID)
+    WA-->>API: ceremonyID, challenge
+    API->>BR: challenge
+    BR->>BR: navigator.credentials.create()
+    BR->>API: credentialID, publicKey
+    API->>WA: FinishRegistration(...)
+
+    Note over U,BR: Later — passwordless login
+    BR->>API: POST /v1/webauthn/login/begin
+    API->>WA: BeginAssertion(userID)
+    WA-->>API: challenge
+    BR->>BR: navigator.credentials.get()<br/>signs challenge with passkey
+    BR->>API: signature
+    API->>WA: FinishAssertion(...)<br/>verifies ed25519
+    API->>JWT: Issue token
+    API->>BR: {access_token}
+```
+
+OAuth 2.1 PKCE for delegated clients (`pkg/auth/oauth2`):
+
+```go
+verifier, challenge, _ := oauth2.GenerateVerifier()
+authResp, _ := server.Authorize(oauth2.AuthorizeRequest{
+    ClientID:            "my-app",
+    CodeChallenge:       challenge,
+    CodeChallengeMethod: oauth2.MethodS256, // OAuth 2.1 rejects "plain"
+}, subject, email, roles)
+tok, _ := server.Token(oauth2.TokenRequest{
+    Code: authResp.Code, CodeVerifier: verifier, ClientID: "my-app",
+})
+```
+
+---
+
+## Sovereign AI: data residency + on-prem inference
+
+```mermaid
+flowchart LR
+    MSG[Message<br/>region=us<br/>classification=pii] --> POL{DataResidencyPolicy<br/>HomeRegion=in}
+    POL -- deny --> X[Span error<br/>denials counter<br/>auto-incident]
+    OK[Message<br/>region=on-prem<br/>classification=secret] --> POL2{DataResidencyPolicy}
+    POL2 -- allow --> AGENT[on-prem agent]
+
+    PII[PII request] --> ROUTE{Router}
+    ROUTE --> LOCAL[Ollama on-prem<br/>region=on-prem]
+    PUBLIC[Public request] --> ROUTE
+    ROUTE --> REMOTE[Anthropic / Gemini / OpenAI<br/>region=us]
+```
+
+- `pkg/sovereignty.ProviderRegistry` — allowlist of external providers
+  and what classifications each may receive.
+- `governance.DataResidencyPolicy` — denies PII/Secret leaving `HomeRegion`
+  unless going on-prem.
+- `OllamaProvider.Region() = "on-prem"` — automatically passes residency
+  checks for any home region.
+
+---
+
+## RBI FREE-AI alignment
+
+The August 2025 [RBI FREE-AI report](https://rbidocs.rbi.org.in/rdocs/PublicationReport/Pdfs/FREEAIR130820250A24FF2D4578453F824C72ED9F5D5851.PDF)
+defines 7 Sutras + 26 Recommendations across 6 Pillars. Genie's
+implementation status:
+
+| Rec | Title | Genie |
+| --- | --- | --- |
+| 2 | AI Innovation Sandbox | ✅ `cmd/genie` |
+| 4 | Indigenous AI Models | ✅ `pkg/llm.OllamaProvider` |
+| 6 | Adaptive Policies | ✅ `pkg/policy` YAML |
+| 8 | Graded Liability | ✅ `pkg/incidents.Grade` |
+| 14 | Board-Approved AI Policy | ✅ `config/ai-policy.example.yaml` (Annexure V) |
+| 15 | Data Lifecycle Governance | ✅ envelope encryption + retention |
+| 16 | AI System Governance + Autonomous | ✅ `RiskLevel()` + supervisor |
+| 17 | Product Approval | 🟡 inventory + risk class |
+| 18 | Consumer Protection | ✅ AI disclosure banner |
+| 19 | Cybersecurity | ✅ JWT + RBAC + classification + injection + rate-limit |
+| 20 | Red Teaming | ✅ `cmd/red-team` |
+| 21 | BCP for AI | ✅ `agents/fallback` + `Orchestrator.SetFallback` |
+| 22 | AI Incident Reporting (Annexure VI) | ✅ `pkg/incidents` + auto-record |
+| 23 | AI Inventory | ✅ `GET /v1/ai-inventory` |
+| 24 | AI Audit Framework | 🟡 `agents/auditor` |
+| 25 | Disclosures | ✅ `GET /v1/disclosures` |
+| 26 | AI Toolkit | ✅ `pkg/toolkit` |
+
+Items 1, 3, 5, 7, 9–13 are regulator / SRO actions (outside Genie's scope).
+
+```bash
+# RBI-aligned tooling
+make red-team                              # adversarial probes
+curl localhost:8080/v1/disclosures | jq .  # public governance disclosure
+curl -H "Authorization: Bearer $ADMIN" localhost:8080/v1/ai-inventory | jq .
+curl -H "Authorization: Bearer $ADMIN" localhost:8080/v1/aibom | jq .
+```
+
+---
+
+## Federated learning + secure aggregation
+
+Aligned with **RBI Rec 4** — indigenous sector models trained without
+moving raw data across institutions.
+
+```mermaid
+sequenceDiagram
+    participant W1 as Worker 1
+    participant W2 as Worker 2
+    participant W3 as Worker 3
+    participant AGG as Aggregator
+
+    Note over W1,W3: Each worker has local data, never leaves
+    W1->>W1: SplitAdditiveShares(value, 3, P)
+    W2->>W2: SplitAdditiveShares(value, 3, P)
+    W3->>W3: SplitAdditiveShares(value, 3, P)
+
+    par
+        W1->>W2: share_1,2
+        W1->>W3: share_1,3
+    and
+        W2->>W1: share_2,1
+        W2->>W3: share_2,3
+    and
+        W3->>W1: share_3,1
+        W3->>W2: share_3,2
+    end
+
+    W1->>AGG: sum of received shares
+    W2->>AGG: sum of received shares
+    W3->>AGG: sum of received shares
+    AGG->>AGG: Reveal() → aggregated sum
+    Note over AGG: never sees individual values
+```
+
+```go
+// FedAvg over Worker updates (sample-count-weighted).
+avg, _ := federated.FedAvg([]federated.Update{
+    {WorkerID: "bank-a", Samples: 100, Weights: federated.Weights{0.1, 0.2}},
+    {WorkerID: "bank-b", Samples: 300, Weights: federated.Weights{0.3, 0.4}},
+})
+
+// Secure aggregation primitive.
+shares, _ := federated.SplitAdditiveShares(big.NewInt(42), 3, modulus)
+```
+
+---
+
+## AIBOM + CycloneDX + Sigstore signing
+
+```mermaid
+flowchart LR
+    REG[registry.List] --> MAN[Manifest per agent<br/>id · kind · model · region<br/>training_data_class · risk_class]
+    EXT[Builder.Add for LLMs / embedders / tools] --> MAN
+    MAN --> DOC[Document<br/>generated_at + components]
+    DOC --> CDX[CycloneDX 1.6 ML-BOM]
+    DOC --> SIG[Sign with Ed25519]
+    SIG --> OUT[SignedDocument]
+    OUT --> CONS[Regulator / auditor]
+```
+
+```go
+signer, _ := aibom.NewEd25519Signer()
+sd, _ := aibom.Sign(doc, signer)
+_ = aibom.Verify(sd) // nil on success; non-nil if tampered
+
+// Canonical CycloneDX 1.6 ML-BOM:
+cdx := doc.ToCycloneDX()
+```
+
+---
+
+## Identity: DIDs + Verifiable Credentials
+
+`pkg/identity` ships minimum-viable **did:key** (Ed25519) +
+**W3C Verifiable Credentials 1.1** with `Ed25519Signature2020` proofs:
+
+```go
+issuer, _ := identity.NewDIDKey()   // did:key:z...
+vc := &identity.VerifiableCredential{
+    Type: []string{"VerifiableCredential", "GenieAgentManifest"},
+    CredentialSubject: map[string]any{
+        "agentId":   "ingestor",
+        "riskClass": "low",
+        "auditedOn": "2026-05-23",
+    },
+}
+identity.IssueVC(issuer, vc)
+identity.VerifyVC(vc, issuer.Public) // nil if signature ok
+```
+
+Pairs with the AIBOM — each agent's manifest can be packaged as a VC and
+shared with regulators.
+
+---
+
+## CloudEvents + AsyncAPI + OpenInference
+
+```mermaid
+flowchart LR
+    BUS[protocol.Message] --Wrap--> CE[CloudEvents 1.0<br/>specversion · id · source<br/>type=com.c2siorg.genie.*<br/>genieclassification · genietraceid]
+    CE --> EXT[Kafka / NATS / Knative consumers]
+    BUS -.described by.-> ASYNC[docs/asyncapi.yaml]
+    SPAN[OTel LLM span] -.semconv.-> OINF[OpenInference / OpenLLMetry<br/>Arize Phoenix · Langfuse]
+```
+
+```go
+ev := cloudevents.Wrap(msg, "genie://bus")
+// ev marshals to CloudEvents 1.0 structured-mode JSON.
+
+got, _ := cloudevents.Unwrap(ev)
+// got.To, got.Type, got.Metadata are restored.
+```
+
+---
+
+## Live profiling (pprof)
+
+Standard-library pprof under `/debug/pprof/*`, behind JWT auth + the
+`admin` role:
+
+```bash
+go tool pprof "localhost:8080/debug/pprof/heap?seconds=30" \
+  -header "Authorization=Bearer $ADMIN_TOKEN"
+```
+
+For tokenless local debugging, call `web.StartLocalPprof("127.0.0.1:6060")`
+from `cmd/api`. Bound to localhost only — never exposed externally.
 
 ---
 
 ## Scaffolding a new agent
 
-Add a "tax estimator" agent without writing the boilerplate:
-
 ```bash
-make scaffold name=tax_estimator cap=estimate_tax \
-  in=analysis_result out=tax_estimate next=financial_supervisor
+make scaffold name=tax_estimator_v2 cap=estimate_tax_v2 \
+  in=analysis_result out=tax_estimate_v2 next=financial_supervisor
 ```
 
-Genie generates:
+Generates:
 
 ```
-agents/tax_estimator/
-  tax_estimator.go      # full Agent implementation skeleton
-  tax_estimator_test.go # passing table-driven test
+agents/tax_estimator_v2/
+  tax_estimator_v2.go      # full Agent skeleton with TODO
+  tax_estimator_v2_test.go # passing pass-through test
 ```
 
-It also prints the line you need to add to `cmd/api/main.go` and
-`cmd/genie/main.go`:
+Prints the registration snippet for `cmd/api/main.go`:
 
 ```go
-register(tax_estimator.New())
+register(tax_estimator_v2.New())
 ```
-
-Fill in `HandleMessage`'s TODO with your domain logic.
 
 ---
 
-## Testing
+## Testing & quality gates
 
 ```bash
-make test
+make test                  # 57 test packages, all green
+go vet ./...               # clean
+make red-team              # adversarial probes vs board-approved policy
+make bcp-drill             # forces a portfolio_advisor failure → fallback fires
 ```
 
-This runs:
-
-- Unit tests for every agent (table-driven, no I/O).
-- `pkg/auth` JWT + bcrypt roundtrips.
-- `pkg/crypto` envelope encryption roundtrips (with env KEK).
-- `pkg/governance` policy decisions.
-- End-to-end pipeline through the in-memory bus (`tests/integration_test.go`).
-
-Postgres-backed integration tests are not wired in (no testcontainers
-dependency yet). The repos are exposed via interfaces (`UserRepo`,
-`AccountRepo`, `DocumentRepo`) so handler-level tests can substitute fakes.
+CI (CircleCI): `vet → test → docker-build`.
 
 ---
 
@@ -584,401 +1370,117 @@ dependency yet). The repos are exposed via interfaces (`UserRepo`,
 | --- | --- | --- |
 | `GENIE_HTTP_ADDR` | `cmd/api` | listen address (default `:8080`) |
 | `GENIE_JWT_SECRET` | `cmd/api` | HS256 secret bytes |
-| `GENIE_KEK_BASE64` | `cmd/api` | 32-byte base64-encoded KEK |
+| `GENIE_KEK_BASE64` | `cmd/api` | 32-byte base64 KEK |
 | `GENIE_DB_DSN` | `cmd/api` | Postgres DSN |
+| `GENIE_AI_POLICY` | `cmd/api` (optional) | path to board policy YAML; default `config/ai-policy.example.yaml` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `cmd/api` (optional) | enables OTLP exporter |
-| `GENIE_OTEL_INSECURE` | `cmd/api` (optional) | `"true"` to skip TLS on OTLP |
-| `GENIE_LLM` | `cmd/api` (optional) | `"mock"` (default) or `"ollama"` — selects the LLM stack |
-| `GENIE_OLLAMA_URL` | `cmd/api` (when ollama) | Ollama HTTP root, default `http://localhost:11434` |
-| `GENIE_OLLAMA_CHAT` | `cmd/api` (when ollama) | chat model id, default `llama3.2:1b` |
-| `GENIE_OLLAMA_EMBED` | `cmd/api` (when ollama) | embedding model id, default `nomic-embed-text` |
-| `GENIE_LLM_BUDGET` | `cmd/api` (optional) | daily token cap per principal, default `1000000` |
-| `GENIE_LLM_CACHE_TTL` | `cmd/api` (optional) | response cache TTL in seconds, default `600` |
-| `GENIE_LLM_TIMEOUT` | `cmd/api` (optional) | per-call timeout in seconds, default `30` |
-| `GENIE_LLM_CIRCUIT` | `cmd/api` (optional) | consecutive-error threshold for the circuit breaker, default `5` |
+| `GENIE_OTEL_INSECURE` | `cmd/api` (optional) | `true` to skip TLS on OTLP |
+| `GENIE_LLM` | `cmd/api` (optional) | `mock` (default) or `ollama` |
+| `GENIE_OLLAMA_URL` | `cmd/api` (ollama) | default `http://localhost:11434` |
+| `GENIE_OLLAMA_CHAT` | `cmd/api` (ollama) | default `llama3.2:1b` |
+| `GENIE_OLLAMA_EMBED` | `cmd/api` (ollama) | default `nomic-embed-text` |
+| `GENIE_LLM_BUDGET` | `cmd/api` (optional) | daily token cap, default `1_000_000` |
+| `GENIE_LLM_CACHE_TTL` | `cmd/api` (optional) | cache TTL seconds, default `600` |
+| `GENIE_LLM_TIMEOUT` | `cmd/api` (optional) | per-call seconds, default `30` |
+| `GENIE_LLM_CIRCUIT` | `cmd/api` (optional) | error threshold, default `5` |
 
-Generate a key locally:
+Generate a fresh KEK:
 
 ```bash
 openssl rand -base64 32
-```
-
-### Run with Ollama (on-prem inference)
-
-When `GENIE_LLM=ollama`, `cmd/api` builds the production wrapper stack
-`Ollama → Cost → Cache → Budget → Deadline → Circuit` and switches the RAG
-embedder to `nomic-embed-text` via Ollama. Both `pkg/llm.OllamaProvider` and
-`pkg/rag.OllamaEmbedder` already exist; the factory in
-[cmd/api/llmstack.go](cmd/api/llmstack.go) just wires them.
-
-```bash
-# Local development (without Docker):
-brew install ollama        # or any platform installer
-ollama serve &
-ollama pull llama3.2:1b    # ~1GB, runs on a laptop CPU
-ollama pull nomic-embed-text
-
-export GENIE_LLM=ollama
-export GENIE_OLLAMA_CHAT=llama3.2:1b
-export GENIE_OLLAMA_EMBED=nomic-embed-text
-go run ./cmd/api
-```
-
-```bash
-# Or with the full Docker stack — Ollama is now a first-class compose service:
-make compose-up
-# The `ollama-pull` init container warms the model cache once; subsequent
-# runs reuse the volume.
-```
-
-Verify the stack is live:
-
-```bash
-curl -s localhost:11434/api/tags | jq '.models[].name'
-# "llama3.2:1b"
-# "nomic-embed-text:latest"
-
-curl -s localhost:8080/readyz | jq .
-# {"status":"ok"}   # only 200s when Ollama responds to /api/tags
-```
-
-Mock mode (default, used by CI and `cmd/genie`) bypasses Ollama entirely and
-uses `llm.Mock` + `rag.HashEmbedder`, so the demo runs with zero external
-dependencies.
-
----
-
-## MCP integration (Zerodha Kite + custom servers)
-
-Genie speaks the **Model Context Protocol** in both directions:
-
-- **As a client** — `pkg/mcp/client` connects to any MCP server that speaks
-  streamable HTTP. The `portfolio_advisor` agent uses it to call
-  [Zerodha's hosted Kite MCP](https://mcp.kite.trade/mcp) for the user's
-  holdings and positions.
-- **As a server** — `pkg/mcp/server` exposes selected read-only agents
-  (`financial_educator`, `macro_research`, `rate_watcher`) as MCP tools
-  under `/mcp`. Claude Desktop, Cursor, or any MCP client can call them.
-
-### Linking a Zerodha account
-
-```bash
-# Tokens come from the Kite MCP login flow (mcp.kite.trade); paste the
-# session token Genie should store. The plaintext only lives in memory
-# long enough to be encrypted via pkg/crypto.
-curl -s -X POST localhost:8080/v1/mcp/tokens \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "provider": "zerodha-kite",
-    "endpoint": "https://mcp.kite.trade/mcp",
-    "token": "PASTE-SESSION-TOKEN-HERE"
-  }'
-```
-
-Once a token is on file, `portfolio_advisor` will fetch holdings and
-positions whenever the supervisor dispatches a `portfolio_request`.
-
-### MCP flow
-
-```mermaid
-sequenceDiagram
-    actor U as User
-    participant API as cmd/api
-    participant DB as Postgres (mcp_tokens)
-    participant ADV as portfolio_advisor
-    participant KITE as mcp.kite.trade
-
-    U->>API: POST /v1/mcp/tokens {provider, endpoint, token}
-    API->>DB: encrypt(token) -> mcp_tokens
-    Note over U: Later, in /v1/ask
-    API->>ADV: bus -> portfolio_request
-    ADV->>DB: SELECT mcp_tokens
-    ADV->>API: Decrypt(payload) -> bearer
-    ADV->>KITE: initialize, tools/call get_holdings
-    KITE-->>ADV: holdings
-    ADV->>API: portfolio_snapshot (classification=pii)
-```
-
----
-
-## Sovereign AI (data residency)
-
-Sovereign-AI deployments — Indian or otherwise — require that PII and
-payment data stay inside national borders. Genie enforces this with two
-primitives:
-
-- **`pkg/sovereignty.ProviderRegistry`** is the allowlist of external
-  providers (LLMs, MCP servers) and the classifications each may receive.
-- **`pkg/governance.DataResidencyPolicy`** runs on the bus. PII / Secret
-  messages whose region tag is anything other than `HomeRegion` or
-  `on-prem` are denied. Public/Internal messages get a configurable
-  exception.
-
-```mermaid
-flowchart LR
-    MSG[Message<br/>region=us<br/>classification=pii] --> POL{DataResidencyPolicy<br/>HomeRegion=in}
-    POL -- deny --> X[Span error<br/>denials counter<br/>msg dropped]
-    OK[Message<br/>region=on-prem<br/>classification=secret] --> POL2{DataResidencyPolicy}
-    POL2 -- allow --> AGENT[on-prem agent]
-```
-
-Configure the home region in `cmd/api` (`sovereignty.RegionIN` by default
-for an India deployment). Tag outbound providers like this:
-
-```go
-reg := sovereignty.NewRegistry()
-reg.Register(sovereignty.Provider{
-    Name:                   "anthropic",
-    Region:                 sovereignty.RegionUS,
-    AllowedClassifications: []protocol.Classification{protocol.ClassPublic, protocol.ClassInternal},
-})
-```
-
-A local LLM provider (e.g. Ollama) registered with
-`Region: sovereignty.RegionOnPrem, AllowedClassifications: {public, internal, pii, secret}`
-is the right destination for PII reasoning.
-
----
-
-## RBI / DPDP-aligned compliance
-
-The `pkg/compliance` package adds the three primitives the Reserve Bank of
-India's cyber-resilience framework and the DPDP Act, 2023 expect:
-
-| Primitive | Where | What it does |
-| --- | --- | --- |
-| **Consent ledger** | `compliance.Ledger` + `governance.ConsentPolicy` | Records explicit per-category consent (`transactions`, `portfolio`, `recommendations`, `third_party_share`). The policy denies messages whose type requires a category with no active consent. |
-| **Tamper-evident audit log** | `compliance.AuditLog` (SHA-256 hash chain) | Append-only. `Verify()` walks the chain and surfaces any mutation. |
-| **Explainability** | `governance.ExplainabilityPolicy` | Denies recommender / advisor outputs that omit a `rationale` field — RBI guidance for automated lending decisions. |
-
-These slot into the same `governance.NewComposite(...)` stack as the
-existing policies, so every message hits them before reaching an agent.
-
-### Consent + audit flow
-
-```mermaid
-sequenceDiagram
-    actor U as User
-    participant API as cmd/api
-    participant LED as Consent Ledger
-    participant AUD as Audit Log
-    participant BUS as Bus
-    participant POL as ConsentPolicy
-    participant ADV as portfolio_advisor
-
-    U->>API: POST /v1/consents {category:portfolio,purpose:show}
-    API->>LED: Grant(...)
-    API->>AUD: Append("consent.grant", ...)
-    Note over U,ADV: Later
-    U->>API: POST /v1/ask
-    API->>BUS: Publish portfolio_request
-    BUS->>POL: Evaluate
-    POL->>LED: HasActive(user, portfolio)?
-    LED-->>POL: yes
-    POL-->>BUS: allow
-    BUS->>ADV: HandleMessage
-```
-
-(The HTTP endpoint to grant consent is on the roadmap; for now the
-`Ledger` interface is wired into the policy and seeded programmatically in
-`cmd/api`. Adding the endpoint is a five-line handler.)
-
----
-
-## Live profiling (pprof)
-
-The standard library pprof endpoints are exposed under `/debug/pprof/*`
-behind JWT auth + the `admin` role. Hit them like this:
-
-```bash
-# Get an admin token (seeded via Postgres or via a manual update).
-go tool pprof "localhost:8080/debug/pprof/heap?seconds=30" \
-  -header "Authorization=Bearer $ADMIN_TOKEN"
-```
-
-For local debugging without a token, call `web.StartLocalPprof("127.0.0.1:6060")`
-from `cmd/api` (commented-out hook). It binds to localhost only so a
-container running `genie-api` doesn't accidentally expose pprof to the
-network.
-
----
-
-## LLM Provider abstraction
-
-`pkg/llm.Provider` is the seam where Anthropic / Gemini / OpenAI / Ollama
-plug in. `Mock` is shipped today; production providers are a future PR.
-The `Provider.Region()` method composes with `sovereignty` so the
-DataResidencyPolicy can refuse PII routing to an out-of-region provider
-without the agent having to know.
-
-```go
-type Provider interface {
-    Name() string
-    Region() string
-    Complete(ctx context.Context, req CompletionRequest) (CompletionResponse, error)
-}
 ```
 
 ---
 
 ## AI concept inventory
 
-Beyond MARA, MCP and the RBI alignment, Genie now ships a layered set of AI
-primitives. Each item is small, swappable, and behind a stable interface.
+Beyond MARA, Genie ships a layered set of AI primitives. Each item is
+small, swappable, and behind a stable interface.
 
-| Concept | Where | Notes |
-| --- | --- | --- |
-| **RAG** | [`pkg/rag`](pkg/rag/) | `Embedder` + `VectorStore` + `Index`; `HashEmbedder` (deterministic) and `OllamaEmbedder` (on-prem); in-mem store for the demo, pgvector slot kept open. |
-| **Citations on outputs** | [`agents/educator`](agents/educator/educator.go) | `educator.WithRAG(idx)` makes glossary answers carry top-K source chunks; the 7 Sutras are seeded into the index at boot. |
-| **Output-schema enforcement** | [`pkg/schema`](pkg/schema/) + `governance.SchemaPolicy` | Tiny pure-Go JSON-Schema subset; deny messages whose Type maps to a registered schema and whose Content fails validation. |
-| **Constitutional AI** | [`pkg/constitution`](pkg/constitution/), [`config/constitution.yaml`](config/constitution.yaml) | YAML-loaded 7-Sutra system prompt; `Critique(...)` scores outputs 0..10 against the constitution. |
-| **LLM-as-judge auditor** | [`agents/auditor`](agents/auditor/auditor.go) | `auditor.WithJudge(provider, constitution, model)` scores every broadcast message and records the verdict in `pkg/eval`. |
-| **SSE streaming** | [`pkg/web/handlers/ask_stream.go`](pkg/web/handlers/ask_stream.go), [`pkg/busio/stream.go`](pkg/busio/stream.go) | `POST /v1/ask/stream` emits one `agent.handle` event per bus hop, then a final `report` event. |
-| **Token budgeting** | [`pkg/llm.BudgetedProvider`](pkg/llm/budget.go) | Wraps any `Provider`; daily per-principal cap; `ErrBudgetExceeded` when over. |
-| **Reasoning patterns** | [`pkg/reasoning`](pkg/reasoning/) | `CoTPrompt`, `SplitCoT`, `Reflect`, and a textbook `ReAct(...)` loop. |
-| **Account Aggregator** | [`agents/aa_fetcher`](agents/aa_fetcher/) | Sahamati `FIClient` interface; `InMemoryFIClient` fixture; gated by `compliance.Ledger` for consent. |
-| **Indic ASR/TTS** | [`agents/voice`](agents/voice/) | `VoiceProvider` interface (`Transcribe`/`Synthesise`); `EchoProvider` for tests; plug Bhashini/Whisper later. |
-| **Tax estimator (India)** | [`agents/tax_estimator`](agents/tax_estimator/) | New regime (FY 2024-25) + old regime slabs + cess; 87A rebate baked in for ≤ ₹7L. |
-
-### Quick examples
-
-```bash
-# Stream a finance question (SSE) — needs an authenticated bearer.
-curl -N -X POST localhost:8080/v1/ask/stream \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{"question":"Where am I overspending?","document_id":"...UUID..."}'
-# event: trace
-# data: tr-...
-#
-# event: agent.handle
-# data: {"from":"ingestor","to":"normalizer","type":"raw_transactions",...}
-# ...
-# event: report
-# data: Genie Financial Report ...
-```
-
-```go
-// Constitutional critique.
-cst, _ := constitution.Load("config/constitution.yaml")
-verdict, _ := cst.Critique(ctx, provider, "model-id", "<candidate output>")
-// verdict.Score in [0,10], verdict.Reasoning is one line.
-```
-
-```go
-// ReAct loop with one tool.
-result, _ := reasoning.ReAct(ctx, provider, "model", "rate finder", "rate?", []reasoning.Tool{{
-    Name: "rate",
-    Run:  func(_ context.Context, _ string) (string, error) { return "83.0", nil },
-}}, 3)
-```
-
----
-
-## RBI FREE-AI alignment
-
-The August 2025 [RBI Framework for Responsible and Ethical Enablement of AI
-(FREE-AI)](https://rbidocs.rbi.org.in/rdocs/PublicationReport/Pdfs/FREEAIR130820250A24FF2D4578453F824C72ED9F5D5851.PDF)
-sets out 7 Sutras, 6 Pillars and 26 Recommendations. Genie maps onto the report
-as follows. Items marked ✅ are implemented in this repo; 🟡 are partial; — is
-outside Genie's scope (regulator or sector-level action).
-
-| Pillar | Rec | Title | Genie evidence |
-| --- | --- | --- | --- |
-| Infra | 1 | Financial sector data infrastructure | — |
-| Infra | 2 | AI Innovation Sandbox | ✅ `cmd/genie` runs the pipeline locally without any external system |
-| Infra | 3 | Incentives + funding | — |
-| Infra | 4 | Indigenous AI models | ✅ `pkg/llm.OllamaProvider` for on-prem inference; `Provider.Region()` lets the residency policy refuse cross-border PII |
-| Infra | 5 | AI + DPI | — |
-| Policy | 6 | Adaptive policies | ✅ `pkg/policy` loads the board-approved YAML; engineers ship the loader, the board owns the values |
-| Policy | 7 | Affirmative-action compliance | — |
-| Policy | 8 | Graded liability framework | ✅ `pkg/incidents.Grade()` classifies first-offense vs repeat using a configurable lookback window |
-| Policy | 9 | AI Standing Committee | — |
-| Capacity | 10–13 | Capacity building, sharing, awards | — |
-| Governance | 14 | Board-approved AI policy | ✅ [`config/ai-policy.example.yaml`](config/ai-policy.example.yaml) + `pkg/policy.AIPolicy` (mirrors Annexure V) |
-| Governance | 15 | Data lifecycle governance | ✅ `pkg/crypto` envelope encryption + `expires_at` columns + `db.StartRetentionJob` purge every 6h |
-| Governance | 16 | AI system governance + autonomous controls | ✅ Per-agent `RiskLevel()`, supervisor session lifecycle, autonomous agents (portfolio_advisor) classified High |
-| Governance | 17 | AI in product approval | 🟡 inventory + risk class give the data; explicit approval workflow on the roadmap |
-| Protection | 18 | Consumer protection | ✅ `Ask` handler returns the `ai_disclosure` banner so users always know they're interacting with AI |
-| Protection | 19 | Cybersecurity measures | ✅ JWT + RBAC + classification + PII + injection + rate-limit middleware (`pkg/web/mid.RateLimit`) |
-| Protection | 20 | Red teaming | ✅ `cmd/red-team` + `make red-team` runs the adversarial probe corpus against the composite policy |
-| Protection | 21 | BCP for AI systems | ✅ `agents/fallback.NewFor(...)` + `Orchestrator.SetFallback(...)` routes failed messages to a human-review notifier |
-| Protection | 22 | AI incident reporting (Annexure VI) | ✅ `pkg/incidents` + Postgres `incidents` table + `POST /v1/incidents`; orchestrator hooks auto-record policy denials and agent errors |
-| Assurance | 23 | AI Inventory + sector-wide repository | ✅ `GET /v1/ai-inventory` lists every registered agent with risk class, capabilities, fallback presence |
-| Assurance | 24 | AI audit framework | 🟡 `agents/auditor` records each bus message; periodic third-party audit cadence on the roadmap |
-| Assurance | 25 | AI disclosures | ✅ `GET /v1/disclosures` returns policy version, sutras, agent counts by risk class |
-| Assurance | 26 | AI Compliance Toolkit | ✅ `pkg/toolkit` ships a default Scorecard with one check per Sutra |
-
-### Running the RBI-aligned tooling
-
-```bash
-# Red-team the board-approved policy (Rec 20)
-make red-team
-
-# Pull the public disclosures surface (Rec 25) — no auth required
-curl localhost:8080/v1/disclosures | jq .
-
-# List AI inventory (Rec 23) — admin only
-curl -H "Authorization: Bearer $ADMIN_TOKEN" localhost:8080/v1/ai-inventory | jq .
-
-# Submit an incident (Rec 22, Annexure VI form)
-curl -X POST localhost:8080/v1/incidents \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{"use_case":"credit","description":"model refused valid applicant","failure_mode":"bias","severity":"moderate"}'
-```
-
-### The board owns the policy
-
-`config/ai-policy.example.yaml` is the Annexure V outline. Bump `version` and
-`board_approved_on` on every change. Engineers never edit the active values —
-only the loader (`pkg/policy`) and the policies (`pkg/governance`).
+| Category | Concepts |
+| --- | --- |
+| **Protocols** | MCP · A2A · CloudEvents 1.0 · AsyncAPI 3.0 · OpenInference semconv · CycloneDX 1.6 ML-BOM · Sigstore-style signing · W3C DIDs (did:key) · W3C VCs · OAuth 2.1 + PKCE · OAuth Device · WebAuthn (Ed25519 passkeys) |
+| **LLM** | Mock · Ollama (on-prem) · Anthropic · OpenAI · Gemini + Cost/Cache/Router/Shadow/Circuit/Deadline/Budget wrappers |
+| **Vision** | `VisionProvider` interface · Ollama vision · `agents/receipt_ocr` |
+| **Retrieval** | Vector + BM25 + RRF · pgvector store · cross-encoder rerank · HyDE · query rewrite · parent-child · time-decay · Self-RAG · CRAG · lost-in-middle · GraphRAG entity walk |
+| **Reasoning** | CoT · ReAct · Reflexion · Chain-of-Verification · Step-Back · Semantic Router |
+| **Memory** | Semantic (per-user) · Episodic w/ summarisation · Working scratchpad |
+| **Eval** | RAGAS · CheckList · drift (KL) · hallucination detector · pairwise Elo · 7-Sutra Scorecard |
+| **Safety** | Jailbreak (heuristic + LLM) · topic guardrail · toxicity · bias (demographic parity) · output schema · explainability requirement · red-team harness |
+| **Workflow** | DAG runtime · Saga compensation · HITL approval · event-sourced log |
+| **Privacy** | HMAC tokenisation · Laplace / Gaussian DP noise · classification ceilings · residency policy |
+| **Governance** | Board-approved YAML policy · consent ledger · tamper-evident audit log · graded liability · Annexure VI incident reporting · AIBOM |
+| **Federated** | FedAvg · additive secret-sharing aggregation |
+| **Agent patterns** | Supervisor · Hierarchical Supervisor · Mixture-of-Agents · Fallback · ReAct loop · Reflexion loop |
 
 ---
 
 ## Roadmap
 
-| Phase | Status | Notes |
-| --- | --- | --- |
-| Multi-agent platform | ✅ | MARA-aligned, message-driven |
-| 9 core finance agents | ✅ | ingestor → reporter |
-| 6 ADK-inspired agents | ✅ | currency, educator, macro, rate-watcher, loan, auditor |
-| OTel traces + metrics | ✅ | stdout + OTLP exporters |
-| HTTP API, JWT auth, RBAC | ✅ | chi + stdlib JWT |
-| Postgres persistence | ✅ | pgx + embedded migrations |
-| Envelope encryption (AES-GCM) | ✅ | env / KMS resolvers |
-| Tempo + Grafana via compose | ✅ | local stack |
-| CircleCI pipeline | ✅ | test + docker build |
-| Scaffold generator | ✅ | `make scaffold name=...` |
-| OpenAPI spec | ✅ | `docs/openapi.yaml` |
-| MCP client (Zerodha Kite) | ✅ | `portfolio_advisor` calls `mcp.kite.trade` |
-| MCP server exposing Genie tools | ✅ | `/mcp` JSON-RPC over HTTP |
-| Sovereign-AI data residency | ✅ | `pkg/sovereignty` + `DataResidencyPolicy` |
-| Consent ledger + audit chain | ✅ | `pkg/compliance` (in-mem; Postgres tables ready) |
-| Explainability policy | ✅ | rationale required on recommender output |
-| pprof under admin | ✅ | `/debug/pprof/*` |
-| LLM Provider interface + Mock | ✅ | Anthropic / Gemini / OpenAI providers pending |
-| Kubernetes manifests | 🚧 | kustomize overlays for local/prod |
-| Postgres-backed eval store | 🚧 | currently in-memory |
-| Key rotation | 🚧 | schema ready (`kek_id`), logic pending |
-| Real LLM providers + Ollama | 🚧 | only `llm.Mock` today |
-| Account Aggregator (India) integration | 🚧 | natural extension of MCP client |
-| Vector store / RAG knowledge layer | 🚧 | future tool integration |
+| Phase | Status |
+| --- | --- |
+| MARA platform (orchestrator, bus, registry, governance) | ✅ |
+| 20+ specialist agents | ✅ |
+| OTel traces + metrics + OpenInference | ✅ |
+| HTTP API + JWT + RBAC | ✅ |
+| Postgres persistence | ✅ |
+| Envelope encryption + KMS interface | ✅ |
+| Tempo + Grafana via compose | ✅ |
+| Ollama on-prem LLM | ✅ |
+| Real LLM providers (Anthropic / Gemini / OpenAI) | ✅ |
+| MCP client + server (Zerodha) | ✅ |
+| A2A client + server | ✅ |
+| CloudEvents + AsyncAPI + CycloneDX + Sigstore | ✅ |
+| Self-RAG + CRAG + GraphRAG + pgvector | ✅ |
+| Reasoning patterns (CoT, ReAct, Reflexion, CoV, Step-Back) | ✅ |
+| RAGAS, CheckList, drift, hallucination, Elo | ✅ |
+| Safety: jailbreak, topic, bias | ✅ |
+| Workflow DAG + Saga + HITL | ✅ |
+| Vision adapter + receipt OCR | ✅ |
+| OAuth device flow + OAuth 2.1 + WebAuthn | ✅ |
+| Privacy (DP, tokenisation) + Identity (DIDs, VCs) | ✅ |
+| Federated learning + secure aggregation | ✅ |
+| AIBOM + ed25519 signing | ✅ |
+| Kubernetes manifests (kustomize) | 🚧 |
+| Postgres-backed eval / feedback stores | 🚧 |
+| KEK rotation | 🚧 |
+| Account Aggregator full FIU flow (Sahamati) | 🚧 |
+| Agentic Commerce Protocol adapter (ACP / AP2 / UPI) | 🚧 |
+| ONDC buyer-app integration | 🚧 |
 
 ---
+
+## Contributing
+
+```bash
+# Run all checks before pushing
+make test && go vet ./... && make red-team
+```
+
+Good first issues:
+
+- A new specialist agent under `agents/` (use `make scaffold`).
+- A real reranker model behind `rag.Reranker` (BGE-reranker, ColBERT).
+- A KMS-backed `crypto.KeyResolver` (AWS / GCP / Vault).
+- An OTLP exporter dashboard for Grafana.
 
 ## License
 
-MIT. See [LICENSE](LICENSE) when added.
-
----
+MIT.
 
 ## References
 
 - [Multi-Agent Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/index.html)
-- [Building blocks](https://microsoft.github.io/multi-agent-reference-architecture/docs/building-blocks/Building-Blocks.html)
-- [Agents communication](https://microsoft.github.io/multi-agent-reference-architecture/docs/agents-communication/Agents-Communication.html)
-- [Observability](https://microsoft.github.io/multi-agent-reference-architecture/docs/observability/Observability.html)
-- [Security](https://microsoft.github.io/multi-agent-reference-architecture/docs/security/Security.html)
+- [RBI Framework for Responsible and Ethical Enablement of AI (FREE-AI), Aug 2025](https://rbidocs.rbi.org.in/rdocs/PublicationReport/Pdfs/FREEAIR130820250A24FF2D4578453F824C72ED9F5D5851.PDF)
 - [Google ADK samples — agent categories](https://github.com/google/adk-samples/tree/main/python/agents)
+- [Anthropic Model Context Protocol](https://modelcontextprotocol.io/)
+- [Google Agent2Agent Protocol](https://github.com/google/a2a)
+- [CloudEvents Specification](https://cloudevents.io/)
+- [CycloneDX 1.6 ML-BOM](https://cyclonedx.org/capabilities/mlbom/)
+- [OpenInference Semantic Conventions](https://github.com/Arize-ai/openinference)
+- [W3C DID Core](https://www.w3.org/TR/did-core/)
+- [W3C Verifiable Credentials Data Model 1.1](https://www.w3.org/TR/vc-data-model/)
+- [RFC 8628 OAuth 2.0 Device Authorization Grant](https://datatracker.ietf.org/doc/html/rfc8628)
+- [OAuth 2.1 draft](https://datatracker.ietf.org/doc/draft-ietf-oauth-v2-1/)
+- [WebAuthn Level 3](https://www.w3.org/TR/webauthn-3/)
+- [Reflexion (Shinn et al. 2023)](https://arxiv.org/abs/2303.11366) · [Chain-of-Verification (Dhuliawala et al. 2023)](https://arxiv.org/abs/2309.11495) · [Self-RAG (Asai et al. 2023)](https://arxiv.org/abs/2310.11511) · [Corrective RAG (Yan et al. 2024)](https://arxiv.org/abs/2401.15884)
