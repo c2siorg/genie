@@ -10,6 +10,11 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/governance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Orchestrator coordinates multiple agents, applying governance and routing messages via a bus.
@@ -66,20 +71,49 @@ func NewOrchestrator(reg registry.Registry, bus comm.Bus, policy governance.Poli
 // - Agents do not call each other directly; they communicate by emitting messages.
 // - Observability becomes straightforward: all interactions are messages.
 func (o *Orchestrator) Start(ctx context.Context) {
+	tracer := otel.Tracer("github.com/c2siorg/genie/pkg/orchestration")
+	pm := observability.Metrics()
+
 	for _, a := range o.reg.List(ctx) {
 		agentID := a.ID()
+		ag := a
 		o.bus.Subscribe(agentID, func(c context.Context, msg agent.Message) {
-			// Apply governance *before* the agent sees the message.
-			//
-			// This is a key pattern: centralize safety checks at the boundary.
-			// If a policy denies a message, the agent never processes it.
+			// Re-attach the publisher's trace context so this span is a child
+			// of the bus.publish span, even though the handler runs in its
+			// own goroutine.
+			c = observability.ExtractTraceContext(c, msg.Metadata)
+
+			c, span := tracer.Start(c, "agent.handle",
+				trace.WithSpanKind(trace.SpanKindConsumer),
+				trace.WithAttributes(
+					attribute.String("genie.agent.id", agentID),
+					attribute.String("genie.agent.name", ag.Name()),
+					attribute.String("genie.msg.id", msg.ID),
+					attribute.String("genie.msg.from", msg.From),
+					attribute.String("genie.msg.type", msg.Type),
+				),
+			)
+			defer span.End()
+
+			handleAttrs := []attribute.KeyValue{
+				attribute.String("agent.id", agentID),
+				attribute.String("msg.type", msg.Type),
+			}
+
 			if o.policy != nil {
-				res, err := o.policy.Evaluate(c, msg)
+				res, err := o.runPolicy(c, tracer, msg)
 				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, "policy error")
 					o.env.Logf("policy error for msg %s: %v", msg.ID, err)
 					return
 				}
 				if res.Decision == governance.DecisionDeny {
+					span.SetAttributes(attribute.String("genie.policy.reason", res.Reason))
+					span.SetStatus(codes.Error, "denied by policy")
+					if pm != nil && pm.PolicyDenials != nil {
+						pm.PolicyDenials.Add(c, 1, metric.WithAttributes(handleAttrs...))
+					}
 					o.env.Logf("message %s denied by policy: %s", msg.ID, res.Reason)
 					return
 				}
@@ -87,23 +121,55 @@ func (o *Orchestrator) Start(ctx context.Context) {
 
 			o.env.Logf("agent %s handling message %s from %s", agentID, msg.ID, msg.From)
 
-			// Delegate to the agent implementation.
-			//
-			// The agent can return zero messages (no follow-up work) or multiple
-			// messages (fan-out). The orchestrator does not interpret their meaning;
-			// it just republishes them to the bus for routing.
-			out, err := a.HandleMessage(c, msg, o.env)
+			start := time.Now()
+			out, err := ag.HandleMessage(c, msg, o.env)
+			elapsedMs := float64(time.Since(start).Microseconds()) / 1000.0
+
+			if pm != nil {
+				if pm.HandleDuration != nil {
+					pm.HandleDuration.Record(c, elapsedMs, metric.WithAttributes(handleAttrs...))
+				}
+				if pm.MessagesHandled != nil {
+					pm.MessagesHandled.Add(c, 1, metric.WithAttributes(handleAttrs...))
+				}
+			}
+
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "agent error")
+				if pm != nil && pm.AgentErrors != nil {
+					pm.AgentErrors.Add(c, 1, metric.WithAttributes(handleAttrs...))
+				}
 				o.env.Logf("agent %s error: %v", agentID, err)
 				return
 			}
+
+			span.SetAttributes(attribute.Int("genie.agent.outputs", len(out)))
 			for _, m := range out {
-				// Re-enter the message stream. This is what creates the multi-agent
-				// flow: one agent's output becomes another agent's input.
 				o.bus.Publish(c, m)
 			}
 		})
 	}
+}
+
+func (o *Orchestrator) runPolicy(ctx context.Context, tracer trace.Tracer, msg agent.Message) (governance.PolicyResult, error) {
+	ctx, span := tracer.Start(ctx, "governance.evaluate",
+		trace.WithAttributes(
+			attribute.String("genie.msg.id", msg.ID),
+			attribute.String("genie.msg.type", msg.Type),
+		),
+	)
+	defer span.End()
+
+	res, err := o.policy.Evaluate(ctx, msg)
+	if err != nil {
+		return res, err
+	}
+	span.SetAttributes(
+		attribute.String("genie.policy.decision", string(res.Decision)),
+		attribute.String("genie.policy.reason", res.Reason),
+	)
+	return res, nil
 }
 
 // SimpleEnvironment is a basic implementation of agent.Environment using observability primitives.

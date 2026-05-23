@@ -4,7 +4,12 @@ import (
 	"context"
 	"sync"
 
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Handler receives messages published on the bus.
@@ -100,6 +105,31 @@ func (b *InMemoryBus) Subscribe(agentID string, h Handler) (unsubscribe func()) 
 // - propagate context deadlines/cancellation
 // - implement buffering/backpressure strategies
 func (b *InMemoryBus) Publish(ctx context.Context, msg protocol.Message) {
+	tracer := otel.Tracer("github.com/c2siorg/genie/pkg/comm")
+	ctx, span := tracer.Start(ctx, "bus.publish",
+		trace.WithSpanKind(trace.SpanKindProducer),
+		trace.WithAttributes(
+			attribute.String("genie.msg.id", msg.ID),
+			attribute.String("genie.msg.from", msg.From),
+			attribute.String("genie.msg.to", msg.To),
+			attribute.String("genie.msg.type", msg.Type),
+			attribute.String("genie.msg.role", string(msg.Role)),
+		),
+	)
+	defer span.End()
+
+	if msg.Metadata == nil {
+		msg.Metadata = map[string]any{}
+	}
+	observability.InjectTraceContext(ctx, msg.Metadata)
+
+	if pm := observability.Metrics(); pm != nil && pm.MessagesPublished != nil {
+		pm.MessagesPublished.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("msg.to", msg.To),
+			attribute.String("msg.type", msg.Type),
+		))
+	}
+
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -119,6 +149,7 @@ func (b *InMemoryBus) Publish(ctx context.Context, msg protocol.Message) {
 		}
 	}
 }
+
 
 var _ Bus = (*InMemoryBus)(nil)
 
