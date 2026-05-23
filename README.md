@@ -588,12 +588,352 @@ dependency yet). The repos are exposed via interfaces (`UserRepo`,
 | `GENIE_DB_DSN` | `cmd/api` | Postgres DSN |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `cmd/api` (optional) | enables OTLP exporter |
 | `GENIE_OTEL_INSECURE` | `cmd/api` (optional) | `"true"` to skip TLS on OTLP |
+| `GENIE_LLM` | `cmd/api` (optional) | `"mock"` (default) or `"ollama"` — selects the LLM stack |
+| `GENIE_OLLAMA_URL` | `cmd/api` (when ollama) | Ollama HTTP root, default `http://localhost:11434` |
+| `GENIE_OLLAMA_CHAT` | `cmd/api` (when ollama) | chat model id, default `llama3.2:1b` |
+| `GENIE_OLLAMA_EMBED` | `cmd/api` (when ollama) | embedding model id, default `nomic-embed-text` |
+| `GENIE_LLM_BUDGET` | `cmd/api` (optional) | daily token cap per principal, default `1000000` |
+| `GENIE_LLM_CACHE_TTL` | `cmd/api` (optional) | response cache TTL in seconds, default `600` |
+| `GENIE_LLM_TIMEOUT` | `cmd/api` (optional) | per-call timeout in seconds, default `30` |
+| `GENIE_LLM_CIRCUIT` | `cmd/api` (optional) | consecutive-error threshold for the circuit breaker, default `5` |
 
 Generate a key locally:
 
 ```bash
 openssl rand -base64 32
 ```
+
+### Run with Ollama (on-prem inference)
+
+When `GENIE_LLM=ollama`, `cmd/api` builds the production wrapper stack
+`Ollama → Cost → Cache → Budget → Deadline → Circuit` and switches the RAG
+embedder to `nomic-embed-text` via Ollama. Both `pkg/llm.OllamaProvider` and
+`pkg/rag.OllamaEmbedder` already exist; the factory in
+[cmd/api/llmstack.go](cmd/api/llmstack.go) just wires them.
+
+```bash
+# Local development (without Docker):
+brew install ollama        # or any platform installer
+ollama serve &
+ollama pull llama3.2:1b    # ~1GB, runs on a laptop CPU
+ollama pull nomic-embed-text
+
+export GENIE_LLM=ollama
+export GENIE_OLLAMA_CHAT=llama3.2:1b
+export GENIE_OLLAMA_EMBED=nomic-embed-text
+go run ./cmd/api
+```
+
+```bash
+# Or with the full Docker stack — Ollama is now a first-class compose service:
+make compose-up
+# The `ollama-pull` init container warms the model cache once; subsequent
+# runs reuse the volume.
+```
+
+Verify the stack is live:
+
+```bash
+curl -s localhost:11434/api/tags | jq '.models[].name'
+# "llama3.2:1b"
+# "nomic-embed-text:latest"
+
+curl -s localhost:8080/readyz | jq .
+# {"status":"ok"}   # only 200s when Ollama responds to /api/tags
+```
+
+Mock mode (default, used by CI and `cmd/genie`) bypasses Ollama entirely and
+uses `llm.Mock` + `rag.HashEmbedder`, so the demo runs with zero external
+dependencies.
+
+---
+
+## MCP integration (Zerodha Kite + custom servers)
+
+Genie speaks the **Model Context Protocol** in both directions:
+
+- **As a client** — `pkg/mcp/client` connects to any MCP server that speaks
+  streamable HTTP. The `portfolio_advisor` agent uses it to call
+  [Zerodha's hosted Kite MCP](https://mcp.kite.trade/mcp) for the user's
+  holdings and positions.
+- **As a server** — `pkg/mcp/server` exposes selected read-only agents
+  (`financial_educator`, `macro_research`, `rate_watcher`) as MCP tools
+  under `/mcp`. Claude Desktop, Cursor, or any MCP client can call them.
+
+### Linking a Zerodha account
+
+```bash
+# Tokens come from the Kite MCP login flow (mcp.kite.trade); paste the
+# session token Genie should store. The plaintext only lives in memory
+# long enough to be encrypted via pkg/crypto.
+curl -s -X POST localhost:8080/v1/mcp/tokens \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "provider": "zerodha-kite",
+    "endpoint": "https://mcp.kite.trade/mcp",
+    "token": "PASTE-SESSION-TOKEN-HERE"
+  }'
+```
+
+Once a token is on file, `portfolio_advisor` will fetch holdings and
+positions whenever the supervisor dispatches a `portfolio_request`.
+
+### MCP flow
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant API as cmd/api
+    participant DB as Postgres (mcp_tokens)
+    participant ADV as portfolio_advisor
+    participant KITE as mcp.kite.trade
+
+    U->>API: POST /v1/mcp/tokens {provider, endpoint, token}
+    API->>DB: encrypt(token) -> mcp_tokens
+    Note over U: Later, in /v1/ask
+    API->>ADV: bus -> portfolio_request
+    ADV->>DB: SELECT mcp_tokens
+    ADV->>API: Decrypt(payload) -> bearer
+    ADV->>KITE: initialize, tools/call get_holdings
+    KITE-->>ADV: holdings
+    ADV->>API: portfolio_snapshot (classification=pii)
+```
+
+---
+
+## Sovereign AI (data residency)
+
+Sovereign-AI deployments — Indian or otherwise — require that PII and
+payment data stay inside national borders. Genie enforces this with two
+primitives:
+
+- **`pkg/sovereignty.ProviderRegistry`** is the allowlist of external
+  providers (LLMs, MCP servers) and the classifications each may receive.
+- **`pkg/governance.DataResidencyPolicy`** runs on the bus. PII / Secret
+  messages whose region tag is anything other than `HomeRegion` or
+  `on-prem` are denied. Public/Internal messages get a configurable
+  exception.
+
+```mermaid
+flowchart LR
+    MSG[Message<br/>region=us<br/>classification=pii] --> POL{DataResidencyPolicy<br/>HomeRegion=in}
+    POL -- deny --> X[Span error<br/>denials counter<br/>msg dropped]
+    OK[Message<br/>region=on-prem<br/>classification=secret] --> POL2{DataResidencyPolicy}
+    POL2 -- allow --> AGENT[on-prem agent]
+```
+
+Configure the home region in `cmd/api` (`sovereignty.RegionIN` by default
+for an India deployment). Tag outbound providers like this:
+
+```go
+reg := sovereignty.NewRegistry()
+reg.Register(sovereignty.Provider{
+    Name:                   "anthropic",
+    Region:                 sovereignty.RegionUS,
+    AllowedClassifications: []protocol.Classification{protocol.ClassPublic, protocol.ClassInternal},
+})
+```
+
+A local LLM provider (e.g. Ollama) registered with
+`Region: sovereignty.RegionOnPrem, AllowedClassifications: {public, internal, pii, secret}`
+is the right destination for PII reasoning.
+
+---
+
+## RBI / DPDP-aligned compliance
+
+The `pkg/compliance` package adds the three primitives the Reserve Bank of
+India's cyber-resilience framework and the DPDP Act, 2023 expect:
+
+| Primitive | Where | What it does |
+| --- | --- | --- |
+| **Consent ledger** | `compliance.Ledger` + `governance.ConsentPolicy` | Records explicit per-category consent (`transactions`, `portfolio`, `recommendations`, `third_party_share`). The policy denies messages whose type requires a category with no active consent. |
+| **Tamper-evident audit log** | `compliance.AuditLog` (SHA-256 hash chain) | Append-only. `Verify()` walks the chain and surfaces any mutation. |
+| **Explainability** | `governance.ExplainabilityPolicy` | Denies recommender / advisor outputs that omit a `rationale` field — RBI guidance for automated lending decisions. |
+
+These slot into the same `governance.NewComposite(...)` stack as the
+existing policies, so every message hits them before reaching an agent.
+
+### Consent + audit flow
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant API as cmd/api
+    participant LED as Consent Ledger
+    participant AUD as Audit Log
+    participant BUS as Bus
+    participant POL as ConsentPolicy
+    participant ADV as portfolio_advisor
+
+    U->>API: POST /v1/consents {category:portfolio,purpose:show}
+    API->>LED: Grant(...)
+    API->>AUD: Append("consent.grant", ...)
+    Note over U,ADV: Later
+    U->>API: POST /v1/ask
+    API->>BUS: Publish portfolio_request
+    BUS->>POL: Evaluate
+    POL->>LED: HasActive(user, portfolio)?
+    LED-->>POL: yes
+    POL-->>BUS: allow
+    BUS->>ADV: HandleMessage
+```
+
+(The HTTP endpoint to grant consent is on the roadmap; for now the
+`Ledger` interface is wired into the policy and seeded programmatically in
+`cmd/api`. Adding the endpoint is a five-line handler.)
+
+---
+
+## Live profiling (pprof)
+
+The standard library pprof endpoints are exposed under `/debug/pprof/*`
+behind JWT auth + the `admin` role. Hit them like this:
+
+```bash
+# Get an admin token (seeded via Postgres or via a manual update).
+go tool pprof "localhost:8080/debug/pprof/heap?seconds=30" \
+  -header "Authorization=Bearer $ADMIN_TOKEN"
+```
+
+For local debugging without a token, call `web.StartLocalPprof("127.0.0.1:6060")`
+from `cmd/api` (commented-out hook). It binds to localhost only so a
+container running `genie-api` doesn't accidentally expose pprof to the
+network.
+
+---
+
+## LLM Provider abstraction
+
+`pkg/llm.Provider` is the seam where Anthropic / Gemini / OpenAI / Ollama
+plug in. `Mock` is shipped today; production providers are a future PR.
+The `Provider.Region()` method composes with `sovereignty` so the
+DataResidencyPolicy can refuse PII routing to an out-of-region provider
+without the agent having to know.
+
+```go
+type Provider interface {
+    Name() string
+    Region() string
+    Complete(ctx context.Context, req CompletionRequest) (CompletionResponse, error)
+}
+```
+
+---
+
+## AI concept inventory
+
+Beyond MARA, MCP and the RBI alignment, Genie now ships a layered set of AI
+primitives. Each item is small, swappable, and behind a stable interface.
+
+| Concept | Where | Notes |
+| --- | --- | --- |
+| **RAG** | [`pkg/rag`](pkg/rag/) | `Embedder` + `VectorStore` + `Index`; `HashEmbedder` (deterministic) and `OllamaEmbedder` (on-prem); in-mem store for the demo, pgvector slot kept open. |
+| **Citations on outputs** | [`agents/educator`](agents/educator/educator.go) | `educator.WithRAG(idx)` makes glossary answers carry top-K source chunks; the 7 Sutras are seeded into the index at boot. |
+| **Output-schema enforcement** | [`pkg/schema`](pkg/schema/) + `governance.SchemaPolicy` | Tiny pure-Go JSON-Schema subset; deny messages whose Type maps to a registered schema and whose Content fails validation. |
+| **Constitutional AI** | [`pkg/constitution`](pkg/constitution/), [`config/constitution.yaml`](config/constitution.yaml) | YAML-loaded 7-Sutra system prompt; `Critique(...)` scores outputs 0..10 against the constitution. |
+| **LLM-as-judge auditor** | [`agents/auditor`](agents/auditor/auditor.go) | `auditor.WithJudge(provider, constitution, model)` scores every broadcast message and records the verdict in `pkg/eval`. |
+| **SSE streaming** | [`pkg/web/handlers/ask_stream.go`](pkg/web/handlers/ask_stream.go), [`pkg/busio/stream.go`](pkg/busio/stream.go) | `POST /v1/ask/stream` emits one `agent.handle` event per bus hop, then a final `report` event. |
+| **Token budgeting** | [`pkg/llm.BudgetedProvider`](pkg/llm/budget.go) | Wraps any `Provider`; daily per-principal cap; `ErrBudgetExceeded` when over. |
+| **Reasoning patterns** | [`pkg/reasoning`](pkg/reasoning/) | `CoTPrompt`, `SplitCoT`, `Reflect`, and a textbook `ReAct(...)` loop. |
+| **Account Aggregator** | [`agents/aa_fetcher`](agents/aa_fetcher/) | Sahamati `FIClient` interface; `InMemoryFIClient` fixture; gated by `compliance.Ledger` for consent. |
+| **Indic ASR/TTS** | [`agents/voice`](agents/voice/) | `VoiceProvider` interface (`Transcribe`/`Synthesise`); `EchoProvider` for tests; plug Bhashini/Whisper later. |
+| **Tax estimator (India)** | [`agents/tax_estimator`](agents/tax_estimator/) | New regime (FY 2024-25) + old regime slabs + cess; 87A rebate baked in for ≤ ₹7L. |
+
+### Quick examples
+
+```bash
+# Stream a finance question (SSE) — needs an authenticated bearer.
+curl -N -X POST localhost:8080/v1/ask/stream \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Where am I overspending?","document_id":"...UUID..."}'
+# event: trace
+# data: tr-...
+#
+# event: agent.handle
+# data: {"from":"ingestor","to":"normalizer","type":"raw_transactions",...}
+# ...
+# event: report
+# data: Genie Financial Report ...
+```
+
+```go
+// Constitutional critique.
+cst, _ := constitution.Load("config/constitution.yaml")
+verdict, _ := cst.Critique(ctx, provider, "model-id", "<candidate output>")
+// verdict.Score in [0,10], verdict.Reasoning is one line.
+```
+
+```go
+// ReAct loop with one tool.
+result, _ := reasoning.ReAct(ctx, provider, "model", "rate finder", "rate?", []reasoning.Tool{{
+    Name: "rate",
+    Run:  func(_ context.Context, _ string) (string, error) { return "83.0", nil },
+}}, 3)
+```
+
+---
+
+## RBI FREE-AI alignment
+
+The August 2025 [RBI Framework for Responsible and Ethical Enablement of AI
+(FREE-AI)](https://rbidocs.rbi.org.in/rdocs/PublicationReport/Pdfs/FREEAIR130820250A24FF2D4578453F824C72ED9F5D5851.PDF)
+sets out 7 Sutras, 6 Pillars and 26 Recommendations. Genie maps onto the report
+as follows. Items marked ✅ are implemented in this repo; 🟡 are partial; — is
+outside Genie's scope (regulator or sector-level action).
+
+| Pillar | Rec | Title | Genie evidence |
+| --- | --- | --- | --- |
+| Infra | 1 | Financial sector data infrastructure | — |
+| Infra | 2 | AI Innovation Sandbox | ✅ `cmd/genie` runs the pipeline locally without any external system |
+| Infra | 3 | Incentives + funding | — |
+| Infra | 4 | Indigenous AI models | ✅ `pkg/llm.OllamaProvider` for on-prem inference; `Provider.Region()` lets the residency policy refuse cross-border PII |
+| Infra | 5 | AI + DPI | — |
+| Policy | 6 | Adaptive policies | ✅ `pkg/policy` loads the board-approved YAML; engineers ship the loader, the board owns the values |
+| Policy | 7 | Affirmative-action compliance | — |
+| Policy | 8 | Graded liability framework | ✅ `pkg/incidents.Grade()` classifies first-offense vs repeat using a configurable lookback window |
+| Policy | 9 | AI Standing Committee | — |
+| Capacity | 10–13 | Capacity building, sharing, awards | — |
+| Governance | 14 | Board-approved AI policy | ✅ [`config/ai-policy.example.yaml`](config/ai-policy.example.yaml) + `pkg/policy.AIPolicy` (mirrors Annexure V) |
+| Governance | 15 | Data lifecycle governance | ✅ `pkg/crypto` envelope encryption + `expires_at` columns + `db.StartRetentionJob` purge every 6h |
+| Governance | 16 | AI system governance + autonomous controls | ✅ Per-agent `RiskLevel()`, supervisor session lifecycle, autonomous agents (portfolio_advisor) classified High |
+| Governance | 17 | AI in product approval | 🟡 inventory + risk class give the data; explicit approval workflow on the roadmap |
+| Protection | 18 | Consumer protection | ✅ `Ask` handler returns the `ai_disclosure` banner so users always know they're interacting with AI |
+| Protection | 19 | Cybersecurity measures | ✅ JWT + RBAC + classification + PII + injection + rate-limit middleware (`pkg/web/mid.RateLimit`) |
+| Protection | 20 | Red teaming | ✅ `cmd/red-team` + `make red-team` runs the adversarial probe corpus against the composite policy |
+| Protection | 21 | BCP for AI systems | ✅ `agents/fallback.NewFor(...)` + `Orchestrator.SetFallback(...)` routes failed messages to a human-review notifier |
+| Protection | 22 | AI incident reporting (Annexure VI) | ✅ `pkg/incidents` + Postgres `incidents` table + `POST /v1/incidents`; orchestrator hooks auto-record policy denials and agent errors |
+| Assurance | 23 | AI Inventory + sector-wide repository | ✅ `GET /v1/ai-inventory` lists every registered agent with risk class, capabilities, fallback presence |
+| Assurance | 24 | AI audit framework | 🟡 `agents/auditor` records each bus message; periodic third-party audit cadence on the roadmap |
+| Assurance | 25 | AI disclosures | ✅ `GET /v1/disclosures` returns policy version, sutras, agent counts by risk class |
+| Assurance | 26 | AI Compliance Toolkit | ✅ `pkg/toolkit` ships a default Scorecard with one check per Sutra |
+
+### Running the RBI-aligned tooling
+
+```bash
+# Red-team the board-approved policy (Rec 20)
+make red-team
+
+# Pull the public disclosures surface (Rec 25) — no auth required
+curl localhost:8080/v1/disclosures | jq .
+
+# List AI inventory (Rec 23) — admin only
+curl -H "Authorization: Bearer $ADMIN_TOKEN" localhost:8080/v1/ai-inventory | jq .
+
+# Submit an incident (Rec 22, Annexure VI form)
+curl -X POST localhost:8080/v1/incidents \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"use_case":"credit","description":"model refused valid applicant","failure_mode":"bias","severity":"moderate"}'
+```
+
+### The board owns the policy
+
+`config/ai-policy.example.yaml` is the Annexure V outline. Bump `version` and
+`board_approved_on` on every change. Engineers never edit the active values —
+only the loader (`pkg/policy`) and the policies (`pkg/governance`).
 
 ---
 
@@ -612,9 +952,18 @@ openssl rand -base64 32
 | CircleCI pipeline | ✅ | test + docker build |
 | Scaffold generator | ✅ | `make scaffold name=...` |
 | OpenAPI spec | ✅ | `docs/openapi.yaml` |
+| MCP client (Zerodha Kite) | ✅ | `portfolio_advisor` calls `mcp.kite.trade` |
+| MCP server exposing Genie tools | ✅ | `/mcp` JSON-RPC over HTTP |
+| Sovereign-AI data residency | ✅ | `pkg/sovereignty` + `DataResidencyPolicy` |
+| Consent ledger + audit chain | ✅ | `pkg/compliance` (in-mem; Postgres tables ready) |
+| Explainability policy | ✅ | rationale required on recommender output |
+| pprof under admin | ✅ | `/debug/pprof/*` |
+| LLM Provider interface + Mock | ✅ | Anthropic / Gemini / OpenAI providers pending |
 | Kubernetes manifests | 🚧 | kustomize overlays for local/prod |
 | Postgres-backed eval store | 🚧 | currently in-memory |
 | Key rotation | 🚧 | schema ready (`kek_id`), logic pending |
+| Real LLM providers + Ollama | 🚧 | only `llm.Mock` today |
+| Account Aggregator (India) integration | 🚧 | natural extension of MCP client |
 | Vector store / RAG knowledge layer | 🚧 | future tool integration |
 
 ---
