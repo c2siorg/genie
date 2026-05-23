@@ -31,10 +31,37 @@ import (
 // Importantly, Orchestrator does NOT contain agent-specific logic; it is a
 // generic coordinator. This keeps the platform stable even as agents change.
 type Orchestrator struct {
-	reg    registry.Registry
-	bus    comm.Bus
-	policy governance.Policy
-	env    agent.Environment
+	reg       registry.Registry
+	bus       comm.Bus
+	policy    governance.Policy
+	env       agent.Environment
+	hooks     Hooks
+	fallbacks map[string]string // agent id -> fallback agent id
+}
+
+// Hooks lets cmd-level code observe orchestration events without taking a
+// dependency on incident / audit packages from inside pkg/orchestration.
+type Hooks struct {
+	OnPolicyDeny  func(ctx context.Context, msg agent.Message, reason string)
+	OnAgentError  func(ctx context.Context, agentID string, msg agent.Message, err error)
+}
+
+// WithHooks installs the orchestrator hooks. Idempotent.
+func (o *Orchestrator) WithHooks(h Hooks) *Orchestrator { o.hooks = h; return o }
+
+// SetFallback declares that messages bound to original that fail under
+// HandleMessage should be republished to fallbackID. Returns the orchestrator
+// for chaining. Use the empty string to remove a mapping.
+func (o *Orchestrator) SetFallback(originalID, fallbackID string) *Orchestrator {
+	if o.fallbacks == nil {
+		o.fallbacks = map[string]string{}
+	}
+	if fallbackID == "" {
+		delete(o.fallbacks, originalID)
+		return o
+	}
+	o.fallbacks[originalID] = fallbackID
+	return o
 }
 
 // NewOrchestrator constructs a new orchestrator.
@@ -114,6 +141,9 @@ func (o *Orchestrator) Start(ctx context.Context) {
 					if pm != nil && pm.PolicyDenials != nil {
 						pm.PolicyDenials.Add(c, 1, metric.WithAttributes(handleAttrs...))
 					}
+					if o.hooks.OnPolicyDeny != nil {
+						o.hooks.OnPolicyDeny(c, msg, res.Reason)
+					}
 					o.env.Logf("message %s denied by policy: %s", msg.ID, res.Reason)
 					return
 				}
@@ -140,7 +170,16 @@ func (o *Orchestrator) Start(ctx context.Context) {
 				if pm != nil && pm.AgentErrors != nil {
 					pm.AgentErrors.Add(c, 1, metric.WithAttributes(handleAttrs...))
 				}
+				if o.hooks.OnAgentError != nil {
+					o.hooks.OnAgentError(c, agentID, msg, err)
+				}
 				o.env.Logf("agent %s error: %v", agentID, err)
+				// Route to fallback agent if one is registered for this id.
+				if fb, ok := o.fallbacks[agentID]; ok && fb != "" {
+					o.env.Logf("dispatching to fallback %s", fb)
+					fbMsg := agent.NewMessage(agentID, fb, agent.RoleAgent, "fallback_request", msg.Content, msg.Metadata)
+					o.bus.Publish(c, fbMsg)
+				}
 				return
 			}
 

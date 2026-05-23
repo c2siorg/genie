@@ -5,9 +5,11 @@ package educator
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 )
 
 const (
@@ -31,6 +33,17 @@ var glossary = map[string]string{
 
 type Agent struct {
 	Glossary map[string]string
+	// Index is the optional RAG index. When set, the educator appends source
+	// citations to its answer. Leave nil to fall back to glossary-only.
+	Index *rag.Index
+}
+
+// Answer is the structured payload the educator now emits when the RAG
+// index is configured. Without RAG it still ships a plain-text answer for
+// backwards compatibility.
+type Answer struct {
+	Text      string             `json:"text"`
+	Citations []rag.ScoredChunk  `json:"citations,omitempty"`
 }
 
 func New() *Agent {
@@ -41,6 +54,9 @@ func New() *Agent {
 	return &Agent{Glossary: cp}
 }
 
+// WithRAG attaches a rag.Index so answers carry citations.
+func (a *Agent) WithRAG(idx *rag.Index) *Agent { a.Index = idx; return a }
+
 func (a *Agent) ID() string             { return ID }
 func (a *Agent) Name() string           { return "Financial Educator" }
 func (a *Agent) Capabilities() []string { return []string{CapExplain, CapEducate} }
@@ -50,13 +66,32 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 		return nil, nil
 	}
 	key := strings.ToLower(strings.TrimSpace(msg.Content))
-	answer, ok := a.Glossary[key]
+	text, ok := a.Glossary[key]
 	if !ok {
-		answer = "No glossary entry yet. Try one of: " + joinKeys(a.Glossary) + "."
+		text = "No glossary entry yet. Try one of: " + joinKeys(a.Glossary) + "."
 	}
 	env.Logf("[educator] explained %q", key)
+
+	// Backwards-compatible path: no RAG index → plain text payload.
+	if a.Index == nil {
+		return []agent.Message{
+			agent.NewMessage(ID, msg.From, agent.RoleAgent, TypeOut, text, msg.Metadata),
+		}, nil
+	}
+
+	// RAG path: attach top citations so the consumer can verify the claim.
+	cites, err := a.Index.Search(ctx, msg.Content, 3)
+	if err != nil {
+		// Fail soft: still return the answer, just without citations.
+		env.Logf("[educator] rag search failed: %v", err)
+	}
+	ans := Answer{Text: text, Citations: cites}
+	body, err := json.Marshal(ans)
+	if err != nil {
+		return nil, err
+	}
 	return []agent.Message{
-		agent.NewMessage(ID, msg.From, agent.RoleAgent, TypeOut, answer, msg.Metadata),
+		agent.NewMessage(ID, msg.From, agent.RoleAgent, TypeOut, string(body), msg.Metadata),
 	}, nil
 }
 

@@ -16,6 +16,10 @@ tags:
   - name: accounts
   - name: documents
   - name: ask
+  - name: mcp
+  - name: incidents
+  - name: governance
+  - name: debug
   - name: health
 
 paths:
@@ -162,6 +166,136 @@ paths:
           description: Metadata
         '404': { description: Not found }
 
+  /v1/mcp/tokens:
+    post:
+      tags: [mcp]
+      security: [{ bearer: [] }]
+      summary: Store an encrypted MCP session token for a remote provider
+      description: |
+        The token plaintext only lives in memory long enough to be sealed
+        with the envelope encryption (pkg/crypto). Use this for Zerodha Kite
+        and any other MCP provider Genie should reach on the user's behalf.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StoreMCPTokenRequest' }
+      responses:
+        '201':
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoreMCPTokenResponse' }
+
+  /mcp:
+    post:
+      tags: [mcp]
+      summary: MCP JSON-RPC endpoint (Genie as an MCP server)
+      description: |
+        Streamable-HTTP MCP transport. Supports initialize, tools/list, and
+        tools/call. Exposes Genie's read-only agents (explain_finance,
+        macro_context, rate_outlook) as MCP tools.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: JSON-RPC response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /v1/incidents:
+    post:
+      tags: [incidents]
+      security: [{ bearer: [] }]
+      summary: Submit an AI incident (Annexure VI form)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Incident' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Incident' }
+    get:
+      tags: [incidents]
+      security: [{ bearer: [] }]
+      summary: List recent incidents (admin only)
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100 }
+      responses:
+        '200':
+          description: Array of incidents
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Incident' }
+        '403': { description: admin role required }
+
+  /v1/ai-inventory:
+    get:
+      tags: [governance]
+      security: [{ bearer: [] }]
+      summary: Registered AI agent inventory (RBI FREE-AI Rec 23)
+      responses:
+        '200':
+          description: Array of inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/InventoryItem' }
+        '403': { description: admin role required }
+
+  /v1/disclosures:
+    get:
+      tags: [governance]
+      summary: Public AI governance disclosure (RBI FREE-AI Rec 25)
+      description: |
+        Returns the board-approved policy version, principles in force, agent
+        counts by risk class, and the incident reporting URL. No auth.
+      responses:
+        '200':
+          description: Disclosure summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policy_version: { type: string }
+                  policy_approved_on: { type: string }
+                  principles: { type: array, items: { type: string } }
+                  home_region: { type: string }
+                  incident_reporting_url: { type: string }
+                  agent_counts: { type: object }
+
+  /debug/pprof/{profile}:
+    get:
+      tags: [debug]
+      security: [{ bearer: [] }]
+      summary: Live profiling (admin only)
+      parameters:
+        - in: path
+          name: profile
+          required: true
+          schema:
+            type: string
+            enum: [heap, goroutine, allocs, block, mutex, profile, threadcreate, trace]
+      responses:
+        '200':
+          description: Profile payload (pprof binary or text)
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden (admin role required) }
+
   /v1/ask:
     post:
       tags: [ask]
@@ -253,3 +387,69 @@ components:
       properties:
         trace_id: { type: string }
         report: { type: string }
+    StoreMCPTokenRequest:
+      type: object
+      required: [provider, endpoint, token]
+      properties:
+        provider:
+          type: string
+          example: zerodha-kite
+        endpoint:
+          type: string
+          example: https://mcp.kite.trade/mcp
+        token:
+          type: string
+    Incident:
+      type: object
+      required: [use_case, description]
+      properties:
+        id: { type: string, format: uuid }
+        occurred_at: { type: string, format: date-time }
+        detected_at: { type: string, format: date-time }
+        use_case: { type: string, example: credit_decisioning }
+        model: { type: string, example: recommender_v1 }
+        third_party_vendor: { type: string }
+        description: { type: string }
+        affected_stakeholders:
+          type: string
+          enum: [internal, external, both]
+        severity:
+          type: string
+          enum: [low, moderate, high]
+          default: low
+        failure_mode:
+          type: string
+          enum:
+            - bias
+            - hallucination
+            - explainability_gap
+            - privacy_breach
+            - unintended_action
+            - policy_denied
+            - agent_error
+            - unknown
+        root_cause: { type: string }
+        response_actions: { type: string }
+        status:
+          type: string
+          enum: [ongoing, resolved]
+        actor_id: { type: string }
+        metadata: { type: object }
+    InventoryItem:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        capabilities: { type: array, items: { type: string } }
+        risk_class:
+          type: string
+          enum: [low, medium, high]
+        has_fallback: { type: boolean }
+        fallback_id: { type: string }
+    StoreMCPTokenResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        provider: { type: string }
+        endpoint: { type: string }
+        kek_id: { type: string }

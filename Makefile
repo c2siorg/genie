@@ -50,6 +50,14 @@ scaffold: ## Generate a new agent. Usage: make scaffold name=<id> cap=<capabilit
 docker-build: ## Build the production image
 	docker build -t genie-api:dev .
 
+.PHONY: red-team
+red-team: ## Run the adversarial probe corpus against the board-approved policy (RBI FREE-AI Rec 20)
+	$(GO) run ./cmd/red-team -policy config/ai-policy.example.yaml
+
+.PHONY: bcp-drill
+bcp-drill: ## Force a portfolio_advisor failure to verify the fallback agent activates (RBI FREE-AI Rec 21)
+	GENIE_BCP_DRILL=1 $(GO) run ./cmd/genie
+
 .PHONY: openapi-validate
 openapi-validate: ## Validate docs/openapi.yaml against the OpenAPI schema (requires npx swagger-cli)
 	npx --yes @apidevtools/swagger-cli validate docs/openapi.yaml
