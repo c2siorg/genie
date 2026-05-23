@@ -30,6 +30,28 @@ type Message struct {
 	Content string `json:"content"`
 	// Optional: name of the tool that produced this message (Role=tool).
 	ToolName string `json:"tool_name,omitempty"`
+	// Optional: image attachments. Providers that don't support vision MUST
+	// either reject the request or silently ignore (callers should check
+	// Provider.SupportsVision()).
+	Images []ImagePart `json:"images,omitempty"`
+}
+
+// ImagePart is one attached image. Genie carries images base64-encoded
+// because every provider's wire format (Anthropic, OpenAI, Gemini, Ollama)
+// accepts that shape.
+type ImagePart struct {
+	// Base64 contains the raw image bytes encoded as base64 (without a data:
+	// URI prefix).
+	Base64 string `json:"base64"`
+	// MimeType is "image/jpeg", "image/png", etc.
+	MimeType string `json:"mime_type"`
+}
+
+// VisionProvider is the optional interface a Provider implements when it
+// supports image inputs. Callers can detect support via a type assertion.
+type VisionProvider interface {
+	Provider
+	SupportsVision() bool
 }
 
 // ToolDefinition is a JSON-schema-described function the model is allowed to call.
