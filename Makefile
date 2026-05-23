@@ -26,8 +26,12 @@ build: ## Compile every binary under cmd/ into bin/
 	$(GO) build -o $(BIN_DIR)/ ./cmd/...
 
 .PHONY: test
-test: ## Run all tests
+test: ## Run all unit tests
 	$(GO) test -race $(PKG)
+
+.PHONY: e2e
+e2e: ## Run the user-simulation test against a running stack (signup → ask → disclosures)
+	$(GO) test -tags=e2e -v ./tests/sim/...
 
 .PHONY: vet
 vet: ## go vet
