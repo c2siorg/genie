@@ -121,6 +121,9 @@ main {
 }
 
 .view { display: block; }
+/* Author rule above ties on specificity with the UA [hidden] rule and would
+ * otherwise win the cascade, leaving hidden sections painted. */
+.view[hidden] { display: none; }
 
 .grid {
   display: grid;
