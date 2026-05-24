@@ -177,5 +177,93 @@ func TestUI_StylesheetNonEmpty(t *testing.T) {
 	}
 }
 
+// TestUI_HiddenAttributeOverridesViewDisplay pins the CSS rule that lets the
+// `hidden` HTML attribute actually hide `.view` sections. Without an explicit
+// `.view[hidden]` (or equivalent) rule, the author rule `.view { display:
+// block }` ties on specificity with the UA `[hidden]` rule and wins the
+// cascade — so `el.hidden = true` from JS sets the attribute but the section
+// stays painted. That regression manifested as the Welcome card sitting on
+// top of every tab after login.
+func TestUI_HiddenAttributeOverridesViewDisplay(t *testing.T) {
+	css := readUIFile(t, "styles.css")
+	// Strip whitespace inside braces so we tolerate `{display:none}` or
+	// `{ display: none; }`.
+	flat := regexp.MustCompile(`\s+`).ReplaceAllString(css, "")
+	if !strings.Contains(flat, ".view[hidden]{display:none") {
+		t.Errorf("styles.css missing `.view[hidden] { display: none }` — `.view { display: block }` will override the UA [hidden] rule and leave hidden views painted")
+	}
+}
+
+// TestUI_HideHelperSetsInlineDisplay backs up the CSS test above: even if a
+// future stylesheet edit removes the `.view[hidden]` rule, the JS helpers
+// should still hide via inline `style.display = 'none'`, which beats any
+// class-based rule on specificity.
+func TestUI_HideHelperSetsInlineDisplay(t *testing.T) {
+	js := readUIFile(t, "app.js")
+	// Match `function hide(el) { ... el.style.display = 'none' ... }` with
+	// flexible whitespace and quote style.
+	hideRE := regexp.MustCompile(`function\s+hide\s*\([^)]*\)\s*\{[^}]*style\.display\s*=\s*['"]none['"]`)
+	if !hideRE.MatchString(js) {
+		t.Error("hide() helper must set el.style.display = 'none' so hiding works even if CSS regresses")
+	}
+	showRE := regexp.MustCompile(`function\s+show\s*\([^)]*\)\s*\{[^}]*style\.display\s*=\s*['"]['"]`)
+	if !showRE.MatchString(js) {
+		t.Error("show() helper must clear el.style.display so previously hidden elements become visible again")
+	}
+}
+
+// TestUI_LoginSuccessEntersApp asserts both login and signup success paths
+// (a) persist the session and (b) call enterApp(), which is what triggers
+// hide(views.auth). If either branch ever stops calling enterApp(), the
+// Welcome card would stay on screen.
+func TestUI_LoginSuccessEntersApp(t *testing.T) {
+	js := readUIFile(t, "app.js")
+
+	// sliceBetween isn't quote/brace-aware, and the handler bodies contain
+	// `});` from `api(..., {...})` calls, so we walk a fixed window after
+	// each anchor instead.
+	mustContainNear := func(label, anchor string, want []string) {
+		i := strings.Index(js, anchor)
+		if i < 0 {
+			t.Fatalf("%s: anchor %q not found", label, anchor)
+		}
+		end := i + 800
+		if end > len(js) {
+			end = len(js)
+		}
+		body := js[i:end]
+		for _, w := range want {
+			if !strings.Contains(body, w) {
+				t.Errorf("%s missing %q — needed so the Welcome card hides after sign-in", label, w)
+			}
+		}
+	}
+
+	successCalls := []string{"state.token = out.token", "persistSession()", "enterApp()"}
+	mustContainNear("login success path", "$('#form-login').addEventListener", successCalls)
+	mustContainNear("signup success path", "$('#form-signup').addEventListener", successCalls)
+
+	// And enterApp itself must hide views.auth — otherwise calling it after
+	// login wouldn't move the user out of the auth section.
+	mustContainNear("enterApp()", "function enterApp()", []string{"hide(views.auth)"})
+}
+
+// TestUI_TabHandlerUsesClosest pins the delegated `#tabs` listener to
+// `closest('.tab')` rather than `matches('.tab')`. The matches() variant
+// silently misses clicks that land on a descendant node (e.g. a future icon
+// inside the button), which surfaced as the Governance tab highlighting
+// without ever calling refreshGovernance().
+func TestUI_TabHandlerUsesClosest(t *testing.T) {
+	js := readUIFile(t, "app.js")
+	tabsBlock := sliceBetween(t, js, "$('#tabs').addEventListener", "});")
+
+	if !strings.Contains(tabsBlock, ".closest('.tab')") {
+		t.Error("#tabs click handler must use closest('.tab') so clicks on descendant nodes still resolve to the tab button")
+	}
+	if strings.Contains(tabsBlock, ".matches('.tab')") {
+		t.Error("#tabs click handler still uses matches('.tab') — clicks on a descendant node will be ignored")
+	}
+}
+
 // dummy reference to silence unused-import on filepath if we ever drop it.
 var _ = filepath.Base
