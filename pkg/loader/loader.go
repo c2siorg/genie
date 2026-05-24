@@ -44,6 +44,8 @@ func Auto(ctx context.Context, path string) (Document, error) {
 		return HTMLLoader{}.Load(ctx, path)
 	case ".docx":
 		return DOCXLoader{}.Load(ctx, path)
+	case ".xlsx":
+		return XLSXLoader{}.Load(ctx, path)
 	case ".txt", ".md":
 		return TextLoader{}.Load(ctx, path)
 	}
