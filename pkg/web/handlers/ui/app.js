@@ -37,8 +37,8 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  function show(el) { el.hidden = false; }
-  function hide(el) { el.hidden = true; }
+  function show(el) { el.hidden = false; el.style.display = ''; }
+  function hide(el) { el.hidden = true; el.style.display = 'none'; }
 
   function persistSession() {
     if (state.token && state.user) {
@@ -93,7 +93,8 @@
   }
 
   $('#tabs').addEventListener('click', e => {
-    if (e.target.matches('.tab')) activateTab(e.target.dataset.tab);
+    const tab = e.target.closest('.tab');
+    if (tab) activateTab(tab.dataset.tab);
   });
 
   // -----------------------------------------------------------------
