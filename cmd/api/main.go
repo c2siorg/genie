@@ -26,20 +26,33 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/analyzer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/anomaly"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/auditor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/auto_insurance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/bulk_statement_analyzer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/claim_adjudicator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/currency"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/cyber_guardian"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/deep_research"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/educator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/enricher"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/fallback"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/forecaster"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/google_trends"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/health_preauth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/ingestor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/invoice_processor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/kyc_orchestrator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/loan"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/macro"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mpc_research"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/normalizer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/payment_orchestrator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/portfolio_advisor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/rates"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/recommender"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/reporter"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/sme_loan_workflow"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supervisor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supply_chain_finance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_estimator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
@@ -175,6 +188,24 @@ func run() error {
 	register(aa_fetcher.New(aaFI, consents))
 	register(voice.New(voice.EchoProvider{}))
 	register(tax_estimator.New())
+
+	// ADK-inspired extension agents (see docs/adk-extension-proposal.md).
+	// Tier 1 — direct fits.
+	register(kyc_orchestrator.New())
+	register(claim_adjudicator.New())
+	register(sme_loan_workflow.New())
+	register(invoice_processor.New())
+	register(deep_research.New(nil, "", nil)) // offline-mode by default; pass a Provider to enable ReAct
+	register(bulk_statement_analyzer.New())
+	register(mpc_research.New())
+	// Tier 3 — adjacent verticals.
+	register(auto_insurance.New(nil))
+	register(health_preauth.New())
+	register(supply_chain_finance.New())
+	register(payment_orchestrator.New())
+	// Tier 4 — infrastructure-flavoured.
+	register(cyber_guardian.New())
+	register(google_trends.New(nil)) // host wires a TrendFetcher; agent is inert without one
 
 	// LLM + embedder stack — Mock by default, Ollama when GENIE_LLM=ollama.
 	llmStack := buildLLMStack(ctx, logger)

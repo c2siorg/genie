@@ -4,9 +4,11 @@
 > [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/index.html)
 > and aligned with the **RBI FREE-AI** report. Speaks **MCP** and **A2A**,
 > ships **Ollama on-prem** by default, and bundles a full **GenAI engineering**
-> layer (RAG, prompts, reasoning, memory, eval, safety, privacy).
+> layer (RAG, prompts, reasoning, memory, eval, safety, privacy). Ships
+> **60+ specialist agents** covering retail finance, SME lending, KYC,
+> bancassurance, fraud, treasury, payments, and cyber.
 
-![Go](https://img.shields.io/badge/Go-1.22+-00ADD8)
+![Go](https://img.shields.io/badge/Go-1.25+-00ADD8)
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
 ![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
 ![RBI FREE-AI](https://img.shields.io/badge/RBI-FREE--AI%20aligned-orange)
@@ -20,7 +22,9 @@ Repository: <https://github.com/c2siorg/genie>
 
 - [Why Genie](#why-genie)
 - [System architecture](#system-architecture)
-- [The 20+ specialist agents](#the-20-specialist-agents)
+- [The 60+ specialist agents](#the-60-specialist-agents)
+- [Domain expansion: fraud, lending, tax, treasury, SME](#domain-expansion-fraud-lending-tax-treasury-sme)
+- [ADK-inspired extension agents](#adk-inspired-extension-agents)
 - [End-to-end finance flow](#end-to-end-finance-flow)
 - [Repository layout](#repository-layout)
 - [Quick start (CLI demo)](#quick-start-cli-demo)
@@ -95,7 +99,7 @@ flowchart TB
         BUS[pkg/comm Bus]
         REG[pkg/registry]
         POL[pkg/governance Composite Policy]
-        AGENTS[(20+ specialist agents)]
+        AGENTS[(60+ specialist agents)]
         FB[Fallback agents]
         ORCH --> BUS
         ORCH --> POL
@@ -197,12 +201,16 @@ flowchart TB
 | Compliance | `pkg/compliance` | Consent ledger + tamper-evident audit log + graded liability |
 | Incidents | `pkg/incidents` | Annexure VI form + auto-record |
 | Policy | `pkg/policy` | Board-approved AI policy YAML loader |
+| Policy DSL | `pkg/policy/dsl` | Tiny CEL-style expression DSL for board rules (no code release needed) |
 | Federated | `pkg/federated` | FedAvg + additive secret-sharing |
-| Agents | `agents/` | 20+ specialist + fallback + hierarchical + MoA + vision |
+| Warehouse obs | `pkg/observability/bq` | BigQuery / Snowflake JSONL sink + async buffer |
+| Skills | `pkg/agent` SkillRegistry | Progressive-disclosure skill manifests for supervisor agents |
+| Long-term memory | `pkg/memory` LongTermMemory | Append-only consolidated user facts across sessions |
+| Agents | `agents/` | 60+ specialist + fallback + hierarchical + MoA + vision + ADK-inspired extensions |
 
 ---
 
-## The 20+ specialist agents
+## The 60+ specialist agents
 
 ```mermaid
 flowchart TB
@@ -261,6 +269,147 @@ flowchart TB
 - **Yellow** — ADK-inspired (educator, currency, macro, rates, loan, auditor).
 - **Green** — India stack (portfolio, AA, voice, tax).
 - **Purple** — vision (receipt OCR).
+
+---
+
+## Domain expansion: fraud, lending, tax, treasury, SME
+
+Beyond the canonical MARA pipeline, Genie ships specialist agents across
+every retail-and-institutional banking surface. Each is **deterministic-first**
+so the routing logic is auditable from source code (RBI Rec 25 — explainability).
+LLM rationale can be layered on top via `agents/reporter` when probabilistic
+explanation is wanted.
+
+### Fraud & financial crime (5)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/fraud` | Velocity bursts, impossible-travel, after-hours large debits, high-risk merchant categories | Medium |
+| `agents/mule` | Pass-through, fan-in/fan-out, post-credit burst — graph-pattern mule detection | High |
+| `agents/aml_monitor` | FIU-IND STR generator: CTR (₹10L cash), LTR (₹50L wire), 7-day structuring, sanctions/PEP match | High |
+| `agents/phishing_classifier` | URL + SMS + UPI VPA scorer: IP-literal, punycode, brand impersonation, OTP-share lures | Medium |
+| `agents/synthetic_identity` | KYC anomaly stack: thin file, address velocity, PAN/Aadhaar name mismatch, PAN 5th-char check | High |
+
+### Lending & credit (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/cashflow_underwriter` | Alt-data credit score (300–900 CIBIL-comparable) from 6 explainable signals | High |
+| `agents/debt_optimizer` | Month-by-month avalanche/snowball payoff simulator with time-to-freedom | Medium |
+| `agents/prepayment_advisor` | Ranks loans by tax-adjusted effective APR; flags fixed-rate foreclosure penalty | Medium |
+
+### Personal finance & behaviour (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/subscription_detector` | Periodicity + amount-consistency finder; surfaces zombie subscriptions on price hikes | Low |
+| `agents/goal_planner` | Monte-Carlo goal probability with p10/p50/p90 corpus envelope | Medium |
+| `agents/emergency_fund` | Median-expense × 3/6/9-month coverage profile → gap + months-to-target | Low |
+
+### Tax (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/tax_harvester` | Indian STCL/LTCL harvester for FY 2024-25; ₹1.25L LTCG exemption, set-off rules | Medium |
+| `agents/deductions_optimizer` | Old-regime Chapter VI-A ceiling fills (80C / 80CCD-1B / 80D / 80TTA) | Medium |
+| `agents/advance_tax_planner` | Quarterly instalments per sec 211; sec 234B/234C shortfall warnings | Medium |
+
+### Investments (4)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/mf_screener` | Composite score (40 % CAGR, 25 % Sharpe, 20 % expense, 15 % consistency) | Medium |
+| `agents/asset_allocator` | 100-age equity rule with risk/horizon adjustments + Buy/Sell rupee deltas | Medium |
+| `agents/sip_vs_lumpsum` | Monte-Carlo comparator with regret probability | Medium |
+| `agents/options_explainer` | Black-Scholes greeks (delta/gamma/theta/vega/rho) + 21-point payoff curve | Medium |
+| `agents/dividend_planner` | DRIP simulator with net-of-tax projection + yield-on-cost | Low |
+
+### SME banking (2)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/working_capital` | DSO + DIO − DPO cycle; monthly forecast + runway months; TReDS hint when CCC >90d | Medium |
+| `agents/invoice_discounter` | Greedy cheapest-effective-APR selector; rating premium AAA…BBB | Medium |
+
+### Institutional risk / treasury (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/var_calculator` | Historical + parametric VaR with Expected Shortfall (CVaR); √horizon scaling | High |
+| `agents/lcr_projector` | Basel III LCR with RBI run-off factors; L2A 85 % / L2B 50 % haircuts; ≥100 % compliance flag | High |
+| `agents/alm_agent` | 9-bucket asset-liability gap (1-7d through >5y); breach at ±15 %; NII shock under parallel rate move | High |
+
+### Customer service & sustainability (2)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/complaint_triage` | RBI Integrated Ombudsman Scheme 2021 classifier; drafts Annexure VI incident form | Medium |
+| `agents/carbon_estimator` | Per-category kgCO₂e + MoM trend + top-3 reduction suggestions | Low |
+
+All 26 agents above are documented in `agents/<name>/<name>.go` headers
+with the rules, thresholds, and rate sources baked in. Each one has its own
+`_test.go` (5–8 cases) — together they add **133 unit tests** that run
+under the same `make test` / `go test ./agents/...` command as the rest.
+
+---
+
+## ADK-inspired extension agents
+
+A second wave of specialists, ported and adapted from the
+[Google ADK samples](https://github.com/google/adk-samples/tree/main/python/agents)
+to fit Indian banking and FREE-AI. Full design rationale in
+[`docs/adk-extension-proposal.md`](docs/adk-extension-proposal.md).
+
+### KYC, claims & lending (4)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/kyc_orchestrator` | Full RBI Master Direction KYC: PAN 5th-char + Aadhaar offline KYC + DigiLocker + PEP/sanctions → SDD/standard/EDD tier or auto-reject with Annexure VI | High |
+| `agents/claim_adjudicator` | Bancassurance claims rule engine (waiting periods, exclusions, sub-limits, co-pay, sum-insured cap); HITL above ₹2L | High |
+| `agents/sme_loan_workflow` | End-to-end SME lending DAG: GST → cashflow → CGTMSE → indicative offer → HITL → sanction letter (uses `pkg/workflow` Saga + HITL) | High |
+| `agents/invoice_processor` | B2B invoice OCR + GSTIN structural validation + vendor master match + 3-way match (PO/GRN/invoice) | Medium |
+
+### Research, batch & event-driven (3)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/deep_research` | Multi-turn ReAct over RBI/Sahamati/FIU-IND corpora with cited brief; deterministic offline fallback for sandbox + CI | Medium |
+| `agents/bulk_statement_analyzer` | N-statement consolidator with inter-account-transfer dedup for AA-driven onboarding | Medium |
+| `agents/mpc_research` | RBI MPC event analyzer (repo Δ, stance shift, hawkishness, surprise vs consensus) with fan-out hints to `loan_advisor`, `prepayment_advisor`, `rate_watcher` | Low |
+
+### Bancassurance & payments (4)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/auto_insurance` | Motor FNOL with total-loss detection (≥75 % IDV), roadside dispatch, NCB-ladder renewal quote | Medium |
+| `agents/health_preauth` | IRDAI cashless pre-auth: PPN gate, PED/specific waiting, room-rent proportionate deduction, procedure-package cap, HITL ≥₹5L | High |
+| `agents/supply_chain_finance` | Buyer-concentration risk + TReDS auction candidate selection over receivables | Medium |
+| `agents/payment_orchestrator` | UPI/IMPS/NEFT/RTGS routing with time-of-day RTGS-window awareness + HITL ≥₹50k | High |
+
+### Cyber & signals (2)
+
+| Agent | Purpose | Risk |
+|---|---|---|
+| `agents/cyber_guardian` | Session-level anomaly stack: impossible travel (Haversine), credential-stuffing density, unknown device, fingerprint churn | Medium |
+| `agents/google_trends` | Surging/fading/steady search-interest classifier; fans out hints to `macro_research` and `mf_screener` | Low |
+
+### Platform / infrastructure additions
+
+| Package | Purpose |
+|---|---|
+| `pkg/policy/dsl` | Tiny CEL-style expression DSL for board policies — risk team can add rules without code releases (FREE-AI Rec 6) |
+| `pkg/memory` LongTermMemory | Third memory tier — append-only consolidated facts per user with supersede semantics |
+| `pkg/loader` XLSX + Scanned-PDF | Stdlib-only XLSX cell extractor + Tesseract OCR fallback for image-rich PDFs |
+| `pkg/safety` Plugin chain | Named, stage-aware plugins + `HTTPShield` adapter template for Model Armor / Bedrock Guardrails / Lakera |
+| `pkg/agent` SkillRegistry | Progressive-disclosure skill manifests to keep supervisor prompts compact |
+| `pkg/observability/bq` | Warehouse-sink Event shape + JSONL sink + buffered async dispatcher for BigQuery / Snowflake |
+| `agents/voice` `StreamingAgent` | Chunked streaming ASR/TTS (incremental partials, audio chunks) on a pluggable provider |
+
+All extension agents follow the same contract as the originals — typed
+JSON payloads, declared `RiskLevel()`, structured `Disclaimer` field,
+Annexure VI `IncidentPayload` on hard rejects, full `HandleMessage`
+dispatch test. The cluster adds roughly **135 unit tests** and lifts the
+total package count past **100 green**.
 
 ---
 
@@ -359,7 +508,7 @@ genie/
 │   ├── demo/          # toy planner/executor/coordinator demo
 │   ├── red-team/      # adversarial probe corpus runner
 │   └── scaffold/      # generates a new agent skeleton
-├── agents/            # 20+ specialist + fallback + hierarchical + MoA + vision
+├── agents/            # 60+ specialist + fallback + hierarchical + MoA + vision + ADK-inspired
 ├── pkg/
 │   ├── protocol/      # Message + Classification + metadata keys
 │   ├── agent/         # Agent + Environment + RiskClass
@@ -367,8 +516,9 @@ genie/
 │   ├── comm/          # in-memory pub/sub bus (with OTel spans)
 │   ├── orchestration/ # orchestrator (governance + tracing + fallback)
 │   ├── governance/    # composite policy
-│   ├── memory/        # KV + SemanticMemory + EpisodicMemory + Summariser
+│   ├── memory/        # KV + SemanticMemory + EpisodicMemory + LongTermMemory + Summariser
 │   ├── observability/ # slog + OTel + OpenInference semconv
+│   │   └── bq/        # BigQuery / Snowflake JSONL sink + async buffer
 │   ├── eval/          # records + ragas/ + checklist/ + drift/ + hallucination/ + elo/
 │   ├── auth/          # JWT + bcrypt + oauth_device/ + oauth2/ + webauthn/
 │   ├── crypto/        # envelope AES-GCM + EnvKeyResolver + KMSKeyResolver
@@ -379,6 +529,7 @@ genie/
 │   ├── a2a/           # A2A client + server
 │   ├── cloudevents/   # CloudEvents 1.0 envelope
 │   ├── policy/        # board-approved AI policy YAML loader
+│   │   └── dsl/       # tiny CEL-style expression DSL for policy rules
 │   ├── incidents/     # Annexure VI form + auto-record
 │   ├── compliance/    # consent ledger + hash-chained audit log
 │   ├── sovereignty/   # region tags + provider registry
@@ -390,10 +541,10 @@ genie/
 │   ├── prompt/        # versioned registry + few-shot + Thompson bandit
 │   ├── constitution/  # 7-Sutra system prompt + Critique
 │   ├── schema/        # JSON-Schema validator + SchemaPolicy
-│   ├── safety/        # jailbreak + topic + toxicity + bias scorer
+│   ├── safety/        # jailbreak + topic + toxicity + bias + pluggable plugin chain
 │   ├── synth/         # synth data generator + RLAIF feedback store
 │   ├── dpo/           # export feedback to DPO/RLAIF JSONL pairs
-│   ├── loader/        # PDF/HTML/DOCX + entity extraction
+│   ├── loader/        # PDF/HTML/DOCX/XLSX + scanned-PDF OCR + entity extraction
 │   ├── toolkit/       # 7-Sutra compliance Scorecard
 │   ├── workflow/      # DAG + Saga + HITL + event-sourced sink
 │   ├── privacy/       # HMAC tokenisation + DP noise
@@ -427,7 +578,7 @@ stdout OTel exporters.
 ```bash
 git clone https://github.com/c2siorg/genie.git
 cd genie
-go test ./...                       # 57 packages all green
+go test ./...                       # 100+ packages all green
 go run ./cmd/genie                  # full pipeline → console
 ```
 
@@ -1169,21 +1320,21 @@ implementation status:
 | --- | --- | --- |
 | 2 | AI Innovation Sandbox | ✅ `cmd/genie` |
 | 4 | Indigenous AI Models | ✅ `pkg/llm.OllamaProvider` |
-| 6 | Adaptive Policies | ✅ `pkg/policy` YAML |
+| 6 | Adaptive Policies | ✅ `pkg/policy` YAML + `pkg/policy/dsl` CEL-style expressions |
 | 8 | Graded Liability | ✅ `pkg/incidents.Grade` |
 | 14 | Board-Approved AI Policy | ✅ `config/ai-policy.example.yaml` (Annexure V) |
 | 15 | Data Lifecycle Governance | ✅ envelope encryption + retention |
-| 16 | AI System Governance + Autonomous | ✅ `RiskLevel()` + supervisor |
+| 16 | AI System Governance + Autonomous | ✅ `RiskLevel()` + supervisor + per-agent deadline/circuit/budget |
 | 17 | Product Approval | 🟡 inventory + risk class |
-| 18 | Consumer Protection | ✅ AI disclosure banner |
-| 19 | Cybersecurity | ✅ JWT + RBAC + classification + injection + rate-limit |
+| 18 | Consumer Protection | ✅ AI disclosure banner on every Verdict/Decision |
+| 19 | Cybersecurity | ✅ JWT + RBAC + classification + injection + rate-limit + `agents/cyber_guardian` session checks |
 | 20 | Red Teaming | ✅ `cmd/red-team` |
 | 21 | BCP for AI | ✅ `agents/fallback` + `Orchestrator.SetFallback` |
-| 22 | AI Incident Reporting (Annexure VI) | ✅ `pkg/incidents` + auto-record |
-| 23 | AI Inventory | ✅ `GET /v1/ai-inventory` |
-| 24 | AI Audit Framework | 🟡 `agents/auditor` |
+| 22 | AI Incident Reporting (Annexure VI) | ✅ `pkg/incidents` + auto-record + `IncidentPayload` on KYC/payment rejects |
+| 23 | AI Inventory | ✅ `GET /v1/ai-inventory` — live, built from registry (60+ agents) |
+| 24 | AI Audit Framework | 🟡 `agents/auditor` + `pkg/observability/bq` warehouse sink for long-horizon analytics |
 | 25 | Disclosures | ✅ `GET /v1/disclosures` |
-| 26 | AI Toolkit | ✅ `pkg/toolkit` |
+| 26 | AI Toolkit | ✅ `pkg/toolkit` 7-Sutra Scorecard + `pkg/safety` plugin chain |
 
 Items 1, 3, 5, 7, 9–13 are regulator / SRO actions (outside Genie's scope).
 
@@ -1398,7 +1549,7 @@ register(tax_estimator_v2.New())
 ## Testing & quality gates
 
 ```bash
-make test                  # 57 test packages, all green
+make test                  # 100+ test packages, all green
 go vet ./...               # clean
 make red-team              # adversarial probes vs board-approved policy
 make bcp-drill             # forces a portfolio_advisor failure → fallback fires
@@ -1445,17 +1596,20 @@ small, swappable, and behind a stable interface.
 | --- | --- |
 | **Protocols** | MCP · A2A · CloudEvents 1.0 · AsyncAPI 3.0 · OpenInference semconv · CycloneDX 1.6 ML-BOM · Sigstore-style signing · W3C DIDs (did:key) · W3C VCs · OAuth 2.1 + PKCE · OAuth Device · WebAuthn (Ed25519 passkeys) |
 | **LLM** | Mock · Ollama (on-prem) · Anthropic · OpenAI · Gemini + Cost/Cache/Router/Shadow/Circuit/Deadline/Budget wrappers |
-| **Vision** | `VisionProvider` interface · Ollama vision · `agents/receipt_ocr` |
-| **Retrieval** | Vector + BM25 + RRF · pgvector store · cross-encoder rerank · HyDE · query rewrite · parent-child · time-decay · Self-RAG · CRAG · lost-in-middle · GraphRAG entity walk |
-| **Reasoning** | CoT · ReAct · Reflexion · Chain-of-Verification · Step-Back · Semantic Router |
-| **Memory** | Semantic (per-user) · Episodic w/ summarisation · Working scratchpad |
+| **Vision** | `VisionProvider` interface · Ollama vision · `agents/receipt_ocr` · scanned-PDF OCR loader (Tesseract) |
+| **Retrieval** | Vector + BM25 + RRF · pgvector store · cross-encoder rerank · HyDE · query rewrite · parent-child · time-decay · Self-RAG · CRAG · lost-in-middle · GraphRAG entity walk · XLSX loader |
+| **Reasoning** | CoT · ReAct · Reflexion · Chain-of-Verification · Step-Back · Semantic Router · multi-turn deep-research with cited briefs |
+| **Memory** | Semantic (per-user) · Episodic w/ summarisation · Long-term consolidated facts (append-only) · Working scratchpad |
 | **Eval** | RAGAS · CheckList · drift (KL) · hallucination detector · pairwise Elo · 7-Sutra Scorecard |
-| **Safety** | Jailbreak (heuristic + LLM) · topic guardrail · toxicity · bias (demographic parity) · output schema · explainability requirement · red-team harness |
-| **Workflow** | DAG runtime · Saga compensation · HITL approval · event-sourced log |
+| **Safety** | Jailbreak (heuristic + LLM) · topic guardrail · toxicity · bias (demographic parity) · output schema · explainability requirement · red-team harness · pluggable plugin chain (Model Armor / Bedrock Guardrails / Lakera adapters) |
+| **Workflow** | DAG runtime · Saga compensation · HITL approval · event-sourced log · SME-loan-style multi-stage orchestration |
 | **Privacy** | HMAC tokenisation · Laplace / Gaussian DP noise · classification ceilings · residency policy |
-| **Governance** | Board-approved YAML policy · consent ledger · tamper-evident audit log · graded liability · Annexure VI incident reporting · AIBOM |
+| **Governance** | Board-approved YAML policy · CEL-style policy DSL · consent ledger · tamper-evident audit log · graded liability · Annexure VI incident reporting · AIBOM |
 | **Federated** | FedAvg · additive secret-sharing aggregation |
-| **Agent patterns** | Supervisor · Hierarchical Supervisor · Mixture-of-Agents · Fallback · ReAct loop · Reflexion loop |
+| **Observability** | OTel + OpenInference · warehouse JSONL sink (BigQuery / Snowflake) · per-agent risk-tagged metrics |
+| **Voice** | Bhashini-shaped batched ASR/TTS · streaming chunked ASR/TTS for conversational UX |
+| **Payments / KYC / Cyber** | UPI/IMPS/NEFT/RTGS rail routing · full RBI KYC workflow · bancassurance claims · session-anomaly (impossible travel, credential stuffing) |
+| **Agent patterns** | Supervisor · Hierarchical Supervisor · Mixture-of-Agents · Fallback · ReAct loop · Reflexion loop · SkillToolset progressive disclosure |
 
 ---
 
@@ -1464,7 +1618,7 @@ small, swappable, and behind a stable interface.
 | Phase | Status |
 | --- | --- |
 | MARA platform (orchestrator, bus, registry, governance) | ✅ |
-| 20+ specialist agents | ✅ |
+| 60+ specialist agents (incl. ADK-inspired extensions) | ✅ |
 | OTel traces + metrics + OpenInference | ✅ |
 | HTTP API + JWT + RBAC | ✅ |
 | Postgres persistence | ✅ |
@@ -1485,6 +1639,12 @@ small, swappable, and behind a stable interface.
 | Privacy (DP, tokenisation) + Identity (DIDs, VCs) | ✅ |
 | Federated learning + secure aggregation | ✅ |
 | AIBOM + ed25519 signing | ✅ |
+| ADK-inspired extension cluster (KYC, claims, SME loan, invoice, deep-research, MPC, bancassurance, payments, cyber) | ✅ |
+| Policy-as-code DSL (`pkg/policy/dsl`) | ✅ |
+| Streaming voice ASR/TTS scaffolding | ✅ |
+| Pluggable safety guardrail plugin chain | ✅ |
+| BigQuery / Snowflake observability sink | ✅ |
+| Long-term memory tier (consolidated facts) | ✅ |
 | Kubernetes manifests (kustomize) | 🚧 |
 | Postgres-backed eval / feedback stores | 🚧 |
 | KEK rotation | 🚧 |
