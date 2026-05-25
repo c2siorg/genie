@@ -1,203 +1,227 @@
-# Field Notes from Production Agentic Apps on Kubernetes
+# Operational Patterns for Production Agentic AI
 
-*Reading "Generative AI on Kubernetes" Chapter 9 with a multi-agent system already in production — what matched, what we did differently, what's a real gap.*
+*What we converged on building Genie — a 60+ agent financial assistant in production — across security, coordination, and state. Honest about what works, what didn't, and where the gaps still are.*
 
 ---
 
-## Why this article exists
+## Why this matters
 
-I just finished Chapter 9 of *Generative AI on Kubernetes* (O'Reilly, Holzner / Roland Huss et al., 2026). It's the most practical thing I've read this year on running agentic systems in production — taxonomies for security patterns, sober treatment of MCP and A2A, honest writing about state management.
+Most "AI in production" content stops at "we deployed a chatbot and it scaled." That's not the hard part. The hard part is what happens after:
 
-I'm running a multi-agent financial assistant called Genie. It's open source, built on Microsoft's Multi-Agent Reference Architecture, aligned with the RBI FREE-AI report, and now ships 60+ specialist agents. Reading the chapter felt like having an external code reviewer go through our architecture and ask "did you think about this?"
+- A user's identity needs to ride through three agent hops and an external API call. Whose token does the API see?
+- Two agents need to coordinate on a 4-hour research task across pod restarts. How do they not lose context?
+- Your guardrail policy fires on a Friday at 2 AM and the audit log has to make sense to a regulator on Monday.
 
-The honest answer was mixed. Some of the chapter's patterns we'd already implemented. Some we'd implemented differently for reasons that hold up. Some are genuine gaps in our roadmap.
+These aren't "frameworks problems." They're operational problems that show up the same shape regardless of which framework you picked. The patterns below are what we settled on across 12 months of iteration on Genie — an open-source multi-agent financial assistant in Go, aligned with the RBI FREE-AI report.
 
-This is the field-notes version. If you're operating an agentic system today, these are the parts of the chapter that should keep you up at night.
+If you're operating an agentic system today, or planning to, this is the playbook I wish someone had handed me on day one.
 
 ---
 
 ## Security: four patterns, not one
 
-The chapter lays out four MCP security patterns for the question "whose identity should the upstream API see when an agent calls a tool?":
+The first question that hits you in production is identity. An agent calls a tool that calls an upstream API. Whose identity should the API see?
 
-1. Agent impersonation (token passthrough)
-2. Service account delegation (Kubernetes-native)
-3. Delegated identity via OAuth2 token exchange (RFC 8693)
-4. Mutual TLS with SPIFFE/SPIRE
+There isn't one answer. There are four patterns, each making a different trade-off between simplicity, attribution, and zero-trust posture.
 
-The framing alone is worth the price of the chapter. Most "agentic AI security" content collapses to "use an API key." The chapter's contribution is forcing you to make the trade-off explicit: simplicity vs attribution vs zero-trust.
+### Pattern 1 — Agent impersonation (token passthrough)
 
-Here's how Genie's posture maps:
+The user's access token rides all the way through. The agent calls the MCP server with `Authorization: Bearer <user-token>`. The MCP server passes that token to the upstream API. The upstream sees the user.
 
-### Pattern 1 — Agent impersonation
+**What you get**: per-user audit trails for free. The upstream API's existing RBAC works unchanged. Regulators can see "Nurse Alice queried Patient 4711," not just "the agent did."
 
-We do this. The user's JWT (HS256, 60-minute TTL) rides through `Authorization: Bearer …` on every `/v1/ask` call. The orchestrator extracts `user_id` and `user_roles` from the JWT into `msg.Metadata`, and `governance.RBACPolicy` evaluates against the roles on every bus hop. The audit log shows the actual user, not "the agent."
+**What you pay**: token lifetime becomes a hot issue. If the user's token expires in 60 minutes and your task takes 4 hours, you ship a refresh strategy or you fail. Scope explosion is the other tax — the user's token needs scopes for every API the agent *might* call.
 
-What the chapter warns about — token lifetime expiry on long-running tasks, scope explosion — we sidestep mostly by being short-running. Our pipelines complete in seconds, not hours. The day we ship a multi-hour research workflow, we'll need a refresh strategy.
+**When it fits**: short-running tasks, existing RBAC infrastructure that you don't want to rebuild, compliance shops that want individual-user attribution.
+
+In Genie this is the default. The user's JWT (HS256, 60-min TTL) rides through every `/v1/ask`. The orchestrator extracts `user_id` + `user_roles` into `msg.Metadata`. Every bus hop re-evaluates `governance.RBACPolicy` against those roles.
 
 ### Pattern 2 — Service account delegation
 
-We're K8s-deploy-agnostic today (compose works, Kubernetes manifests are roadmap), so this pattern isn't load-bearing for us yet. We get the *effect* — workload-to-workload trust without external token servers — through application-level RBAC enforced at two layers: HTTP middleware (`pkg/web/mid.RequireRole`) and bus governance (`pkg/governance.RBACPolicy`). Defence in depth without K8s primitives.
+The agent and the upstream API both live on Kubernetes. They authenticate to each other using the K8s primitives that are already there — ServiceAccount tokens mounted into every pod, RBAC rules in YAML.
 
-When we ship K8s manifests, this pattern becomes the natural choice for intra-cluster trust. The chapter's distinction between **server identity** and **agent identity** (which ServiceAccount token reaches the upstream API) is the call we'll need to make explicitly.
+**What you get**: no external token server, no separate identity provider. K8s already mints the tokens, rotates them, and validates them via the TokenReview API. Auth becomes a YAML edit.
 
-### Pattern 3 — OAuth2 token exchange (RFC 8693)
+**What you pay**: the upstream sees the *agent's* identity, not the user's. If you need per-user attribution, this isn't it. You can layer the user-id in a side-channel header, but you've split your auth story across two surfaces.
 
-This is a gap. We don't implement it. The use case the chapter calls out — preserving both *who* (the user) and *what* (the agent) in a single signed token — is exactly what compliance teams want for AI-driven actions in regulated industries.
+**When it fits**: intra-cluster service-to-service, agent-level rate limits, environments where compliance accepts agent-level attribution.
 
-For a banking use case (which is what Genie targets), "Nurse Alice's medical-assistant agent accessed Patient 4711's records" is the audit shape regulators want. We get the *user* attribution today via the JWT passthrough; we don't yet get the *agent* attribution in the same token. We get it in the OTel trace, which is a different surface.
+We don't lean on K8s ServiceAccounts in Genie today because we run as a single binary (compose stack, K8s manifests on the roadmap). We get a similar effect — workload trust without external token services — through application-level RBAC at two layers: HTTP middleware and bus governance. Different mechanism, same defence-in-depth.
 
-This is going on the roadmap. The chapter sold me.
+### Pattern 3 — Delegated identity via OAuth2 token exchange (RFC 8693)
 
-### Pattern 4 — SPIFFE/SPIRE
+This is the sleeper. It's not as well-known as the others and it's the one I'd implement first if starting fresh today.
 
-Also a gap, also roadmap. We use envelope AES-256-GCM with a KMS-pluggable KEK for data-at-rest, and JWT for service-to-service. The chapter's argument — bearer tokens can be stolen, SVIDs cryptographically bound to the workload can't — is correct.
+The idea: trade the user's token for a *dual-identity* token that carries both the user (`sub` claim) AND the agent (`act` claim). The upstream API can then enforce composite policies — *"allow if the user has permission AND the agent is authorized for this operation."*
 
-For a single-binary deployment of the Genie API behind an LB, SPIFFE is overkill. For a mature K8s deployment running 20+ MCP servers and 60+ agent pods, SPIFFE/SPIRE is the right answer. The chapter's operational caveat is the honest one: it's not bearer tokens, it's a CA you operate. Treat it as critical infrastructure or don't bother.
+**What you get**: cryptographically-signed proof of *who* (the user) AND *what* (the agent) for every action. Audit logs answer "which agent did which user trigger on which data" in a single token, not three logs joined together.
 
-### MCP Gateways
+**What you pay**: you have to operate a token-exchange endpoint. Modern identity platforms (Keycloak, Auth0, Azure AD) support RFC 8693, but you have to wire it. The exchanged tokens should be cached on a `(user, agent, audience)` tuple keyed by the JWT's `exp` claim — never longer than the actual token lifetime.
 
-The chapter introduces this as the "alternative" — instead of implementing security in every MCP server, centralise it at a gateway. We don't have one. We have one MCP server (Genie itself, exposing a curated set of read-only agents via `/mcp`). At one server, the gateway is overkill.
+**When it fits**: regulated industries where the compliance question is dual-identity ("which AI agent accessed this record on whose behalf?"), or any system where you want to grant the agent narrower scopes than the user has.
 
-The day we run 10+ MCP servers across business units, the gateway pattern becomes load-bearing. The chapter names Microsoft's MCP Gateway, IBM's ContextForge, Envoy AI Gateway, Solo.io's agentgateway — useful market scan. Worth re-reading before committing.
+This is a real gap in Genie today. The compliance use case sells me — for a bank or a hospital, "Nurse Alice's medical-assistant agent accessed Patient 4711" is the right audit shape. It's going on the next-quarter roadmap.
 
----
+### Pattern 4 — SPIFFE/SPIRE (zero-trust)
 
-## Inter-agent coordination: A2A
+Bearer tokens — JWTs, ServiceAccount tokens, API keys — can be stolen. SPIFFE solves this by binding identity to the workload itself. Each pod gets a SPIFFE ID (e.g., `spiffe://example.com/ns/agents/sa/customer-support`) and an X.509 cert (SVID) that's automatically issued, rotated every ~30 minutes, and impossible to steal without compromising the pod itself.
 
-The chapter's treatment of A2A is the cleanest I've read. The framing — *MCP is for agents calling tools; A2A is for agents calling other agents* — is the right mental model.
+**What you get**: zero-trust mTLS by default. Stolen credentials become a non-problem. Service mesh integration is natural.
 
-Genie ships `pkg/a2a` (client + server). An A2A peer can call us; we can call other A2A peers. The chapter's three core concepts map directly:
+**What you pay**: operational overhead. The SPIRE Server is critical infrastructure — treat it like your KMS. Registration entries to manage (or automate via the SPIRE Controller Manager). The learning curve is genuinely steeper than bearer tokens.
 
-- **Agent card** — yes, we expose `agent/getCard` listing skills, input modes, output modes, protocol versions.
-- **Task lifecycle** — yes, `task/submit` returns a task ID; the requester can poll. We don't yet support the streaming subscription model the chapter describes; that's a feature gap.
-- **Artifact streaming** — partial. We stream SSE inside `/v1/ask/stream` for our own bus events, but the A2A streaming spec for cross-agent artifact transfer isn't in our implementation yet.
+**When it fits**: production K8s deployments with 10+ services, regulated environments where credential theft is part of the threat model, any setup where you already run a service mesh.
 
-The chapter notes that **ACP merged into A2A under the Linux Foundation in August 2025**. That's the kind of detail you can't get from blog posts; it lives in the chapter and the Agentic AI Foundation (AAIF) project pages. Worth noting because some teams are still building on pre-merge ACP libraries that are now unmaintained.
+This is roadmap for Genie. For our current shape (single API binary + Postgres + Ollama on compose), SPIFFE is overkill. When we ship Helm charts and start running 20+ agent pods, SVIDs replace JWTs for service-to-service. Today's JWT + envelope-encrypted secrets are the bridge.
 
-Where I'd nuance the chapter slightly: it says "treat agents as tools" via MCP loses A2A's richer semantics. True. But for early-stage multi-agent systems, modeling one agent as an MCP tool to another is a fine simplification while you figure out your capability surface. The migration path to A2A is mechanical once you have agent cards drafted.
+### Pattern 5 — Layer them
 
----
+In practice, the right answer is rarely one pattern in isolation. The strongest production posture I've seen layers:
 
-## State management — where the chapter's experience shows
+- **SPIFFE/SPIRE for workload-to-workload mTLS** — cryptographic identity for the network hop
+- **User identity in request metadata** — `X-User-ID` header or token-exchange dual-identity token
+- **Policy engine (OPA, Cedar) for composite authorization** — "allow if workload is X AND user has access to record Y"
 
-The chapter splits agent state into **short-term** (active conversation) and **long-term** (persisted across sessions). Then it walks through:
+You get the security benefits of SPIFFE without losing per-user attribution. The audit log answers both questions. The compromise of a single workload doesn't grant access to arbitrary data.
 
-1. In-memory (works in dev, dies on pod restart)
-2. KV store like Redis with TTL (production short-term)
-3. Database for long-term (queryable, durable, audit-friendly)
-4. Checkpointing for long-running workflows
+### MCP Gateways — when to centralize
 
-This taxonomy maps to almost any agent system. Our shape:
+An alternative to implementing security in every MCP server: deploy a gateway that sits between agent runtimes and MCP servers. Centralize authN, authZ, rate limiting, audit. Several implementations shipped in 2025 — Microsoft's MCP Gateway, IBM's ContextForge, Envoy AI Gateway, Solo.io's agentgateway. The market is young; revisit when you need to choose.
 
-### Short-term — `pkg/memory.EpisodicMemory`
+**When it fits**: 10+ MCP servers, multi-tenant environments, complex authorization that's a pain to repeat in every server.
 
-Today: in-memory rolling buffer per session, with LLM-driven summarisation when the buffer exceeds threshold. Survives across in-process restarts via the orchestrator's bus subscription, but not across pod restarts.
+**When it doesn't**: one or two MCP servers, simple authZ. The gateway is one more thing to keep highly available.
 
-The chapter's call to externalise from day one is correct. Our roadmap line item: implement `EpisodicMemory` over Redis or Postgres. The chapter's specific advice — TTL keyed on session inactivity, scale horizontally because all pods hit the same store — is exactly the migration plan.
-
-### Long-term — `pkg/memory.LongTermMemory`
-
-We shipped this recently as an *append-only* tier — durable consolidated facts about a user that survive across sessions ("primary bank: HDFC, confidence 0.85, source: 60d txn analysis"). Updates supersede rather than overwrite, so the history is preserved for audit.
-
-The reference implementation is in-memory. The Postgres backing is the obvious next step. The chapter's distinction between "short-term needs low-latency access" (KV) and "long-term supports analytics, personalization, and audit requirements" (DB) is exactly the split. We just need to land both halves of it in code.
-
-### Checkpointing — `pkg/workflow`
-
-This is where we accidentally agree with the chapter for different reasons. We built `pkg/workflow` (DAG + Saga + HITL + event-sourced log) for the **SME loan workflow** — a multi-stage process with a human-approval gate that can take hours.
-
-The chapter's checkpoint pattern (save state after each major step; resume from latest on restart) is what our event-sourced sink gives us, because every transition is recorded. A failure mid-DAG re-reads the sink's events and resumes from the last `completed` step. The motivation was different (regulator-friendly audit trail), but the operational benefit (pod evictions don't restart the workflow) falls out for free.
-
-If you're starting an agentic system today and you know you'll have long-running workflows, an event-sourced step log is a better foundation than a "save checkpoint file every N steps" pattern. You get debugging, audit, and resume on the same data structure.
+We run one MCP server today (Genie itself, exposing curated read-only agents). The gateway is overkill at one server. The day we cross 10, the math flips.
 
 ---
 
-## What's universal across the chapter
+## Inter-agent coordination: A2A vs MCP
 
-Three principles I'd underline regardless of which protocol or framework you pick:
+Two protocols, two jobs, often confused:
+
+- **MCP** connects agents to **tools** — synchronous request/response, "call this function, get this result." Ideal for integrating an agent with its operational environment.
+- **A2A** connects agents to **other agents** — asynchronous task delegation with lifecycle tracking. Designed for when one agent needs another agent to *reason* about something, not just execute a function.
+
+You *could* model another agent as an MCP tool. For simple delegation, it works. What you lose:
+
+- **Capability discovery** — A2A's "agent card" lets one agent programmatically find another that exposes a specific skill. MCP doesn't have this concept.
+- **Task lifecycle** — A2A submits a task, gets an ID, polls or subscribes to updates. MCP is request/response; long-running work has to be modeled awkwardly.
+- **Artifact streaming** — A2A can stream partial results back as the agent works. MCP doesn't natively support this.
+
+The rule we settled on: **A2A for cross-agent orchestration, MCP for tool integration within each agent**. Each agent uses MCP to connect to its own tools; agents use A2A to coordinate with each other.
+
+Genie ships both: `pkg/mcp` (client + server) and `pkg/a2a` (client + server). The MCP server exposes curated read-only agents to Claude Desktop / Cursor / any MCP client. The A2A server lets one Genie instance call another as a first-class peer. We don't yet support A2A's streaming subscription model — polling only. That's a feature gap; on the list.
+
+A useful update: ACP (IBM's Agent Communication Protocol) merged into A2A in August 2025 under the Linux Foundation. Both protocols are now under shared governance via the Agentic AI Foundation. If you're still building on pre-merge ACP libraries, plan a migration.
+
+---
+
+## State management: short, long, and checkpointed
+
+The first thing that surprises teams shipping agentic systems: agents are *not* stateless REST APIs. A user asks one question, the agent retrieves three documents, infers a pattern, suggests an action. The next question depends on all of that context.
+
+Where does the context live? How does it survive a pod restart? How do you scale horizontally when each agent instance needs the conversation history?
+
+The pattern that holds up: split state into **short-term** and **long-term**, then add **checkpointing** for long-running workflows.
+
+### Short-term — the active conversation
+
+For development and prototyping: keep it in a Python dict / Go map in the pod's memory. Trivial, fast, no infrastructure.
+
+For production: externalize from day one. A KV store like Redis is the canonical choice. Session ID as key, serialized conversation as value, TTL matching session expiration.
+
+The argument for externalizing on day one isn't paranoia — it's that the retrofit is painful. In-memory state leaks into closures, goroutine-locals, lazy initializers. You don't fully understand all the places it lives until you try to move it. Weeks of work that could have been hours.
+
+Deploy the KV store as a StatefulSet with a PersistentVolume. Pods restart, state survives. Horizontal scaling works because all pods hit the same store. TTL handles cleanup of abandoned sessions.
+
+Genie's `pkg/memory.EpisodicMemory` is in-process today with LLM-driven summarisation when the buffer overflows. That's fine for the sandbox and CI; production needs the Redis or Postgres backing. On the migration list, sized as a week of work.
+
+### Long-term — facts that survive sessions
+
+Short-term memory is "what did we just discuss?" Long-term memory is "what do we *know* about this user?" — primary bank, risk appetite, dependents, monthly inflow average.
+
+For long-term, KV stores aren't enough. You need SQL — both for cross-session queries ("show me all customers who mentioned pricing concerns last week") and for audit ("prove what the agent told this customer six months ago"). Compliance and analytics both require it.
+
+Pattern that works: KV for short-term (every request reads/writes), DB for long-term (audit logs, user preferences, learnt patterns). Write to the DB asynchronously off the critical path so the user response stays fast. On session start, query the DB for relevant long-term facts and cache them in the short-term store.
+
+Genie's `pkg/memory.LongTermMemory` is the reference implementation — append-only consolidated facts, supersede semantics ("primary bank: HDFC, superseded → primary bank: ICICI" both visible in history). The Postgres backing is the obvious migration. Same migration path: in-memory today, durable tomorrow.
+
+### Checkpointing — for the long-runners
+
+Some workflows take hours. An SME loan workflow that fetches GST data, runs cashflow analysis, checks CGTMSE eligibility, drafts an indicative offer, waits for a Relationship Manager's human approval, then drafts the sanction letter — that's not a single LLM call. That's a multi-stage pipeline that needs to survive pod evictions.
+
+The pattern: save a checkpoint after each major step. If the pod is evicted, the agent resumes from the most recent checkpoint instead of starting over.
+
+A robust shape: not "save a JSON file every N steps" but an **event-sourced step log**. Every transition (`started`, `completed`, `failed`, `awaiting_approval`, `approved`) is appended. Recovery is replay: read the log, find the last `completed` step, resume from the next one.
+
+This gives you three things for free:
+
+1. **Resumability** — the original goal.
+2. **Auditability** — the regulator can see every state transition.
+3. **Debuggability** — the on-call can read mid-flight state to understand what the agent was thinking at step 17.
+
+Genie's `pkg/workflow` is exactly this — DAG + Saga compensation + HITL approval + event-sourced sink. We built it for the SME loan workflow's regulator-friendly audit trail. The pod-eviction survivability was a happy side effect.
+
+---
+
+## Three operational principles that hold across all of this
+
+The patterns change as the protocols evolve. These three don't.
 
 ### 1. Make trust structural, not behavioural
 
-Every security pattern in the chapter pushes you toward enforcement points that can't be skipped by a forgetful caller. SPIFFE binds identity to the workload; OAuth2 token exchange centralises the actor claim; the service account is mounted automatically, not passed.
+Every security pattern above pushes you toward enforcement points the caller can't accidentally skip. SPIFFE binds identity to the workload. ServiceAccount tokens are mounted automatically. Governance composites evaluate every message before any agent runs.
 
-The opposite — "trust this code path because we said to" — is the failure mode. We see it in our own code when an engineer adds a new LLM call and forgets to wrap it in the policy composite. The wrapper isn't optional; the orchestrator forces it. Same idea, different layer.
+The opposite — "remember to check authorization in this handler" — fails the first time a junior engineer ships a new handler without the check. The wrapper isn't a guideline; the orchestrator forces it. Same logic at every layer.
 
-### 2. Long-running != hung; checkpoint it
+### 2. Long-running ≠ hung. Checkpoint it.
 
-An agent that takes 4 hours to complete a research task isn't broken. It's normal. The chapter's checkpoint advice — save intermediate state, resume on restart — is what makes long-running agents production-grade.
+An agent that takes 4 hours to complete a research task isn't broken; it's normal. What makes it *production*-grade is that a pod eviction at hour 3 doesn't restart from hour 0.
 
-The harder lesson: design the agent's intermediate state to be *inspectable*. Our SME loan workflow's `workflow.State` is a key-value map that an on-call engineer can read mid-flight. The chapter's example (`step_001.json`, `step_002.json`) has the same property. When something goes wrong at step 17, you can read step 16's output and figure out why.
+The harder version of this principle: design checkpoint state to be *inspectable*. A key-value map (or an event log) that an on-call engineer can read mid-flight is worth ten "save the model weights" black boxes. When something goes wrong at step 17, you want to read step 16's output and figure out why.
 
-### 3. State externalisation is non-negotiable
+### 3. Externalize state from day one
 
-The chapter is direct: "In-memory state will fail the moment you scale horizontally or survive a pod restart." We learned this the easier way (we read the chapter before scaling), but every team I've talked to that didn't externalise from day one ended up doing a painful retrofit.
+In-memory state will fail the moment you scale horizontally or survive a pod restart. The retrofit cost is weeks, not hours, because state leaks into more places than you think.
 
-The retrofit isn't just "move dict to Redis." It's "discover all the places state implicitly leaks (closures, goroutine-local data, lazy initialisers), and migrate each one carefully." The honest cost is weeks. The honest avoidance is "Redis from day one, even if the data lives there for 30 seconds."
-
----
-
-## Things the chapter wisely doesn't cover
-
-A few things I appreciated were left out, because they belong elsewhere:
-
-- **Specific framework comparisons.** LangGraph, CrewAI, custom — the chapter names them only enough to make a point about coordination fragmentation. The operational patterns hold regardless.
-- **Cost optimisation for LLM calls.** Different book chapter, probably a different book.
-- **Agent evaluation and quality metrics.** Adjacent topic; out of scope.
-
-The discipline of "operational patterns that endure across tools and standards" is what makes the chapter age well.
+Even if the data only lives in Redis for 30 seconds, put it in Redis from day one. Future you will thank present you.
 
 ---
 
-## What I'd add for the next edition
+## What we're shipping next
 
-One area where I wish the chapter had gone deeper:
+This is what's on Genie's next-quarter roadmap, sized in weeks:
 
-**The relationship between policy-as-code (governance) and AuthZ.** The chapter covers OAuth scopes, RBAC, SubjectAccessReview, SPIFFE allowlists. All of those are *transport-level* authz. There's a layer above that — *behavioural* policy that gates which tools an agent is allowed to call, or what classifications can leave the home region, or what content patterns trip an injection check. That layer is essential in regulated industries and the chapter alludes to it (OPA / Cedar in the gateway section) but doesn't go deep.
+1. **OAuth2 token exchange (RFC 8693)** — agent runtime exchanges user JWT for a dual-identity token before MCP calls. Audit log answers "which agent on whose behalf" in one signed credential.
+2. **EpisodicMemory → Redis / Postgres** — externalize short-term memory so pods can restart without dropping conversations.
+3. **LongTermMemory → Postgres** — the Postgres backing for the consolidated-facts tier.
+4. **A2A streaming subscription** — catch up the A2A server to the streaming spec, not just polling.
+5. **Helm charts + SPIFFE/SPIRE** — when we ship K8s manifests, SVIDs replace JWT for service-to-service.
 
-Genie's `pkg/governance` composite stacks ~10 policies that run on every bus hop. The chapter could have a sibling section on "policy at the message layer, not just at the transport layer." Maybe in the next edition.
-
----
-
-## Concrete actions I'm taking after reading
-
-1. **Add RFC 8693 token exchange to Genie's roadmap.** Specifically: agent runtime exchanges the user's JWT for a dual-identity token (user in `sub`, agent in `act`) before calling MCP servers. The chapter's worked example is the right shape.
-2. **Move EpisodicMemory to Redis or Postgres.** Move LongTermMemory to Postgres. Today's in-memory reference implementations are sufficient for the sandbox; production deployments need the durability.
-3. **Re-evaluate MCP Gateway when we cross 10 MCP servers.** Today we run one; the gateway is overkill. Bookmark the chapter's market scan.
-4. **Plan SPIFFE/SPIRE for the K8s deployment.** Not for the compose stack. When we ship Helm charts, SVIDs replace JWT for service-to-service.
-5. **A2A streaming subscription.** Catch up our A2A server to the streaming spec, not just polling.
-
-That's a quarter's worth of work, all of it concretely scoped because the chapter named the shapes.
-
----
-
-## The book and where to find it
-
-*Generative AI on Kubernetes* by Hendrik Roland Huss et al., O'Reilly Media, 2026. Chapter 9 is the production patterns chapter. Other chapters cover architecture, RAG, observability — relevant but separately reviewed.
-
-If you're operating an agentic system on Kubernetes (or planning to), buy the book. The chapter pays for itself the first time you correctly route a security trade-off because of the four-pattern framework.
-
-The chapter cites Christian Posta's "[MCP Authorization Patterns for Upstream API Calls](https://oreil.ly/ufDox)" as foundational. Worth reading alongside.
+Each of those addresses a gap that production stress will hit before we're ready, unless we ship them first.
 
 ---
 
 ## The repo
 
-Genie is open source under MIT. Where the chapter's patterns landed in our code:
+Genie is open source under MIT. Everything above is in the codebase:
 
 - Security — `pkg/auth/`, `pkg/governance/`, `pkg/crypto/`
 - MCP — `pkg/mcp/` (client + server)
 - A2A — `pkg/a2a/` (client + server)
 - State — `pkg/memory/` (episodic + semantic + long-term tiers)
 - Workflow checkpointing — `pkg/workflow/`
-- Full docs — [`docs/`](docs/) — including 13 detailed per-agent pages and 7 per-package pages
+- Full docs — [`docs/`](docs/) — 13 detailed per-agent pages, 7 per-package pages, FREE-AI mapping, operations guide
 
 ```bash
 git clone https://github.com/c2siorg/genie.git
-go test ./...
+go test ./...           # 100+ packages green
+make compose-up         # full stack with Postgres + Tempo + Grafana + Ollama
 ```
 
 ---
 
-If you've read the chapter and applied it to your own system, what's the one pattern that surprised you most? For me it was the OAuth2 token-exchange angle — I'd dismissed it as enterprise-y bureaucracy until the chapter framed it as the natural way to keep both user and agent identity in a single signed credential. Going on our roadmap as a result.
+If you've shipped a production agentic system, which of these patterns bit you hardest? For us it was the state-externalization retrofit — moving in-memory session state to Redis took longer than anything else in the year, and we mostly avoided the worst of it. Curious what others saw.
 
-#GenerativeAI #Kubernetes #MCP #A2A #SPIFFE #ResponsibleAI #ProductionAI #FinTechIndia #BankingAI #OReilly
+#GenerativeAI #Kubernetes #MCP #A2A #SPIFFE #ResponsibleAI #ProductionAI #FinTechIndia #BankingAI
