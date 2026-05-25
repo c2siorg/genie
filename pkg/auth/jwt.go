@@ -56,6 +56,49 @@ func (i *Issuer) Issue(userID, email string, roles []Role) (string, Claims, erro
 	return tok, claims, err
 }
 
+// IssueWithActor returns a signed JWT with a custom audience and an RFC
+// 8693 actor claim. Used by the token-exchange flow to mint a
+// dual-identity token whose Subject stays the original user and Actor
+// identifies the service currently acting on the user's behalf.
+//
+// When audience is nil the Issuer's default audience is used. Pass an
+// explicit audience to scope the token to a specific upstream target.
+func (i *Issuer) IssueWithActor(userID, email string, roles []Role, audience []string, actor *Actor) (string, Claims, error) {
+	now := time.Now().UTC()
+	aud := audience
+	if len(aud) == 0 {
+		aud = i.Audience
+	}
+	claims := Claims{
+		Subject:   userID,
+		Email:     email,
+		Roles:     roles,
+		IssuedAt:  now.Unix(),
+		ExpiresAt: now.Add(i.TTL).Unix(),
+		Issuer:    i.Issuer,
+		Audience:  aud,
+		Actor:     actor,
+	}
+	tok, err := encode(jwtHeader{Alg: "HS256", Typ: "JWT"}, claims, i.Secret)
+	return tok, claims, err
+}
+
+// VerifyIgnoringAudience is Verify with the audience check skipped.
+// Used by the token-exchange flow where the input token may already be
+// scoped to a different audience than the issuer's default.
+//
+// Concurrency note: mutates Audience temporarily; not safe to call from
+// many goroutines on the same Issuer. For multi-goroutine use, the
+// token-exchange package should hold the verifier behind a mutex or use
+// a per-call copy of the Issuer.
+func (i *Issuer) VerifyIgnoringAudience(token string) (Claims, error) {
+	saved := i.Audience
+	i.Audience = nil
+	c, err := i.Verify(token)
+	i.Audience = saved
+	return c, err
+}
+
 // Verify parses, validates the signature, expiration, and audience of a token.
 func (i *Issuer) Verify(token string) (Claims, error) {
 	parts := strings.Split(token, ".")
