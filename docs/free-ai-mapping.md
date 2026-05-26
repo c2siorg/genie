@@ -137,6 +137,13 @@ The board signs off on the file the system loads. No translation layer.
 | Per-row `kek_id` (supports rotation) | `pkg/storage/postgres/migrations/` |
 | Retention job (`expires_at` purge every 6h) | `pkg/storage/postgres/retention.go` |
 | Document lifecycle | `pkg/web/handlers/documents.go` |
+| **Postgres Row-Level Security (DB-enforced tenant isolation)** | `pkg/storage/postgres/migrations/0005_rls.sql` + `pkg/storage/postgres/tenant.go` (`WithTenant` / `WithAdminContext`) |
+| **Bus-layer TenantPolicy (defence in depth with RLS)** | `pkg/governance/tenant.go` |
+
+The RLS + bus pairing is the Q1 hardening's two-pair defence: a bug
+in either layer is caught by the other. See
+[packages/postgres-rls.md](packages/postgres-rls.md) and
+[packages/governance-tenant.md](packages/governance-tenant.md).
 
 ### Rec 16 — AI System Governance + Autonomous Systems ✅
 
@@ -152,14 +159,26 @@ The board signs off on the file the system loads. No translation layer.
 A high-risk autonomous loop can't burn through your LLM budget — the
 wrapper cuts it off.
 
-### Rec 17 — Product Approval 🟡
+### Rec 17 — Product Approval ✅
 
-Live AI inventory exists (Rec 23); a structured product-approval
-workflow consuming it is on the roadmap. Today the building blocks:
+The Q1 hardening promoted this from 🟡 to ✅ via the four-tier
+promotion model (`pkg/agent.Tier`). Each promotion (Sketch → Prototype
+→ Beta → Production) is a documented decision, and the dispatch gate
+refuses customer-facing traffic to anything below Production. The
+risk team reads the tier off `/v1/ai-inventory`.
 
-- Inventory endpoint: `GET /v1/ai-inventory` (`pkg/web/handlers/inventory.go`)
-- Risk class per agent: `pkg/agent.RiskOf(a)`
-- AIBOM with audit timestamps: `pkg/aibom/`
+| Artefact | Where |
+|---|---|
+| Four-tier promotion model | `pkg/agent/tier.go` (`TierSketch`, `TierPrototype`, `TierBeta`, `TierProduction`) |
+| Default-to-Prototype dispatch gate (fail closed) | `pkg/agent.TierOf` |
+| Tier column on inventory | `pkg/web/handlers/inventory.go::InventoryItem.Tier` |
+| End-to-end gate test | `tests/security_envelope_test.go::TestSecurityEnvelope_SketchTierIsBlocked` |
+| Promotion checklist | [`docs/operations.md`](operations.md) — Q1 hardening section |
+| Risk class per agent | `pkg/agent.RiskOf(a)` |
+| AIBOM with audit timestamps | `pkg/aibom/` |
+
+See [packages/agent-tier.md](packages/agent-tier.md) for the model in
+detail.
 
 ### Rec 18 — Consumer Protection ✅
 
@@ -216,9 +235,13 @@ make red-team
 | Safety scorer flag above threshold | `pkg/safety/` |
 | KYC sanctions hit | `agents/kyc_orchestrator` `rejectVerdict` |
 | Payment rejection | `agents/payment_orchestrator` `reject()` |
+| **Dual-identity attribution on every audited call** | `pkg/auth/tokenexchange/exchange.go` — `Subject = user`, `Actor = agent`, N-hop chain via `Actor.Nested` |
 
 Output: Annexure VI-shaped JSON in the incident log, hash-chained into
-the audit log.
+the audit log. With RFC 8693 dual-identity tokens, a reviewer reading
+a single audit entry can answer both "which user initiated" and "what
+was the proximate agent caller, and which services touched the request
+in between." See [packages/oauth-token-exchange.md](packages/oauth-token-exchange.md).
 
 ### Rec 23 — AI Inventory ✅
 
@@ -229,7 +252,11 @@ curl -H "Authorization: Bearer $ADMIN" /v1/ai-inventory | jq .
 ```
 
 `pkg/web/handlers/inventory.go` reads `registry.List(ctx)` →
-`InventoryItem[]` with id, name, capabilities, risk_class, has_fallback.
+`InventoryItem[]` with id, name, capabilities, risk_class, **tier**,
+has_fallback. The `tier` column is what the risk team scans to spot
+non-production agents serving customer traffic (Rec 17). The UI
+contract test (`pkg/web/handlers/ui_security_test.go::TestInventory_ListIncludesTier`)
+pins the JSON field name against accidental drift.
 
 ### Rec 24 — AI Audit Framework 🟡
 

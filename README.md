@@ -409,6 +409,22 @@ to fit Indian banking and FREE-AI. Full design rationale in
 | `pkg/observability/bq` | Warehouse-sink Event shape + JSONL sink + buffered async dispatcher for BigQuery / Snowflake |
 | `agents/voice` `StreamingAgent` | Chunked streaming ASR/TTS (incremental partials, audio chunks) on a pluggable provider |
 
+### Q1 hardening — security primitives
+
+The four pieces shipped together as a defence-in-depth envelope. Each
+has its own doc under `docs/packages/`; read all four to understand
+how they layer.
+
+| Package | Purpose |
+|---|---|
+| `pkg/storage/postgres` + `migrations/0005_rls.sql` | DB-enforced tenant isolation via Postgres Row-Level Security + `SET LOCAL` GUC (`WithTenant` / `WithAdminContext`). FREE-AI Rec 15. |
+| `pkg/governance.TenantPolicy` | Bus-layer cross-tenant check that pairs with RLS — `expected_tenant` mismatch or missing `tenant_id` → deny before the agent runs |
+| `pkg/auth/tokenexchange` | OAuth 2.0 Token Exchange (RFC 8693). Dual-identity tokens (`Subject = user`, `Actor = agent`), N-hop nested actor chains. FREE-AI Rec 22. |
+| `pkg/agent.Tier` | Sketch / Prototype / Beta / Production promotion model. Dispatch gate refuses customer-facing traffic to anything below Production. Default-to-Prototype (fail closed). FREE-AI Rec 17. |
+
+End-to-end integration test that composes all four:
+`tests/security_envelope_test.go`.
+
 All extension agents follow the same contract as the originals — typed
 JSON payloads, declared `RiskLevel()`, structured `Disclaimer` field,
 Annexure VI `IncidentPayload` on hard rejects, full `HandleMessage`
