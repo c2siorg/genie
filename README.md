@@ -18,7 +18,9 @@ Repository: <https://github.com/c2siorg/genie>
 
 > **📚 Detailed documentation:** every agent, every package, every protocol, every endpoint, and every FREE-AI recommendation has a dedicated page in [`docs/`](docs/). Start at [docs/README.md](docs/README.md).
 >
-> Quick links: [architecture](docs/architecture.md) · [operations](docs/operations.md) · [HTTP API](docs/api.md) · [protocols](docs/protocols.md) · [FREE-AI mapping](docs/free-ai-mapping.md) · [agents](docs/agents/README.md) · [packages](docs/packages/README.md)
+> **🛡 AI Governance & Security:** the canonical CISO/risk-officer reference — threat model, eleven-layer defence-in-depth envelope, every claim anchored to a file path — lives at [`docs/ai-governance-security.md`](docs/ai-governance-security.md).
+>
+> Quick links: [architecture](docs/architecture.md) · [operations](docs/operations.md) · [HTTP API](docs/api.md) · [protocols](docs/protocols.md) · [FREE-AI mapping](docs/free-ai-mapping.md) · [agents](docs/agents/README.md) · [packages](docs/packages/README.md) · [security](docs/ai-governance-security.md)
 
 ---
 
