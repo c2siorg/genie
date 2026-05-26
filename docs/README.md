@@ -18,7 +18,7 @@
 | Use a platform package | [packages/README.md](packages/README.md) |
 | Open the HTTP API | [api.md](api.md) |
 | Hit MCP/A2A protocols | [protocols.md](protocols.md) |
-| Read the LinkedIn-ready writeups | [linkedin-article-architecture.md](linkedin-article-architecture.md) · [linkedin-article-compliance.md](linkedin-article-compliance.md) |
+| Read long-form writeups | All long-form pieces have moved to [pratikdhanave.github.io/blog](https://pratikdhanave.github.io/blog/) — grouped by topic, with the security + FREE-AI series anchored back to file paths in this repo |
 | See the ADK extension proposal | [adk-extension-proposal.md](adk-extension-proposal.md) |
 
 ---
@@ -38,10 +38,6 @@ docs/
 ├── openapi.yaml                               ← HTTP spec
 ├── asyncapi.yaml                              ← bus event spec
 ├── adk-extension-proposal.md                  ← the design doc behind the 13 new agents
-├── linkedin-article-architecture.md
-├── linkedin-article-compliance.md
-├── linkedin-article-rbi-freeai.md
-├── linkedin-post*.md                          ← short-post variants
 ├── agents/
 │   ├── README.md                              ← agent index + contract
 │   ├── kyc_orchestrator.md                    ← Tier 1.1
@@ -87,20 +83,19 @@ docs/
 ### "I'm a CRO / compliance officer evaluating Genie for FREE-AI alignment"
 
 1. [free-ai-mapping.md](free-ai-mapping.md) — table per recommendation
-2. [linkedin-article-compliance.md](linkedin-article-compliance.md) — the long-form
+2. The long-form FREE-AI walkthroughs now live on the blog: [Mapping a multi-agent platform to GCP PCSE](https://pratikdhanave.github.io/blog/2026/04/24/mapping-genie-to-gcp-pcse-blueprint/), [RBI FREE-AI implementation notes](https://pratikdhanave.github.io/blog/2026/04/18/rbi-free-ai-implementation-notes/), [AI governance — from credential to codebase](https://pratikdhanave.github.io/blog/2026/04/21/ai-governance-from-credential-to-codebase/)
 3. Spot-check: pick one Rec → open the linked file → run `go test ./<pkg>/...`
 
 ### "I'm a CISO reviewing the security posture"
 
 1. **[ai-governance-security.md](ai-governance-security.md)** — the canonical reference. Threat model, eleven-layer envelope, every claim anchored to a file path. Read this first.
 2. **[gcp-pcse-mapping.md](gcp-pcse-mapping.md)** — every GCP Professional Cloud Security Engineer exam-blueprint bullet mapped to a Genie file path (or honest gap). Useful for reviewers already fluent in the PCSE vocabulary.
-3. [linkedin-article-security-complete.md](linkedin-article-security-complete.md) — the consolidated security deep-dive (long-form narrative)
-4. [linkedin-article-agentic-security-operations.md](linkedin-article-agentic-security-operations.md) — runtime operations playbook (SLIs, runbook, drift, drills)
-5. [api.md](api.md) — auth, RBAC, rate limits
-6. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow, OAuth 2.0 Token Exchange (RFC 8693)
-7. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
-8. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
-9. The four Q1 hardening primitives — read all four together; they're the defence-in-depth envelope:
+3. The long-form security narratives now live on the blog: [Consolidated security deep-dive](https://pratikdhanave.github.io/blog/2026/04/22/consolidated-security-deep-dive/), [Defence in depth for agentic AI](https://pratikdhanave.github.io/blog/2026/04/23/defence-in-depth-for-agentic-ai/), [Agentic security in production — operations playbook](https://pratikdhanave.github.io/blog/2026/04/20/agentic-security-in-production/)
+4. [api.md](api.md) — auth, RBAC, rate limits
+5. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow, OAuth 2.0 Token Exchange (RFC 8693)
+6. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
+7. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
+8. The four Q1 hardening primitives — read all four together; they're the defence-in-depth envelope:
    - [packages/postgres-rls.md](packages/postgres-rls.md) — DB-level tenant isolation
    - [packages/governance-tenant.md](packages/governance-tenant.md) — bus-level tenant isolation
    - [packages/oauth-token-exchange.md](packages/oauth-token-exchange.md) — dual-identity audit

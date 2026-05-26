@@ -163,7 +163,7 @@ completeness.
 | Configuring network isolation and data encapsulation for N-tier applications | Out of scope — deployment platform | ⚪ |
 | **Identifying use cases and configuring VPC Service Controls** | Application analog: **`pkg/sovereignty.ProviderRegistry.Allowed(provider, classification)`** — classification → provider allowlist. A `pii`-classified message cannot reach a provider whose region isn't in the allowlist for `pii`. The Google product handles data-egress at the network boundary; the Genie analog handles it at the routing decision. | 🟡 (analog, not equivalent) |
 
-**Anchors:** `pkg/sovereignty/sovereignty.go` · `pkg/llm/router.go` (the LLM router consults the registry before dispatching) · `docs/linkedin-article-sovereign-ai.md`
+**Anchors:** `pkg/sovereignty/sovereignty.go` · `pkg/llm/router.go` (the LLM router consults the registry before dispatching) · long-form: [Sovereign AI is a policy, not a slide](https://pratikdhanave.github.io/blog/2026/04/15/sovereign-ai-is-a-policy/)
 
 ---
 
