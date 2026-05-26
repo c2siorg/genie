@@ -35,6 +35,7 @@ where" table.
 | [oauth-token-exchange.md](oauth-token-exchange.md) | `pkg/auth/tokenexchange/` | RFC 8693 dual-identity tokens — Subject=user, Actor=agent — with N-hop nested chains for audit (FREE-AI Rec 22) |
 | [agent-tier.md](agent-tier.md) | `pkg/agent/tier.go` | Sketch/Prototype/Beta/Production promotion model; default-to-Prototype dispatch gate (FREE-AI Rec 17, 23) |
 | [governance-tenant.md](governance-tenant.md) | `pkg/governance/tenant.go` | Bus-layer tenant check that pairs with RLS — defence in depth for cross-tenant routing |
+| [auth-elevation.md](auth-elevation.md) | `pkg/auth/elevation/` | Time-bound privileged access (PCSE §1.4 analog) — request/approve/revoke with audit chain integration |
 
 ---
 
@@ -60,6 +61,7 @@ where" table.
 | Dual-write agent traces to BigQuery | `pkg/observability/bq.JSONLSink` + a BQ load job |
 | Stream ASR partials to a Bhashini WebSocket | `agents/voice.StreamingAgent` with a `StreamingVoiceProvider` impl |
 | Refuse to dispatch a Sketch-tier agent on customer traffic | `pkg/agent.Tier` + a policy that calls `agent.Production(agent.TierOf(target))` |
+| Grant time-bound admin to an engineer who needs to investigate an incident | `pkg/auth/elevation.Service.Request` → admin approves → automatic expiry |
 | Stop cross-tenant message routing at the bus | `pkg/governance.TenantPolicy` in your `CompositePolicy` stack |
 | Force the DB itself to refuse cross-tenant reads | `pkg/storage/postgres.WithTenant` + run migration `0005_rls.sql` |
 | Mint a token that records "user A via agent X" for audit | `pkg/auth/tokenexchange.Service` with the chain's actor ids |

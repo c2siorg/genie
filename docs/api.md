@@ -223,6 +223,74 @@ Returns the hash-chained audit log (newest first, paginated).
 
 ---
 
+## Privileged Access Manager — time-bound elevation
+
+PCSE §1.4 analog. Request → approve → time-window → automatic expiry.
+Every transition flows into the hash-chained audit log with the
+genesis grant id as `audit_root`. See
+[packages/auth-elevation.md](packages/auth-elevation.md).
+
+### `POST /v1/elevation/requests` — file a request
+
+Authenticated user files a request. The subject is taken from the
+authenticated claims; clients do not pass a subject id.
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role":"admin","reason":"investigate ticket #1234","ttl_seconds":1800}' \
+  http://localhost:8080/v1/elevation/requests | jq .
+```
+
+Returns the `Grant` (status `pending`). 400 on validation error
+(missing reason, TTL above `MaxDuration`, role not in
+`ElevatableRoles`).
+
+### `POST /v1/elevation/requests/{id}/approve` — admin approves
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  http://localhost:8080/v1/elevation/requests/$GRANT_ID/approve | jq .
+```
+
+403 if the caller doesn't hold `admin`; 400 if the caller is the
+subject (4-eyes minimum) or has already approved this grant (N-eyes
+integrity). Returns the updated grant — `pending` if N-eyes not yet
+satisfied, `active` if it is.
+
+### `POST /v1/elevation/requests/{id}/deny` — admin denies
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"insufficient justification"}' \
+  http://localhost:8080/v1/elevation/requests/$GRANT_ID/deny | jq .
+```
+
+Reason is required (400 otherwise). 409 if the grant isn't pending.
+
+### `POST /v1/elevation/requests/{id}/revoke` — admin terminates an active grant
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"task completed"}' \
+  http://localhost:8080/v1/elevation/requests/$GRANT_ID/revoke | jq .
+```
+
+Reason required. 409 if the grant isn't active.
+
+### `GET /v1/elevation/requests/{id}` — read one
+
+Subject or admin only. Stranger gets 404 (not 403 — refusing to
+confirm existence is the right move for an admin-flavoured resource).
+
+### `GET /v1/elevation/requests?limit=50` — list (admin)
+
+Recent grants in arbitrary order; pagination cursor is roadmap.
+
+---
+
 ## MCP
 
 ### `POST /mcp` — Genie as MCP server

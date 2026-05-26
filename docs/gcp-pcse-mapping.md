@@ -113,7 +113,7 @@ the application's.
 | Configuring Access Context Manager | Application analog: `pkg/sovereignty.ProviderRegistry.Allowed(provider, classification)` gates which provider can receive which sensitivity tier. The Google product handles network-context conditions; the Genie analog handles data-context conditions. | 🟡 |
 | Applying Policy Intelligence | Audit log analytics via `pkg/observability/bq` (warehouse sink) + the BCP drill harness flag agents with excessive denials. Policy-recommendation tooling not implemented. | 🟡 |
 | Managing permissions through groups | Roles are stored as `[]Role` on User — a user belongs to multiple roles concurrently. Group abstraction over roles not implemented (would be a separate `groups` table mapping group → roles). | 🟡 |
-| Identifying use cases and configuring **Privileged Access Manager** (time-bound elevation) | **Not implemented.** Would slot in as `pkg/auth.ElevationGrant{role, expires_at, audit_id}` — time-bound `WithAdminContext` with automatic revoke. **Listed as a gap below.** | ⚪ |
+| Identifying use cases and configuring **Privileged Access Manager** (time-bound elevation) | **Implemented** as `pkg/auth/elevation.Service`. Request → approve (N-eyes) → window-of-time → automatic expiry (lazy, no daemon) → revocable. Every transition writes to the hash-chained audit log with the genesis entry id (`audit_root`) for trace-back. Defaults: MaxDuration=4h, RequireApprovers=1 (set 2 for 4-eyes). Routes under `/v1/elevation/*`. See [packages/auth-elevation.md](packages/auth-elevation.md). | ✅ |
 
 **Anchors:** `pkg/web/mid/auth.go` · `pkg/governance/rbac.go` · `pkg/governance/policy.go` · `pkg/policy/dsl/` · `pkg/governance/tenant.go` · `pkg/storage/postgres/migrations/0005_rls.sql` · `pkg/sovereignty/sovereignty.go`
 
@@ -280,31 +280,17 @@ This is Genie's home turf. Every sub-section maps cleanly.
 Gaps where a PCSE-aligned reviewer would expect more than Genie currently
 ships. In priority order:
 
-### Gap 1 — Privileged Access Manager analog (PCSE 1.4)
+### Gap 1 — Privileged Access Manager analog (PCSE 1.4) — ✅ CLOSED
 
-**What's missing.** Time-bound elevation: a workflow where an engineer
-requests admin role for a specific operation, gets it for a bounded
-window, and the role is automatically revoked at expiry with a full
-audit entry.
+Shipped as `pkg/auth/elevation` (430 LoC + 430 LoC of tests). See
+[`packages/auth-elevation.md`](packages/auth-elevation.md) for the full
+spec. Highlights: request/approve/deny/revoke lifecycle, N-eyes via
+`RequireApprovers`, lazy expiry (no daemon), every transition in the
+hash-chained audit log with `audit_root` for per-grant trace-back,
+HTTP surface at `/v1/elevation/*` with router + service double-gate.
 
-**Proposed shape.**
-
-```go
-// pkg/auth/elevation/elevation.go (proposed)
-type Grant struct {
-    Subject     string
-    Role        auth.Role
-    Reason      string
-    GrantedBy   string         // who approved
-    ExpiresAt   time.Time
-    AuditID     string         // hash-chain entry id at grant time
-}
-func (s *Service) Request(ctx, subject, role, reason string) (*Grant, error)
-func (s *Service) Approve(ctx, grantID, approverID string) error
-func (s *Service) ActiveFor(ctx, subject string) []Grant
-```
-
-**LoC estimate:** ~250 in `pkg/auth/elevation/` + test + doc.
+Total HTTP surface added: 6 routes. Total tests added: 33 (22 service
+unit + 11 HTTP contract).
 
 ### Gap 2 — Format-preserving encryption (PCSE 3.1)
 

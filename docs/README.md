@@ -69,7 +69,8 @@ docs/
     ├── postgres-rls.md                        ← pkg/storage/postgres + 0005_rls.sql (RLS)
     ├── oauth-token-exchange.md                ← pkg/auth/tokenexchange (RFC 8693)
     ├── agent-tier.md                          ← pkg/agent.Tier promotion model
-    └── governance-tenant.md                   ← pkg/governance.TenantPolicy
+    ├── governance-tenant.md                   ← pkg/governance.TenantPolicy
+    └── auth-elevation.md                      ← pkg/auth/elevation (PCSE §1.4 PAM analog)
 ```
 
 ---
@@ -104,6 +105,7 @@ docs/
    - [packages/governance-tenant.md](packages/governance-tenant.md) — bus-level tenant isolation
    - [packages/oauth-token-exchange.md](packages/oauth-token-exchange.md) — dual-identity audit
    - [packages/agent-tier.md](packages/agent-tier.md) — promotion gate
+   - [packages/auth-elevation.md](packages/auth-elevation.md) — time-bound privileged access (PCSE §1.4)
 
 ### "I'm a risk officer setting policy"
 

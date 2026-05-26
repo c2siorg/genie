@@ -57,6 +57,7 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
@@ -139,7 +140,9 @@ func run() error {
 
 	consents := compliance.NewInMemoryLedger()
 	auditLog := compliance.NewInMemoryAuditLog()
-	_ = auditLog // reserved for incident-correlated audit entries.
+	// auditLog feeds the elevation service (and is reserved for incident-
+	// correlated audit entries on other transitions in the future).
+	elevationSvc := elevation.New(auditLog)
 
 	// Annexure V — board-approved AI policy lives in YAML, not Go code.
 	policyPath := os.Getenv("GENIE_AI_POLICY")
@@ -336,6 +339,9 @@ func run() error {
 		RateLimit: mid.NewRateLimit(60, 1.0), // 60-req burst, 1/sec refill
 		AIBOM:     &handlers.AIBOM{Reg: reg, Builder: aibom.NewBuilder()},
 		Feedback:  &handlers.Feedback{Store: synth.NewInMemoryFeedbackStore()},
+		// Elevation — PCSE §1.4 analog: time-bound privileged access with
+		// audit chain integration. Routes registered under /v1/elevation/*.
+		Elevation: &handlers.Elevation{Service: elevationSvc},
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui

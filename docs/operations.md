@@ -347,6 +347,63 @@ Every named test in that suite must pass for the defence-in-depth
 contract to hold. If a test starts failing after a change, treat it
 as a security regression and revert before debugging.
 
+### Privileged Access Manager — time-bound elevation runbook
+
+Production-grade configuration (4-eyes, 1h cap) in cmd/api wire-up:
+
+```go
+elevationSvc := elevation.New(auditLog)
+elevationSvc.RequireApprovers = 2          // 4-eyes
+elevationSvc.MaxDuration       = 1 * time.Hour
+```
+
+**Engineer flow** — needs admin for a real incident:
+
+```bash
+# 1. File the request (any authenticated user)
+TOKEN=...   # engineer's normal token
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role":"admin","reason":"Investigate INC-2026-0042","ttl_seconds":1800}' \
+  http://localhost:8080/v1/elevation/requests | jq .
+
+# Returns: { "id": "uuid...", "status": "pending", ... }
+```
+
+**Approver flow** — admin reviews and approves:
+
+```bash
+# 2. List pending requests
+ADMIN=...   # admin's token
+curl -s -H "Authorization: Bearer $ADMIN" \
+  "http://localhost:8080/v1/elevation/requests?limit=20" | jq '.[] | select(.status=="pending")'
+
+# 3. Approve
+curl -s -X POST -H "Authorization: Bearer $ADMIN" \
+  http://localhost:8080/v1/elevation/requests/$GRANT_ID/approve | jq .
+
+# Under 4-eyes, a SECOND admin must also approve before the grant
+# becomes active. Each admin can approve at most once per grant.
+```
+
+**Revoke flow** — incident is closed early:
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"INC-2026-0042 resolved, dropping elevation"}' \
+  http://localhost:8080/v1/elevation/requests/$GRANT_ID/revoke | jq .
+```
+
+**Audit trail** — every transition is in the hash-chained log under
+the `elevation.*` action prefix, linked by `audit_root = original
+grant audit seq`. To pull a grant's full history:
+
+```bash
+curl -s -H "Authorization: Bearer $ADMIN" /v1/audit/log | \
+  jq '.[] | select(.details.audit_root == '"$GRANT_AUDIT_SEQ"')'
+```
+
 ---
 
 ## Adding a new LLM provider

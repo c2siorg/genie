@@ -27,7 +27,8 @@ type Deps struct {
 	Feedback    *handlers.Feedback
 	ChatWS      *handlers.ChatWS
 	UI          *handlers.UI
-	RateLimit   *mid.RateLimit // optional global limiter
+	Elevation   *handlers.Elevation // optional: time-bound privileged access (PCSE 1.4 analog)
+	RateLimit   *mid.RateLimit      // optional global limiter
 	Logger      mid.Logger
 }
 
@@ -96,6 +97,22 @@ func NewRouter(d Deps) http.Handler {
 				}
 				if d.ChatWS != nil {
 					r.Get("/chat/ws", d.ChatWS.Serve)
+				}
+				if d.Elevation != nil {
+					// Time-bound privileged access (PCSE §1.4 analog).
+					// Request is open to any authenticated user (the
+					// service caps TTL and requires admin approval).
+					// Approve / Deny / Revoke / List are admin-gated;
+					// Get is open with the handler enforcing subject-
+					// or-admin access internally.
+					r.Route("/elevation/requests", func(r chi.Router) {
+						r.Post("/", d.Elevation.Request)
+						r.Get("/{id}", d.Elevation.Get)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Get("/", d.Elevation.List)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/approve", d.Elevation.Approve)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/deny", d.Elevation.Deny)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/revoke", d.Elevation.Revoke)
+					})
 				}
 			})
 		})
