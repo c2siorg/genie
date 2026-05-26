@@ -10,6 +10,7 @@
 |---|---|
 | Get the 30-second pitch | [Root README](../README.md) |
 | **Review AI governance + security end-to-end** | **[ai-governance-security.md](ai-governance-security.md)** — the canonical CISO/risk-officer reference |
+| **Map Genie to the GCP PCSE blueprint** | **[gcp-pcse-mapping.md](gcp-pcse-mapping.md)** — every PCSE exam bullet → file path or honest gap |
 | Understand the architecture pattern | [architecture.md](architecture.md) |
 | Map FREE-AI recommendations to code | [free-ai-mapping.md](free-ai-mapping.md) |
 | Run the stack locally | [operations.md](operations.md) |
@@ -28,6 +29,7 @@
 docs/
 ├── README.md                                  ← this index
 ├── ai-governance-security.md                  ← CISO/risk reference; threat model + 11 layers + invariants
+├── gcp-pcse-mapping.md                        ← GCP PCSE exam blueprint → Genie file paths
 ├── architecture.md                            ← MARA + the 7 load-bearing pieces
 ├── free-ai-mapping.md                         ← every Rec → file path
 ├── operations.md                              ← compose-up, env, KEK, observability
@@ -90,13 +92,14 @@ docs/
 ### "I'm a CISO reviewing the security posture"
 
 1. **[ai-governance-security.md](ai-governance-security.md)** — the canonical reference. Threat model, eleven-layer envelope, every claim anchored to a file path. Read this first.
-2. [linkedin-article-security-complete.md](linkedin-article-security-complete.md) — the consolidated security deep-dive (long-form narrative)
-3. [linkedin-article-agentic-security-operations.md](linkedin-article-agentic-security-operations.md) — runtime operations playbook (SLIs, runbook, drift, drills)
-4. [api.md](api.md) — auth, RBAC, rate limits
-5. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow, OAuth 2.0 Token Exchange (RFC 8693)
-6. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
-7. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
-8. The four Q1 hardening primitives — read all four together; they're the defence-in-depth envelope:
+2. **[gcp-pcse-mapping.md](gcp-pcse-mapping.md)** — every GCP Professional Cloud Security Engineer exam-blueprint bullet mapped to a Genie file path (or honest gap). Useful for reviewers already fluent in the PCSE vocabulary.
+3. [linkedin-article-security-complete.md](linkedin-article-security-complete.md) — the consolidated security deep-dive (long-form narrative)
+4. [linkedin-article-agentic-security-operations.md](linkedin-article-agentic-security-operations.md) — runtime operations playbook (SLIs, runbook, drift, drills)
+5. [api.md](api.md) — auth, RBAC, rate limits
+6. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow, OAuth 2.0 Token Exchange (RFC 8693)
+7. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
+8. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
+9. The four Q1 hardening primitives — read all four together; they're the defence-in-depth envelope:
    - [packages/postgres-rls.md](packages/postgres-rls.md) — DB-level tenant isolation
    - [packages/governance-tenant.md](packages/governance-tenant.md) — bus-level tenant isolation
    - [packages/oauth-token-exchange.md](packages/oauth-token-exchange.md) — dual-identity audit
