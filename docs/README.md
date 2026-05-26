@@ -61,7 +61,11 @@ docs/
     ├── safety-plugins.md                      ← pkg/safety plugin chain
     ├── agent-skill-registry.md                ← pkg/agent SkillRegistry
     ├── observability-bq.md                    ← pkg/observability/bq
-    └── voice-streaming.md                     ← agents/voice StreamingAgent
+    ├── voice-streaming.md                     ← agents/voice StreamingAgent
+    ├── postgres-rls.md                        ← pkg/storage/postgres + 0005_rls.sql (RLS)
+    ├── oauth-token-exchange.md                ← pkg/auth/tokenexchange (RFC 8693)
+    ├── agent-tier.md                          ← pkg/agent.Tier promotion model
+    └── governance-tenant.md                   ← pkg/governance.TenantPolicy
 ```
 
 ---
@@ -83,10 +87,17 @@ docs/
 
 ### "I'm a CISO reviewing the security posture"
 
-1. [api.md](api.md) — auth, RBAC, rate limits
-2. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow
-3. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
-4. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
+1. [linkedin-article-security-complete.md](linkedin-article-security-complete.md) — the consolidated security deep-dive
+2. [linkedin-article-agentic-security-operations.md](linkedin-article-agentic-security-operations.md) — runtime operations playbook (SLIs, runbook, drift, drills)
+3. [api.md](api.md) — auth, RBAC, rate limits
+4. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow, OAuth 2.0 Token Exchange (RFC 8693)
+5. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
+6. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
+7. The four Q1 hardening primitives — read all four together; they're the defence-in-depth envelope:
+   - [packages/postgres-rls.md](packages/postgres-rls.md) — DB-level tenant isolation
+   - [packages/governance-tenant.md](packages/governance-tenant.md) — bus-level tenant isolation
+   - [packages/oauth-token-exchange.md](packages/oauth-token-exchange.md) — dual-identity audit
+   - [packages/agent-tier.md](packages/agent-tier.md) — promotion gate
 
 ### "I'm a risk officer setting policy"
 

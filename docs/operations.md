@@ -204,6 +204,151 @@ verifier, one with new. Cycle.
 
 ---
 
+## Q1 hardening — security primitives runbook
+
+The four primitives shipped in the Q1 hardening pass each have a
+specific operational concern. Read this section alongside
+[packages/postgres-rls.md](packages/postgres-rls.md),
+[packages/governance-tenant.md](packages/governance-tenant.md),
+[packages/oauth-token-exchange.md](packages/oauth-token-exchange.md),
+and [packages/agent-tier.md](packages/agent-tier.md).
+
+### Running the RLS migration (`0005_rls.sql`)
+
+The migration auto-runs at boot via `pkg/storage/postgres`'s embedded
+SQL files. To run it manually against a managed Postgres:
+
+```bash
+docker compose exec postgres psql -U genie -d genie \
+  -f /docker-entrypoint-initdb.d/0005_rls.sql
+```
+
+Verify RLS is forced on every table that should have it:
+
+```sql
+SELECT relname, relrowsecurity, relforcerowsecurity
+  FROM pg_class
+ WHERE relname IN ('documents','accounts','mcp_tokens','incidents','users');
+-- expect relrowsecurity = t AND relforcerowsecurity = t for all five
+```
+
+If `relforcerowsecurity = f`, the policy is honoured for non-owner
+roles but bypassed by the table owner. That's a configuration drift —
+re-run the migration.
+
+### Wiring tenant context into a new handler
+
+```go
+// HTTP handler that needs tenant-scoped reads
+func (h *Handler) GetDocs(w http.ResponseWriter, r *http.Request) {
+    claims, _ := mid.ClaimsFrom(r.Context())
+    err := h.DB.WithTenant(r.Context(), claims.Subject, func(ctx context.Context, tx pgx.Tx) error {
+        rows, err := tx.Query(ctx, "SELECT id, description FROM documents")
+        // RLS applies — no WHERE needed; the GUC scopes the read
+        return scan(rows)
+    })
+    ...
+}
+```
+
+For admin-only routes (audit reader, inventory):
+
+```go
+err := h.DB.WithAdminContext(r.Context(), func(ctx context.Context, tx pgx.Tx) error {
+    // sentinel '__admin__' is set; cross-tenant reads allowed
+    ...
+})
+```
+
+`WithAdminContext` must be gated by `mid.RequireRole(auth.RoleAdmin)`
+at the router. The sentinel is the only legitimate cross-tenant key.
+
+### Wiring TenantPolicy into the bus
+
+```go
+policy := governance.NewComposite(
+    governance.RBACPolicy{
+        RequiredRolesByType: map[string][]string{
+            "finance_question": {"user", "admin"},
+            "kyc_submit":       {"user", "admin"},
+            "payment_request":  {"user", "admin"},
+        },
+        AdminBypass: true,
+    },
+    governance.TenantPolicy{
+        AppliesTo: []string{"finance_question", "kyc_submit", "payment_request"},
+        // AdminBypass left false — admin role does NOT cross tenants
+        // on customer-facing routes. Use a separate policy stack for
+        // admin-only routes if cross-tenant is needed there.
+    },
+    governance.MaxContentLengthPolicy{Max: 16 * 1024},
+)
+orch := orchestration.NewOrchestrator(reg, bus, policy, env)
+```
+
+The HTTP intake layer must populate `metadata.tenant_id` and
+`metadata.expected_tenant` on every message. The orchestrator's
+`OnPolicyDeny` hook should emit a metric so cross-tenant attempts
+trigger an alert.
+
+### Wiring the token-exchange service
+
+```go
+issuer := auth.NewIssuer(jwtSecret, "genie-api", []string{"genie-api"}, ttl)
+exch   := tokenexchange.New(issuer, "genie-api")
+
+// In the agent runtime, before calling an MCP server:
+mcpToken, _, err := exch.Exchange(ctx, tokenexchange.Request{
+    SubjectToken: userJWT,
+    ActorID:      "kyc_orchestrator",
+    Audience:     "mcp://kyc-server",
+})
+// pass mcpToken to the MCP client; downstream sees Subject=user, Actor=agent
+
+// On logout / password change:
+exch.Invalidate(userSubject)
+```
+
+The exchange Service is goroutine-safe. Per host, one Service is
+sufficient. Cache TTL defaults to `min(token_exp, subject_exp) − 60s`;
+override `SafetyMargin` for clock-skew-prone environments.
+
+### Tier promotion checklist
+
+Before promoting an agent from `TierBeta` to `TierProduction`:
+
+- [ ] Agent declares `Tier() Tier { return TierProduction }` in code.
+- [ ] Agent has a `RiskLevel()` declaration (or accept default RiskLow).
+- [ ] Agent has unit tests covering each branch of `HandleMessage`.
+- [ ] Agent has at least one integration test in `tests/` that hits
+      it through the bus.
+- [ ] Adversarial corpus (`pkg/safety` plugin run) passes — at minimum
+      the prompt-injection and jailbreak suites.
+- [ ] Fallback wired via `orchestrator.SetFallback(<id>, <fallback>)`
+      and a BCP drill (`make bcp-drill`) confirms the fallback fires.
+- [ ] Audit hooks emit on every output — verify via
+      `make smoke && curl /v1/audit | jq`.
+- [ ] Entry appears in `/v1/ai-inventory` with `tier = "production"`.
+- [ ] Risk team has signed off in the deployment record.
+
+Promote in a single commit so the tier change is auditable; the
+deployment record carries the link.
+
+### Verifying the security envelope holds
+
+The end-to-end test that exercises tier + tenant + token exchange +
+fallback together:
+
+```bash
+go test ./tests/... -run TestSecurityEnvelope -v
+```
+
+Every named test in that suite must pass for the defence-in-depth
+contract to hold. If a test starts failing after a change, treat it
+as a security regression and revert before debugging.
+
+---
+
 ## Adding a new LLM provider
 
 1. Implement `pkg/llm.Provider` (and optionally `Embedder`, `VisionProvider`).

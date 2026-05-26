@@ -37,6 +37,13 @@ type User struct {
 }
 
 // Claims is the JWT payload Genie issues.
+//
+// The Actor field carries the RFC 8693 dual-identity semantics — when an
+// agent runtime exchanges a user's token, the new token's Subject stays
+// the user and Actor identifies the agent currently acting on the user's
+// behalf. Upstream services can enforce composite policies of the form
+// "allow if Subject has permission AND Actor is authorized for this
+// operation."
 type Claims struct {
 	Subject   string   `json:"sub"`
 	Email     string   `json:"email"`
@@ -45,6 +52,19 @@ type Claims struct {
 	ExpiresAt int64    `json:"exp"`
 	Issuer    string   `json:"iss,omitempty"`
 	Audience  []string `json:"aud,omitempty"`
+	// Actor is the RFC 8693 `act` claim. Set when this token was issued
+	// via a token-exchange flow. Empty for first-party user tokens.
+	Actor *Actor `json:"act,omitempty"`
+}
+
+// Actor identifies the service currently acting on the Subject's behalf
+// (RFC 8693 § 4.1). For nested actor chains (an MCP server that itself
+// exchanges the token for an upstream call), Nested holds the previous
+// actor and the chain extends.
+type Actor struct {
+	Subject string `json:"sub"`           // agent / service identity
+	Issuer  string `json:"iss,omitempty"` // who minted the actor identity
+	Nested  *Actor `json:"act,omitempty"` // previous actor in the chain
 }
 
 // HasRole returns true if the claims include the given role.
