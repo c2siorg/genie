@@ -17,13 +17,20 @@ type Inventory struct {
 }
 
 // InventoryItem is one row of the response.
+//
+// Tier was added in the Q1 hardening pass — FREE-AI Rec 17 (Product
+// Approval) wants the inventory to reflect where each agent sits on the
+// Sketch → Prototype → Beta → Production pipeline. The risk team reads
+// this column to spot non-production agents that are still receiving
+// customer-facing traffic.
 type InventoryItem struct {
-	ID           string           `json:"id"`
-	Name         string           `json:"name"`
-	Capabilities []string         `json:"capabilities"`
-	RiskClass    agent.RiskClass  `json:"risk_class"`
-	HasFallback  bool             `json:"has_fallback"`
-	FallbackID   string           `json:"fallback_id,omitempty"`
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	Capabilities []string        `json:"capabilities"`
+	RiskClass    agent.RiskClass `json:"risk_class"`
+	Tier         agent.Tier      `json:"tier"`
+	HasFallback  bool            `json:"has_fallback"`
+	FallbackID   string          `json:"fallback_id,omitempty"`
 }
 
 // List handles GET /v1/ai-inventory.
@@ -37,6 +44,7 @@ func (h *Inventory) List(w http.ResponseWriter, r *http.Request) {
 			Name:         a.Name(),
 			Capabilities: a.Capabilities(),
 			RiskClass:    agent.RiskOf(a),
+			Tier:         agent.TierOf(a),
 			HasFallback:  hasFB,
 			FallbackID:   fb,
 		})
