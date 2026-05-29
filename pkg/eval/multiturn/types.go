@@ -33,6 +33,8 @@
 // runs locally without an API key.
 package multiturn
 
+import "os"
+
 // MockToolConfig defines a mock tool's description and its canned response.
 // Tools return Result verbatim regardless of what arguments the model passes.
 type MockToolConfig struct {
@@ -175,11 +177,21 @@ type EvalResult struct {
 }
 
 // defaultExecConfig returns the base config used when EvalData.Config is nil.
+// Model is resolved from GENIE_OLLAMA_CHAT env var (same variable the Makefile
+// and docker-compose use), falling back to "llama3.2:1b".
 func defaultExecConfig() ExecConfig {
+	model := os.Getenv("GENIE_OLLAMA_CHAT")
+	if model == "" {
+		model = "llama3.2:1b"
+	}
+	baseURL := os.Getenv("GENIE_OLLAMA_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:11434"
+	}
 	return ExecConfig{
 		Provider: "ollama",
-		BaseURL:  "http://localhost:11434",
-		Model:    "llama3.1",
+		BaseURL:  baseURL,
+		Model:    model,
 		MaxSteps: 20,
 	}
 }

@@ -63,27 +63,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Apply env-level overrides to each test case if needed.
+	// Apply flag + env-level overrides to each test case's ExecConfig.
+	// Command-line flags take precedence over per-case JSON config.
 	ollamaURL := os.Getenv("OLLAMA_BASE_URL")
-	if ollamaURL != "" {
-		for i := range cases {
-			if cases[i].Data.Config == nil {
-				cases[i].Data.Config = &multiturn.ExecConfig{}
-			}
-			if cases[i].Data.Config.BaseURL == "" {
-				cases[i].Data.Config.BaseURL = ollamaURL
-			}
-		}
-	}
 	openaiKey := os.Getenv("OPENAI_API_KEY")
-	if openaiKey != "" {
-		for i := range cases {
-			if cases[i].Data.Config == nil {
-				cases[i].Data.Config = &multiturn.ExecConfig{}
-			}
-			if cases[i].Data.Config.APIKey == "" {
-				cases[i].Data.Config.APIKey = openaiKey
-			}
+	for i := range cases {
+		if cases[i].Data.Config == nil {
+			cases[i].Data.Config = &multiturn.ExecConfig{}
+		}
+		c := cases[i].Data.Config
+		// -provider / -model / -base-url flags override per-case config.
+		if *provider != "" {
+			c.Provider = *provider
+		}
+		if *model != "" {
+			c.Model = *model
+		}
+		if *baseURL != "" {
+			c.BaseURL = *baseURL
+		}
+		// Env vars fill in what flags didn't provide.
+		if c.BaseURL == "" && ollamaURL != "" {
+			c.BaseURL = ollamaURL
+		}
+		if c.APIKey == "" && openaiKey != "" {
+			c.APIKey = openaiKey
 		}
 	}
 

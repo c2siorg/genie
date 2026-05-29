@@ -93,7 +93,6 @@
       },
       "config": {
         "provider": "ollama",
-        "model": "llama3.1",
         "maxSteps": 5
       }
     },
