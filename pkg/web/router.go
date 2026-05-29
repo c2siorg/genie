@@ -28,6 +28,7 @@ type Deps struct {
 	ChatWS      *handlers.ChatWS
 	UI          *handlers.UI
 	Elevation   *handlers.Elevation // optional: time-bound privileged access (PCSE 1.4 analog)
+	AgentGov    *handlers.AgentGov  // optional: AGT governance endpoints
 	RateLimit   *mid.RateLimit      // optional global limiter
 	Logger      mid.Logger
 }
@@ -112,6 +113,18 @@ func NewRouter(d Deps) http.Handler {
 						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/approve", d.Elevation.Approve)
 						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/deny", d.Elevation.Deny)
 						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/revoke", d.Elevation.Revoke)
+					})
+				}
+				if d.AgentGov != nil {
+					r.With(mid.RequireRole(auth.RoleAdmin)).Route("/governance", func(r chi.Router) {
+						r.Get("/agents", d.AgentGov.ListAgents)
+						r.Get("/trust/{agentID}", d.AgentGov.GetTrust)
+						r.Get("/audit", d.AgentGov.GetAudit)
+						r.Post("/killswitch", d.AgentGov.ActivateKillSwitch)
+						r.Delete("/killswitch", d.AgentGov.ClearKillSwitch)
+						r.Get("/killswitch", d.AgentGov.ListKillSwitches)
+						r.Get("/slo", d.AgentGov.GetSLO)
+						r.Get("/rings/{agentID}", d.AgentGov.GetRing)
 					})
 				}
 			})

@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -56,6 +57,7 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_estimator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agentgov"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
@@ -250,11 +252,31 @@ func run() error {
 
 	incidentStore := postgres.NewIncidentStore(db)
 
+	// Build AGT governance bundle.
+	agentIDs := []string{
+		"ingestor", "normalizer", "enricher", "analyzer", "forecaster",
+		"anomaly", "recommender", "reporter", "supervisor", "currency",
+		"macro", "rates", "loan", "educator", "auditor",
+		"portfolio_advisor", "portfolio_advisor_fallback", "recommender_fallback",
+		"aa_fetcher", "voice", "tax_estimator", "kyc_orchestrator",
+		"claim_adjudicator", "sme_loan_workflow", "invoice_processor",
+		"deep_research", "bulk_statement_analyzer", "mpc_research",
+		"auto_insurance", "health_preauth", "supply_chain_finance",
+		"payment_orchestrator", "cyber_guardian", "google_trends",
+	}
+	govBundle, err := agentgov.NewBundle(agentIDs)
+	if err != nil {
+		return fmt.Errorf("agentgov bundle: %w", err)
+	}
+
+	govOnDeny, govOnError := govBundle.OrchestratorHooks()
+
 	orch := orchestration.NewOrchestrator(reg, bus, composite, env)
 	orch.SetFallback("portfolio_advisor", "portfolio_advisor_fallback")
 	orch.SetFallback("recommender", "recommender_fallback")
 	orch.WithHooks(orchestration.Hooks{
 		OnPolicyDeny: func(ctx context.Context, msg agent.Message, reason string) {
+			govOnDeny(ctx, msg, reason)
 			_, _ = incidentStore.Create(ctx, incidents.Incident{
 				UseCase:     msg.Type,
 				Description: "policy denied message: " + reason,
@@ -264,6 +286,7 @@ func run() error {
 			})
 		},
 		OnAgentError: func(ctx context.Context, agentID string, msg agent.Message, err error) {
+			govOnError(ctx, agentID, msg, err)
 			_, _ = incidentStore.Create(ctx, incidents.Incident{
 				UseCase:     agentID,
 				Description: "agent error: " + err.Error(),
@@ -366,6 +389,8 @@ func run() error {
 		// Elevation — PCSE §1.4 analog: time-bound privileged access with
 		// audit chain integration. Routes registered under /v1/elevation/*.
 		Elevation: &handlers.Elevation{Service: elevationSvc},
+		// AGT governance endpoints — admin-gated under /v1/governance/*.
+		AgentGov: &handlers.AgentGov{Bundle: govBundle},
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui
