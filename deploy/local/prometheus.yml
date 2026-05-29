@@ -1,0 +1,31 @@
+global:
+  scrape_interval:     15s   # how often Prometheus scrapes targets
+  evaluation_interval: 15s   # how often rules are evaluated
+
+# ── Scrape targets ────────────────────────────────────────────────────────────
+scrape_configs:
+
+  # Genie API — native Prometheus endpoint produced by the OTel Prometheus
+  # exporter (go.opentelemetry.io/otel/exporters/prometheus) running on :9464.
+  # Metrics are prefixed "genie_" and cover: bus messages, agent errors,
+  # governance denials, handle latency, LLM tokens/cost/latency.
+  - job_name: 'genie-api'
+    static_configs:
+      - targets: ['genie-api:9464']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    honor_labels: true
+
+  # OTel Collector — metrics forwarded from the OTLP pipeline and exposed on
+  # :8889 by the collector's own prometheus exporter.
+  # Metric names are prefixed "genie_collector_".
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Prometheus self-scrape — exposes /metrics about Prometheus itself.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

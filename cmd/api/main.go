@@ -114,6 +114,30 @@ func run() error {
 		_ = tel.Shutdown(sctx)
 	}()
 
+	// Prometheus metrics server — always-on on a dedicated port so Prometheus
+	// can scrape /metrics without crossing the JWT-authenticated API boundary.
+	// Override with GENIE_METRICS_ADDR; default :9464 (standard prom port).
+	metricsAddr := os.Getenv("GENIE_METRICS_ADDR")
+	if metricsAddr == "" {
+		metricsAddr = ":9464"
+	}
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("/metrics", tel.MetricsHandler)
+	metricsMux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	metricsSrv := &http.Server{
+		Addr:              metricsAddr,
+		Handler:           metricsMux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	go func() {
+		logger.Info("metrics listening", "addr", metricsAddr)
+		if err := metricsSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("metrics server", "error", err)
+		}
+	}()
+
 	// Database
 	dsn := mustEnv("GENIE_DB_DSN")
 	db, err := postgres.Open(ctx, postgres.Config{DSN: dsn, MaxConns: 10})
@@ -381,6 +405,9 @@ func run() error {
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("graceful shutdown failed", "error", err)
+	}
+	if err := metricsSrv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("metrics server shutdown failed", "error", err)
 	}
 	return nil
 }

@@ -9,12 +9,27 @@ receivers:
 processors:
   batch:
     timeout: 1s
+  # Memory limiter prevents OOM crashes under metric bursts.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
 
 exporters:
   otlp/tempo:
     endpoint: tempo:4317
     tls:
       insecure: true
+
+  # Prometheus exporter — exposes scraped metrics on :8889 so Prometheus can
+  # pull them. Namespace "genie" prefixes all metric names.
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: genie_collector
+    send_timestamps: true
+    metric_expiration: 180m
+    resource_to_telemetry_conversion:
+      enabled: true
+
   debug:
     verbosity: basic
 
@@ -22,9 +37,9 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [memory_limiter, batch]
       exporters: [otlp/tempo, debug]
     metrics:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [debug]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
