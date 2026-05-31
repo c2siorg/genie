@@ -19,22 +19,34 @@ func (r *recordLogger) Info(msg string, args ...any) {
 	r.entries = append(r.entries, e)
 }
 
-func TestBuildLLMStack_MockByDefault(t *testing.T) {
+func TestBuildLLMStack_OllamaByDefault(t *testing.T) {
+	// Ollama is the default — unset GENIE_LLM still produces an Ollama stack.
 	t.Setenv("GENIE_LLM", "")
+	t.Setenv("GENIE_OLLAMA_URL", "http://unreachable:0")
 	rl := &recordLogger{}
 	s := buildLLMStack(context.Background(), rl)
 	if s.Provider == nil || s.Embedder == nil {
 		t.Fatal("expected provider and embedder to be set")
 	}
+	if !strings.Contains(s.Provider.Name(), "ollama") {
+		t.Fatalf("expected ollama stack by default, got %q", s.Provider.Name())
+	}
+}
+
+func TestBuildLLMStack_MockWhenExplicit(t *testing.T) {
+	// Mock is only selected when explicitly requested.
+	t.Setenv("GENIE_LLM", "mock")
+	rl := &recordLogger{}
+	s := buildLLMStack(context.Background(), rl)
 	if s.Provider.Name() != "mock" {
-		t.Fatalf("expected mock provider, got %q", s.Provider.Name())
+		t.Fatalf("expected mock, got %q", s.Provider.Name())
 	}
 	if s.Probe != nil {
 		t.Fatal("mock stack should not install a probe")
 	}
 }
 
-func TestBuildLLMStack_OllamaWrapped(t *testing.T) {
+func TestBuildLLMStack_OllamaWrapped(t *testing.T) { //nolint:unused
 	t.Setenv("GENIE_LLM", "ollama")
 	t.Setenv("GENIE_OLLAMA_URL", "http://unreachable:0")
 	rl := &recordLogger{}

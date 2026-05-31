@@ -35,7 +35,7 @@ EVAL_WORKERS   ?= 4
 EVAL_COVER_PKG ?= ./pkg/eval/multiturn/...
 
 # Coverage thresholds
-COVER_MIN  ?= 50   # minimum % line coverage required by `make ci`
+COVER_MIN  ?= 70   # minimum % line coverage required by `make ci`
 
 # ─────────────────────────────────────────────────────────────────────────────
 # help — auto-generated from ## comments
@@ -203,6 +203,101 @@ governance-test: ## Run all governance package tests (policy, RBAC, sovereignty,
 	  ./pkg/safety/... \
 	  ./pkg/compliance/...
 
+.PHONY: agenttools-test
+agenttools-test: ## Run agent tool tests (file, shell, code execution, web search)
+	$(GO) test -race -v -count=1 ./pkg/agenttools/...
+
+.PHONY: singleturn-test
+singleturn-test: ## Run single-turn tool-selection eval tests (lesson 03)
+	$(GO) test -race -v -count=1 ./pkg/eval/singleturn/...
+
+.PHONY: singleturn-eval
+singleturn-eval: ## Run single-turn evals against Ollama (needs GENIE_OLLAMA_CHAT)
+	$(GO) run ./cmd/eval-singleturn \
+	  -dataset pkg/eval/singleturn/data/file-tools.json \
+	  -workers $(EVAL_WORKERS)
+
+.PHONY: singleturn-eval-laminar
+singleturn-eval-laminar: ## Run single-turn evals → Laminar traces (auto-loads .env; needs LMNR_PROJECT_API_KEY)
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	$(GO) run ./cmd/eval-singleturn \
+	  -dataset pkg/eval/singleturn/data/file-tools.json \
+	  -workers $(EVAL_WORKERS) \
+	  -laminar
+
+.PHONY: eval-laminar
+eval-laminar: ## Run multi-turn evals → Laminar traces (auto-loads .env; needs LMNR_PROJECT_API_KEY)
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	$(GO) run ./cmd/eval-multiturn \
+	  -dataset $(EVAL_DATASET) \
+	  -skip-judge \
+	  -workers $(EVAL_WORKERS) \
+	  -laminar
+
+.PHONY: opa-test
+opa-test: ## Run OPA engine Go tests (inline Rego + integration)
+	$(GO) test -race -v -count=1 ./pkg/opa/...
+
+.PHONY: opa-policy-test
+opa-policy-test: ## Run Rego unit tests with the opa CLI (requires opa in PATH)
+	@which opa >/dev/null 2>&1 || (echo "opa CLI not found — install from https://www.openpolicyagent.org/docs/latest/#running-opa"; exit 1)
+	opa test policies/ -v
+
+.PHONY: opa-fmt
+opa-fmt: ## Format all .rego policy files (requires opa in PATH)
+	@which opa >/dev/null 2>&1 || (echo "opa CLI not found"; exit 1)
+	opa fmt -w policies/
+
+# ── Lesson 10: Memory ────────────────────────────────────────────────────────
+
+# ── Lesson 13: RAG tools ──────────────────────────────────────────────────
+
+.PHONY: rag-test
+rag-test: ## Lesson 13 — Run RAG knowledge-base tool tests
+	$(GO) test -race -v -count=1 -run "TestRAG\|TestSearch\|TestIngest" ./pkg/agenttools/...
+	$(GO) test -race -v -count=1 ./pkg/rag/...
+
+# ── Lesson 14: Reflexion ──────────────────────────────────────────────────
+
+.PHONY: reflexion-test
+reflexion-test: ## Lesson 14 — Run Reflexion self-critique tests
+	$(GO) test -race -v -count=1 -run TestRunner_Reflexion ./pkg/agentic/...
+	$(GO) test -race -v -count=1 ./pkg/reasoning/...
+
+# ── Runner unit tests ─────────────────────────────────────────────────────
+
+.PHONY: runner-test
+runner-test: ## Run Runner.Run() unit tests (fake LLM server, no Ollama needed)
+	$(GO) test -race -v -count=1 -run TestRunner ./pkg/agentic/...
+
+.PHONY: memory-test
+memory-test: ## Lesson 10 — Run persistent memory tool tests
+	$(GO) test -race -v -count=1 -run TestMemory ./pkg/agenttools/...
+	$(GO) test -race -v -count=1 ./pkg/memory/...
+
+# ── Lesson 11: Supervisor ─────────────────────────────────────────────────────
+
+.PHONY: supervisor-test
+supervisor-test: ## Lesson 11 — Run multi-agent supervisor tests
+	$(GO) test -race -v -count=1 -run TestSupervisor ./pkg/agentic/...
+
+# ── Lesson 12: MCP Tools bridge ───────────────────────────────────────────────
+
+.PHONY: mcp-tools-test
+mcp-tools-test: ## Lesson 12 — Run MCP→agenttools bridge tests
+	$(GO) test -race -v -count=1 -run TestMCP ./pkg/agenttools/...
+
+.PHONY: hitl-test
+hitl-test: ## Run Human-in-the-Loop approval package tests
+	$(GO) test -race -v -count=1 ./pkg/hitl/...
+
+.PHONY: hitl-demo
+hitl-demo: ## Run multi-turn eval with CLI HITL prompts (requires Ollama)
+	$(GO) run ./cmd/eval-multiturn \
+	  -dataset pkg/eval/multiturn/data/agent_multiturn.json \
+	  -hitl cli \
+	  -skip-judge
+
 # ─────────────────────────────────────────────────────────────────────────────
 ## Run locally
 # ─────────────────────────────────────────────────────────────────────────────
@@ -212,8 +307,12 @@ run-cli: ## CLI demo — no HTTP, no Postgres
 	$(GO) run ./cmd/genie
 
 .PHONY: run-api
-run-api: ## HTTP API with Ollama (needs GENIE_DB_DSN, GENIE_JWT_SECRET, GENIE_KEK_BASE64)
+run-api: ## HTTP API — auto-detects Ollama, falls back to mock (needs GENIE_DB_DSN, JWT, KEK)
 	$(GO) run ./cmd/api
+
+.PHONY: run-api-ollama
+run-api-ollama: ## HTTP API forced to Ollama (set GENIE_OLLAMA_CHAT to choose model)
+	GENIE_LLM=ollama $(GO) run ./cmd/api
 
 .PHONY: run-api-mock
 run-api-mock: ## HTTP API with mock LLM — no Ollama dependency
@@ -227,8 +326,20 @@ run-demo: ## Run the multi-agent demo scenario
 ## Ollama model management
 # ─────────────────────────────────────────────────────────────────────────────
 
+.PHONY: ollama-check
+ollama-check: ## Verify Ollama is running and the chat model is available
+	@curl -sf $(GENIE_OLLAMA_URL)/api/tags >/dev/null 2>&1 \
+	  && echo "✓ Ollama running at $(GENIE_OLLAMA_URL)" \
+	  || (echo "✗ Ollama not reachable at $(GENIE_OLLAMA_URL)  — run: ollama serve" && exit 1)
+	@curl -sf $(GENIE_OLLAMA_URL)/api/tags | python3 -c \
+	  "import json,sys; models=[m['name'] for m in json.load(sys.stdin)['models']]; \
+	   print('  models:', ', '.join(models)); \
+	   ok='$(GENIE_OLLAMA_CHAT)' in models or any(m.startswith('$(GENIE_OLLAMA_CHAT)'.split(':')[0]) for m in models); \
+	   print('✓ $(GENIE_OLLAMA_CHAT) available' if ok else '✗ $(GENIE_OLLAMA_CHAT) not pulled — run: make ollama-pull')" \
+	  2>/dev/null || true
+
 .PHONY: ollama-pull
-ollama-pull: ## Pull the default Ollama chat + embed models
+ollama-pull: ## Pull the default Ollama chat + embed models (qwen3.5 + nomic-embed-text)
 	ollama pull $(GENIE_OLLAMA_CHAT)
 	ollama pull $(GENIE_OLLAMA_EMBED)
 
@@ -395,7 +506,7 @@ check: vet build test-fast ## Quick local sanity check: vet + build + tests (no 
 	@echo "check: PASS"
 
 .PHONY: ci
-ci: tidy-check vet lint build test cover-check eval ## Full CI pipeline (run before push)
+ci: tidy-check vet lint build test cover-check agenttools-test singleturn-test opa-test hitl-test memory-test supervisor-test mcp-tools-test rag-test reflexion-test runner-test eval ## Full CI pipeline (run before push)
 	@echo ""
 	@echo "╔══════════════════════════════════╗"
 	@echo "║         CI: ALL PASSED           ║"

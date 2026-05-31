@@ -28,6 +28,7 @@ import (
 	"os"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval/multiturn"
+	evaltrace "github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval/trace"
 )
 
 func main() {
@@ -38,6 +39,8 @@ func main() {
 	skipJudge := flag.Bool("skip-judge", false, "Skip the LLM-as-judge evaluator")
 	workers := flag.Int("workers", 4, "Number of concurrent test runners")
 	asJSON := flag.Bool("json", false, "Emit results as JSON")
+	withLaminar := flag.Bool("laminar", false,
+		"Send eval traces to Laminar (LMNR_PROJECT_API_KEY must be set)")
 	flag.Parse()
 
 	// Resolve config from flags + environment.
@@ -95,6 +98,27 @@ func main() {
 		len(cases), *workers, !*skipJudge)
 
 	runner := multiturn.NewRunner(cfg)
+
+	// ── Laminar tracing ──────────────────────────────────────────────────────
+	if *withLaminar {
+		lmnrURL := os.Getenv("LMNR_BASE_URL")
+		if lmnrURL == "" {
+			lmnrURL = "http://localhost:8000"
+		}
+		tp, tpErr := evaltrace.NewLaminarProvider(context.Background(), "genie-eval-multiturn")
+		if tpErr != nil {
+			fmt.Fprintf(os.Stderr, "laminar setup error: %v\n", tpErr)
+			os.Exit(1)
+		}
+		defer func() {
+			if sErr := tp.Shutdown(context.Background()); sErr != nil {
+				fmt.Fprintf(os.Stderr, "laminar shutdown: %v\n", sErr)
+			}
+		}()
+		runner.TP = tp
+		fmt.Fprintf(os.Stderr, "laminar tracing enabled → %s  (UI: http://localhost:5667)\n", lmnrURL)
+	}
+
 	results := runner.RunDataset(context.Background(), cases)
 
 	if *asJSON {

@@ -101,6 +101,28 @@ func Parse(body []byte) (*AIPolicy, error) {
 	return &p, nil
 }
 
+// OPAConfig converts an AIPolicy into an opa.PolicyConfig suitable for
+// initialising an OPA engine that mirrors the same policy decisions.
+// AgentRings must be provided separately (it comes from the AGT bundle).
+func (p *AIPolicy) OPAConfig(agentRings map[string]int) interface{} {
+	// We return interface{} to avoid a circular import; callers cast with
+	// the opa package directly:
+	//   cfg := policy.(*opa.PolicyConfig)
+	// The opa package is imported in cmd/api where wiring happens.
+	return map[string]interface{}{
+		"rbac":                         p.Governance.RBAC,
+		"home_region":                  p.Sovereignty.HomeRegion,
+		"allow_cross_border_for_public": p.Sovereignty.AllowCrossBorderForPublic,
+		"admin_bypass":                 p.Governance.AdminBypass,
+		"max_content_length":           p.Risk.MaxContentLengthBytes,
+		"block_pii":                    p.Data.BlockPII,
+		"block_prompt_injection":       p.Data.BlockPromptInjection,
+		"required_metadata":            p.Limits.RequiredMetadata,
+		"agent_rings":                  agentRings,
+		"explainability_applies_to":    p.Explain.AppliesTo,
+	}
+}
+
 // BuildComposite turns an AIPolicy into a runtime governance.Policy composite,
 // pulling in the consent ledger when consent gating is configured.
 func (p *AIPolicy) BuildComposite(consents compliance.Ledger) governance.Policy {

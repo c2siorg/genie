@@ -1,2 +1,9 @@
 # OTEL trace dump produced by cmd/genie
 genie-traces.json
+
+# Environment secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+*.local.env
+secrets/

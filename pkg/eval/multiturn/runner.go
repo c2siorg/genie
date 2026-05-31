@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"os"
 	"sync"
+
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	otrace "go.opentelemetry.io/otel/trace"
 )
 
 // RunnerConfig controls how the Runner executes the dataset.
@@ -22,6 +26,9 @@ type RunnerConfig struct {
 type Runner struct {
 	executor *Executor
 	cfg      RunnerConfig
+	// TP is an optional TracerProvider. When non-nil each test case run is
+	// wrapped in an OTLP span so scores appear in Laminar under Traces.
+	TP otrace.TracerProvider
 }
 
 // NewRunner creates a Runner. Pass a zero-value RunnerConfig for all defaults.
@@ -59,8 +66,27 @@ func (r *Runner) RunDataset(ctx context.Context, cases []TestCase) []EvalResult 
 
 // runOne executes a single test case end-to-end.
 func (r *Runner) runOne(ctx context.Context, tc TestCase) EvalResult {
+	// ── Laminar tracing ──────────────────────────────────────────────────────
+	var span otrace.Span
+	if r.TP != nil {
+		tracer := r.TP.Tracer("genie/eval/multiturn")
+		task := tc.Target.OriginalTask
+		if task == "" {
+			task = tc.Data.Prompt
+		}
+		if len(task) > 60 {
+			task = task[:57] + "..."
+		}
+		ctx, span = tracer.Start(ctx, "eval "+task)
+		defer span.End()
+	}
+
 	res, err := r.executor.Run(ctx, tc.Data)
 	if err != nil {
+		if span != nil {
+			span.SetStatus(otelcodes.Error, err.Error())
+			span.SetAttributes(attribute.String("eval.error", err.Error()))
+		}
 		return EvalResult{
 			TestCase: tc,
 			Result:   res,
@@ -99,6 +125,23 @@ func (r *Runner) runOne(ctx context.Context, tc TestCase) EvalResult {
 	}
 
 	overall := (toolOrder + toolsAvoided + outputQuality) / 3
+
+	if span != nil {
+		passed := overall >= 0.6
+		span.SetAttributes(
+			attribute.Float64("eval.score.tool_order", toolOrder),
+			attribute.Float64("eval.score.tools_avoided", toolsAvoided),
+			attribute.Float64("eval.score.output_quality", outputQuality),
+			attribute.Float64("eval.score.overall", overall),
+			attribute.Bool("eval.passed", passed),
+			attribute.StringSlice("eval.tools_used", res.ToolsUsed),
+		)
+		if passed {
+			span.SetStatus(otelcodes.Ok, "")
+		} else {
+			span.SetStatus(otelcodes.Error, "eval failed")
+		}
+	}
 
 	return EvalResult{
 		TestCase: tc,

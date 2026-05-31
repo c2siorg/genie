@@ -73,6 +73,7 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/opa"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/sovereignty"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
@@ -271,6 +272,20 @@ func run() error {
 
 	govOnDeny, govOnError := govBundle.OrchestratorHooks()
 
+	// ── Lesson 16: OPA policy engine ────────────────────────────────────────
+	// Build an OPA engine from the AI policy YAML + agent ring assignments so
+	// every message can be evaluated against Rego rules at /v1/governance/opa/*.
+	opaCfg := opa.DefaultPolicyConfig()
+	opaCfg.AgentRings = agentgov.RingMap(agentIDs)
+	opaCfg.HomeRegion = string(homeRegion)
+	opaCfg.AdminBypass = true
+	opaEngine, opaErr := opa.New(ctx, opaCfg, nil) // nil → load embedded policies/
+	if opaErr != nil {
+		logger.Error("opa engine init", "error", opaErr)
+		// Non-fatal: API runs without OPA introspection endpoints.
+		opaEngine = nil
+	}
+
 	orch := orchestration.NewOrchestrator(reg, bus, composite, env)
 	orch.SetFallback("portfolio_advisor", "portfolio_advisor_fallback")
 	orch.SetFallback("recommender", "recommender_fallback")
@@ -391,6 +406,14 @@ func run() error {
 		Elevation: &handlers.Elevation{Service: elevationSvc},
 		// AGT governance endpoints — admin-gated under /v1/governance/*.
 		AgentGov: &handlers.AgentGov{Bundle: govBundle},
+		// OPA policy introspection — admin-gated under /v1/governance/opa/*.
+		// Nil when the engine failed to init (degraded mode).
+		OPAHandler: func() *handlers.OPAHandler {
+			if opaEngine != nil {
+				return &handlers.OPAHandler{Engine: opaEngine}
+			}
+			return nil
+		}(),
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/hitl"
 )
 
 // systemPrompt is prepended to fresh-task conversations when no messages
@@ -145,6 +147,18 @@ func chatCompletions(
 type Executor struct {
 	// HTTPClient is used for all LLM calls. Defaults to a 60 s timeout client.
 	HTTPClient *http.Client
+	// Approver is called before each tool execution. When set, the agent loop
+	// blocks (sync) or parks (async) until a human approves or denies the call.
+	// A denial stops tool processing for that step and ends the agent loop,
+	// mirroring the TypeScript reference:
+	//
+	//   for tc in toolCalls:
+	//       if !approve(tc): break (rejected = true)
+	//       result = executeTool(tc)
+	//   if rejected: break
+	//
+	// Nil means all tool calls are auto-approved.
+	Approver hitl.Approver
 }
 
 // NewExecutor creates an Executor with a sensible default HTTP client.
@@ -220,12 +234,36 @@ func (e *Executor) Run(ctx context.Context, data EvalData) (Result, error) {
 		msgs = append(msgs, assistantMsg)
 
 		if choice.FinishReason == "tool_calls" || len(assistantMsg.ToolCalls) > 0 {
-			// Execute each mocked tool and collect results.
+			// Process tool calls sequentially with optional HITL approval.
+			// Mirrors the TypeScript reference:
+			//   for tc in toolCalls:
+			//       if !approve(tc): rejected = true; break
+			//       result = executeTool(tc)
+			//   if rejected: break outer loop
 			s := Step{}
+			rejected := false
+
 			for _, tc := range assistantMsg.ToolCalls {
 				// Parse args best-effort (mocks ignore them anyway).
 				var args map[string]any
 				_ = json.Unmarshal([]byte(tc.Function.Arguments), &args)
+
+				// ── HITL approval ──────────────────────────────────────
+				if e.Approver != nil {
+					req := hitl.ApprovalRequest{
+						ToolName: tc.Function.Name,
+						Args:     args,
+					}
+					approved, approvalErr := e.Approver.RequestApproval(ctx, req)
+					if approvalErr != nil {
+						return Result{}, fmt.Errorf("hitl: step %d tool %q: %w", step, tc.Function.Name, approvalErr)
+					}
+					if !approved {
+						rejected = true
+						break
+					}
+				}
+				// ── Execute mock ────────────────────────────────────────
 
 				s.ToolCalls = append(s.ToolCalls, ToolCallRecord{
 					ToolName: tc.Function.Name,
@@ -248,6 +286,9 @@ func (e *Executor) Run(ctx context.Context, data EvalData) (Result, error) {
 				})
 			}
 			steps = append(steps, s)
+			if rejected {
+				break // HITL denied — stop the agent loop.
+			}
 			// Continue the loop so the model can reason over the results.
 			continue
 		}
