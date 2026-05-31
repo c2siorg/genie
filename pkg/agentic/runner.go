@@ -1,6 +1,7 @@
 package agentic
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agenttools"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/hitl"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/memory"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/safety"
 )
 
 // ─── Wire types (OpenAI-compatible) ───────────────────────────────────────
@@ -94,6 +96,15 @@ type Runner struct {
 	// Reflexion enables self-critique and answer refinement after the main
 	// agent loop finishes (lesson 14). Nil = disabled.
 	Reflexion *ReflexionConfig
+	// Safety screens user input (inbound) and model output (outbound).
+	// When a message is flagged the agent refuses rather than proceeding.
+	// Nil = no safety checks (default). See pkg/safety for detectors.
+	Safety *safety.Chain
+	// Episodic memory records each turn to a rolling buffer that is
+	// summarised by the LLM when it overflows. Inject the snapshot into
+	// the system prompt so the agent remembers within a session.
+	Episodic  *memory.EpisodicMemory
+	SessionID string // scopes episodic memory to a session
 	// HTTPClient is reused for all LLM calls.
 	HTTPClient *http.Client
 	// Callbacks for streaming output and observability.
@@ -143,6 +154,14 @@ func RunAgent(ctx context.Context, userMessage string, history []Message, cfg Co
 //     c. Else: capture final text, break.
 //  4. Return final text + updated message history.
 func (r *Runner) Run(ctx context.Context, userMessage string, history []Message) (string, []Message, error) {
+	// ── Lesson 15: safety — screen inbound message ─────────────────────────
+	if r.Safety != nil {
+		v, err := r.Safety.Inspect(ctx, userMessage)
+		if err == nil && v.Flagged {
+			return fmt.Sprintf("I can't process that request: %s", v.Reason), history, nil
+		}
+	}
+
 	cfg := r.Config
 	client := r.HTTPClient
 	if client == nil {
@@ -273,6 +292,35 @@ func (r *Runner) Run(ctx context.Context, userMessage string, history []Message)
 		break
 	}
 
+	// ── Safety: screen outbound answer (up to 2 regeneration retries) ─────
+	if r.Safety != nil && finalText != "" {
+		for attempt := 0; attempt < 2; attempt++ {
+			v, err := r.Safety.Inspect(ctx, finalText)
+			if err != nil || !v.Flagged {
+				break
+			}
+			// Ask the model to regenerate without the problematic content.
+			regenWire := append(wire, wireMessage{
+				Role:    "user",
+				Content: "Your previous response was flagged. Please provide a safe, policy-compliant answer.",
+			})
+			resp, err := r.callLLM(ctx, regenWire, nil)
+			if err != nil || len(resp.Choices) == 0 {
+				finalText = "I'm unable to provide a response to that request."
+				break
+			}
+			finalText = contentString(resp.Choices[0].Message.Content)
+		}
+	}
+
+	// ── Episodic memory: record this turn ───────────────────────────────────
+	if r.Episodic != nil && r.SessionID != "" {
+		_ = r.Episodic.Append(ctx, r.SessionID, "user", userMessage)
+		if finalText != "" {
+			_ = r.Episodic.Append(ctx, r.SessionID, "assistant", finalText)
+		}
+	}
+
 	// ── Lesson 14: Reflexion self-critique ────────────────────────────────
 	// After the main agent loop produces its answer, run up to MaxRetries
 	// critique→refine cycles to improve quality.
@@ -305,6 +353,182 @@ func (r *Runner) Run(ctx context.Context, userMessage string, history []Message)
 
 	// Convert wire back to Messages for caller.
 	return finalText, wireToMessages(wire), nil
+}
+
+// ─── Lesson 15 (streaming): RunStream ────────────────────────────────────────
+
+// RunStream executes the agent loop with streaming delivery.
+// Tokens arrive on the returned channel as they are generated; the error
+// channel receives at most one value (nil on success) when the stream ends.
+//
+//	tokens, errs := runner.RunStream(ctx, "Hello", nil)
+//	for t := range tokens { fmt.Print(t) }
+//	if err := <-errs; err != nil { log.Fatal(err) }
+func (r *Runner) RunStream(ctx context.Context, userMessage string, history []Message) (<-chan string, <-chan error) {
+	tokens := make(chan string, 64)
+	errs := make(chan error, 1)
+
+	go func() {
+		defer close(tokens)
+		defer close(errs)
+
+		// Safety: screen inbound.
+		if r.Safety != nil {
+			if v, err := r.Safety.Inspect(ctx, userMessage); err == nil && v.Flagged {
+				tokens <- fmt.Sprintf("I can't process that request: %s", v.Reason)
+				errs <- nil
+				return
+			}
+		}
+
+		cfg := r.Config
+		client := r.HTTPClient
+		if client == nil {
+			client = &http.Client{Timeout: 120 * time.Second}
+		}
+
+		msgs := r.buildMessages(userMessage, history)
+		wire := messagesToWire(msgs)
+
+		var tools []wireTool
+		if r.Registry != nil {
+			for _, def := range r.Registry.Definitions() {
+				fn, _ := def["function"].(map[string]any)
+				var wt wireTool
+				wt.Type = "function"
+				wt.Function.Name, _ = fn["name"].(string)
+				wt.Function.Description, _ = fn["description"].(string)
+				wt.Function.Parameters, _ = fn["parameters"].(map[string]any)
+				tools = append(tools, wt)
+			}
+		}
+
+		maxSteps := cfg.MaxSteps
+		if maxSteps <= 0 {
+			maxSteps = 20
+		}
+
+		var finalText strings.Builder
+
+		for step := 0; step < maxSteps; step++ {
+			body := wireRequest{Model: cfg.Model, Messages: wire, Tools: tools}
+			// Add stream: true.
+			type streamRequest struct {
+				wireRequest
+				Stream bool `json:"stream"`
+			}
+			sr := streamRequest{wireRequest: body, Stream: true}
+			raw, _ := json.Marshal(sr)
+
+			endpoint := strings.TrimRight(cfg.BaseURL, "/") + "/v1/chat/completions"
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(raw))
+			if err != nil {
+				errs <- err
+				return
+			}
+			req.Header.Set("Content-Type", "application/json")
+			if cfg.APIKey != "" {
+				req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				errs <- fmt.Errorf("stream step %d: %w", step, err)
+				return
+			}
+
+			// Parse SSE stream.
+			var (
+				stepContent strings.Builder
+				toolCalls   []wireToolCall
+				finishReason string
+			)
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if !strings.HasPrefix(line, "data: ") {
+					continue
+				}
+				data := strings.TrimPrefix(line, "data: ")
+				if data == "[DONE]" {
+					break
+				}
+				var chunk struct {
+					Choices []struct {
+						Delta struct {
+							Content   string        `json:"content"`
+							ToolCalls []wireToolCall `json:"tool_calls"`
+						} `json:"delta"`
+						FinishReason string `json:"finish_reason"`
+					} `json:"choices"`
+				}
+				if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+					continue
+				}
+				if len(chunk.Choices) == 0 {
+					continue
+				}
+				c := chunk.Choices[0]
+				if c.FinishReason != "" {
+					finishReason = c.FinishReason
+				}
+				if c.Delta.Content != "" {
+					stepContent.WriteString(c.Delta.Content)
+					finalText.WriteString(c.Delta.Content)
+					select {
+					case tokens <- c.Delta.Content:
+					case <-ctx.Done():
+						resp.Body.Close()
+						errs <- ctx.Err()
+						return
+					}
+				}
+				toolCalls = append(toolCalls, c.Delta.ToolCalls...)
+			}
+			resp.Body.Close()
+
+			if finishReason == "tool_calls" || len(toolCalls) > 0 {
+				// Append assistant message + execute tools (non-streaming).
+				assistantMsg := wireMessage{
+					Role:      "assistant",
+					Content:   stepContent.String(),
+					ToolCalls: toolCalls,
+				}
+				wire = append(wire, assistantMsg)
+				for _, tc := range toolCalls {
+					var args map[string]any
+					_ = json.Unmarshal([]byte(tc.Function.Arguments), &args)
+					result := fmt.Sprintf("no registry: tool %q not executed", tc.Function.Name)
+					if r.Registry != nil {
+						result, _ = r.Registry.Execute(ctx, tc.Function.Name, args)
+					}
+					wire = append(wire, wireMessage{
+						Role:       "tool",
+						Content:    result,
+						ToolCallID: tc.ID,
+						Name:       tc.Function.Name,
+					})
+				}
+				continue
+			}
+			break // no tool calls → done
+		}
+
+		// Episodic memory.
+		if r.Episodic != nil && r.SessionID != "" {
+			_ = r.Episodic.Append(ctx, r.SessionID, "user", userMessage)
+			if finalText.Len() > 0 {
+				_ = r.Episodic.Append(ctx, r.SessionID, "assistant", finalText.String())
+			}
+		}
+
+		if r.Callbacks.OnComplete != nil {
+			r.Callbacks.OnComplete(finalText.String())
+		}
+		errs <- nil
+	}()
+
+	return tokens, errs
 }
 
 // reflexionCycle runs one critique→refine pass.
@@ -396,11 +620,27 @@ func (r *Runner) buildMessages(userMessage string, history []Message) []Message 
 		sp = DefaultSystemPrompt
 	}
 	// ── Lesson 10: seed long-term memory into system prompt ─────────────────
-	// Facts are injected once per call so the model can reason about them
-	// without an explicit recall_fact tool call first.
 	if r.Memory != nil && r.UserID != "" {
 		if summary := agenttools.FactsSummary(r.Memory, r.UserID); summary != "" {
 			sp += summary
+		}
+	}
+
+	// ── Episodic memory: prepend session history snapshot ───────────────────
+	if r.Episodic != nil && r.SessionID != "" {
+		episodicSummary, recent := r.Episodic.Snapshot(r.SessionID)
+		if episodicSummary != "" || len(recent) > 0 {
+			var eb strings.Builder
+			eb.WriteString("\n\n## Conversation history (this session):\n")
+			if episodicSummary != "" {
+				eb.WriteString("Summary of earlier turns: ")
+				eb.WriteString(episodicSummary)
+				eb.WriteString("\n\n")
+			}
+			for _, ep := range recent {
+				fmt.Fprintf(&eb, "%s: %s\n", ep.Role, ep.Content)
+			}
+			sp += eb.String()
 		}
 	}
 	msgs := []Message{{Role: "system", Content: sp}}

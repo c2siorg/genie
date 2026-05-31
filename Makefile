@@ -270,6 +270,33 @@ reflexion-test: ## Lesson 14 — Run Reflexion self-critique tests
 runner-test: ## Run Runner.Run() unit tests (fake LLM server, no Ollama needed)
 	$(GO) test -race -v -count=1 -run TestRunner ./pkg/agentic/...
 
+# ── Issue #22: Safety middleware ──────────────────────────────────────────
+
+.PHONY: safety-test
+safety-test: ## Issue #22 — Safety middleware tests (jailbreak + toxicity blocking)
+	$(GO) test -race -v -count=1 ./pkg/safety/...
+	$(GO) test -race -v -count=1 -run "TestRunner_Safety" ./pkg/agentic/...
+
+# ── Issue #23: Streaming ──────────────────────────────────────────────────
+
+.PHONY: stream-test
+stream-test: ## Issue #23 — RunStream SSE streaming tests
+	$(GO) test -race -v -count=1 -run "TestRunStream" ./pkg/agentic/...
+
+# ── Issue #24: Episodic memory ────────────────────────────────────────────
+
+.PHONY: episodic-test
+episodic-test: ## Issue #24 — Episodic memory integration tests
+	$(GO) test -race -v -count=1 -run "TestRunner_Episodic" ./pkg/agentic/...
+	$(GO) test -race -v -count=1 ./pkg/memory/...
+
+# ── Issue #25: GraphRAG tools ─────────────────────────────────────────────
+
+.PHONY: graphrag-test
+graphrag-test: ## Issue #25 — GraphRAG tool tests (graph_query, graph_ingest, explain_spending)
+	$(GO) test -race -v -count=1 -run "TestGraph" ./pkg/agenttools/...
+	$(GO) test -race -v -count=1 ./pkg/graphrag/...
+
 .PHONY: memory-test
 memory-test: ## Lesson 10 — Run persistent memory tool tests
 	$(GO) test -race -v -count=1 -run TestMemory ./pkg/agenttools/...
@@ -506,7 +533,7 @@ check: vet build test-fast ## Quick local sanity check: vet + build + tests (no 
 	@echo "check: PASS"
 
 .PHONY: ci
-ci: tidy-check vet lint build test cover-check agenttools-test singleturn-test opa-test hitl-test memory-test supervisor-test mcp-tools-test rag-test reflexion-test runner-test eval ## Full CI pipeline (run before push)
+ci: tidy-check vet lint build test cover-check agenttools-test singleturn-test opa-test hitl-test memory-test supervisor-test mcp-tools-test rag-test reflexion-test runner-test safety-test stream-test episodic-test graphrag-test eval ## Full CI pipeline (run before push)
 	@echo ""
 	@echo "╔══════════════════════════════════╗"
 	@echo "║         CI: ALL PASSED           ║"
