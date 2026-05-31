@@ -27,7 +27,11 @@ type Deps struct {
 	Feedback    *handlers.Feedback
 	ChatWS      *handlers.ChatWS
 	UI          *handlers.UI
-	RateLimit   *mid.RateLimit // optional global limiter
+	Elevation   *handlers.Elevation  // optional: time-bound privileged access (PCSE 1.4 analog)
+	AgentGov    *handlers.AgentGov   // optional: AGT governance endpoints
+	OPAHandler  *handlers.OPAHandler // optional: OPA policy introspection endpoints
+	HITL        *handlers.HITLHandler // optional: Human-in-the-Loop approval queue
+	RateLimit   *mid.RateLimit       // optional global limiter
 	Logger      mid.Logger
 }
 
@@ -96,6 +100,54 @@ func NewRouter(d Deps) http.Handler {
 				}
 				if d.ChatWS != nil {
 					r.Get("/chat/ws", d.ChatWS.Serve)
+				}
+				if d.Elevation != nil {
+					// Time-bound privileged access (PCSE §1.4 analog).
+					// Request is open to any authenticated user (the
+					// service caps TTL and requires admin approval).
+					// Approve / Deny / Revoke / List are admin-gated;
+					// Get is open with the handler enforcing subject-
+					// or-admin access internally.
+					r.Route("/elevation/requests", func(r chi.Router) {
+						r.Post("/", d.Elevation.Request)
+						r.Get("/{id}", d.Elevation.Get)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Get("/", d.Elevation.List)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/approve", d.Elevation.Approve)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/deny", d.Elevation.Deny)
+						r.With(mid.RequireRole(auth.RoleAdmin)).Post("/{id}/revoke", d.Elevation.Revoke)
+					})
+				}
+				// HITL approval queue — authenticated users can list/decide.
+				if d.HITL != nil {
+					r.Route("/hitl/approvals", func(r chi.Router) {
+						r.Get("/", d.HITL.List)
+						r.Get("/{id}", d.HITL.Get)
+						r.Post("/{id}/approve", d.HITL.Approve)
+						r.Post("/{id}/deny", d.HITL.Deny)
+					})
+				}
+
+				if d.AgentGov != nil || d.OPAHandler != nil {
+					r.With(mid.RequireRole(auth.RoleAdmin)).Route("/governance", func(r chi.Router) {
+						if d.AgentGov != nil {
+							r.Get("/agents", d.AgentGov.ListAgents)
+							r.Get("/trust/{agentID}", d.AgentGov.GetTrust)
+							r.Get("/audit", d.AgentGov.GetAudit)
+							r.Post("/killswitch", d.AgentGov.ActivateKillSwitch)
+							r.Delete("/killswitch", d.AgentGov.ClearKillSwitch)
+							r.Get("/killswitch", d.AgentGov.ListKillSwitches)
+							r.Get("/slo", d.AgentGov.GetSLO)
+							r.Get("/rings/{agentID}", d.AgentGov.GetRing)
+						}
+						if d.OPAHandler != nil {
+							r.Route("/opa", func(r chi.Router) {
+								r.Get("/health", d.OPAHandler.Health)
+								r.Get("/config", d.OPAHandler.GetConfig)
+								r.Post("/evaluate", d.OPAHandler.Evaluate)
+								r.Post("/check-http", d.OPAHandler.CheckHTTP)
+							})
+						}
+					})
 				}
 			})
 		})

@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
+	promexp "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
@@ -33,6 +37,10 @@ const (
 //
 // Defaults: stdout exporter pair. Set Exporter=ExporterOTLP and OTLPEndpoint
 // (or env OTEL_EXPORTER_OTLP_ENDPOINT) to ship to a collector instead.
+//
+// A Prometheus /metrics scrape endpoint is always registered alongside the
+// primary exporter. The handler is exposed via Telemetry.MetricsHandler and
+// should be served on a dedicated addr (default :9464).
 type TelemetryConfig struct {
 	ServiceName    string
 	ServiceVersion string
@@ -52,6 +60,15 @@ type TelemetryConfig struct {
 type Telemetry struct {
 	TracerProvider *sdktrace.TracerProvider
 	MeterProvider  *sdkmetric.MeterProvider
+
+	// MetricsHandler is the Prometheus /metrics HTTP handler. It is always
+	// non-nil after a successful SetupTelemetry call. Serve it on a dedicated
+	// addr (e.g. :9464) so Prometheus can scrape it without crossing the API
+	// authentication boundary.
+	MetricsHandler http.Handler
+
+	// prometheusRegistry is retained so the handler can be tested.
+	prometheusRegistry *prometheus.Registry
 }
 
 // Shutdown flushes pending spans/metrics and releases provider resources.
@@ -113,6 +130,17 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 		return nil, err
 	}
 
+	// Prometheus reader — always registered as a second metric reader so that
+	// a /metrics scrape endpoint is available regardless of the primary exporter.
+	promReg := prometheus.NewRegistry()
+	promReader, err := promexp.New(
+		promexp.WithRegisterer(promReg),
+		promexp.WithNamespace("genie"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("prometheus exporter: %w", err)
+	}
+
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(traceExp),
 		sdktrace.WithResource(res),
@@ -121,7 +149,8 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 	otel.SetTracerProvider(tp)
 
 	mp := sdkmetric.NewMeterProvider(
-		sdkmetric.WithReader(metricReader),
+		sdkmetric.WithReader(metricReader), // primary (stdout or OTLP)
+		sdkmetric.WithReader(promReader),   // always-on Prometheus scrape reader
 		sdkmetric.WithResource(res),
 	)
 	otel.SetMeterProvider(mp)
@@ -131,7 +160,17 @@ func SetupTelemetry(ctx context.Context, cfg TelemetryConfig) (*Telemetry, error
 		propagation.Baggage{},
 	))
 
-	return &Telemetry{TracerProvider: tp, MeterProvider: mp}, nil
+	metricsHandler := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{
+		EnableOpenMetrics: true,
+		Registry:          promReg,
+	})
+
+	return &Telemetry{
+		TracerProvider:     tp,
+		MeterProvider:      mp,
+		MetricsHandler:     metricsHandler,
+		prometheusRegistry: promReg,
+	}, nil
 }
 
 // buildExporters returns the configured trace exporter and metric reader.

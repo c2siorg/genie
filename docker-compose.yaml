@@ -1,9 +1,10 @@
 # Local development stack:
-#   - genie-api    (the service)
-#   - postgres     (persistence)
-#   - otel-collector (receives OTLP, fans out to Tempo)
-#   - tempo        (trace backend)
-#   - grafana      (UI)
+#   - genie-api      (the service)
+#   - postgres       (persistence)
+#   - otel-collector (receives OTLP, fans out to Tempo + Prometheus exporter)
+#   - tempo          (trace backend)
+#   - prometheus     (metrics backend — scrapes genie-api:9464 + otel-collector:8889)
+#   - grafana        (UI — Tempo + Prometheus datasources)
 
 services:
   postgres:
@@ -41,8 +42,26 @@ services:
     ports:
       - "4317:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP http
+      - "8889:8889"   # Prometheus metrics (collector → Prometheus scrape)
     depends_on:
       - tempo
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'           # allows POST /-/reload
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./deploy/local/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"   # Prometheus UI + API
+    depends_on:
+      - otel-collector
 
   grafana:
     image: grafana/grafana:11.1.0
@@ -56,6 +75,7 @@ services:
       - "3000:3000"
     depends_on:
       - tempo
+      - prometheus
 
   # Local-LLM runtime. The init container `ollama-pull` runs once to warm
   # the model cache so the first genie-api request doesn't pay the download.
@@ -97,6 +117,7 @@ services:
       GENIE_DB_DSN: "postgres://genie:genie@postgres:5432/genie?sslmode=disable"
       OTEL_EXPORTER_OTLP_ENDPOINT: "otel-collector:4317"
       GENIE_OTEL_INSECURE: "true"
+      GENIE_METRICS_ADDR: ":9464"       # Prometheus scrape port
       # Switch to local Ollama. Set GENIE_LLM=mock to bypass.
       GENIE_LLM: "ollama"
       GENIE_OLLAMA_URL: "http://ollama:11434"
@@ -104,6 +125,7 @@ services:
       GENIE_OLLAMA_EMBED: "nomic-embed-text"
     ports:
       - "8080:8080"
+      - "9464:9464"   # Prometheus /metrics scrape endpoint
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,3 +137,4 @@ services:
 volumes:
   postgres-data:
   ollama-data:
+  prometheus-data:

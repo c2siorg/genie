@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -56,7 +57,9 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_estimator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agentgov"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
@@ -70,6 +73,7 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/opa"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/sovereignty"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
@@ -113,6 +117,30 @@ func run() error {
 		_ = tel.Shutdown(sctx)
 	}()
 
+	// Prometheus metrics server — always-on on a dedicated port so Prometheus
+	// can scrape /metrics without crossing the JWT-authenticated API boundary.
+	// Override with GENIE_METRICS_ADDR; default :9464 (standard prom port).
+	metricsAddr := os.Getenv("GENIE_METRICS_ADDR")
+	if metricsAddr == "" {
+		metricsAddr = ":9464"
+	}
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("/metrics", tel.MetricsHandler)
+	metricsMux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	metricsSrv := &http.Server{
+		Addr:              metricsAddr,
+		Handler:           metricsMux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	go func() {
+		logger.Info("metrics listening", "addr", metricsAddr)
+		if err := metricsSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("metrics server", "error", err)
+		}
+	}()
+
 	// Database
 	dsn := mustEnv("GENIE_DB_DSN")
 	db, err := postgres.Open(ctx, postgres.Config{DSN: dsn, MaxConns: 10})
@@ -139,7 +167,9 @@ func run() error {
 
 	consents := compliance.NewInMemoryLedger()
 	auditLog := compliance.NewInMemoryAuditLog()
-	_ = auditLog // reserved for incident-correlated audit entries.
+	// auditLog feeds the elevation service (and is reserved for incident-
+	// correlated audit entries on other transitions in the future).
+	elevationSvc := elevation.New(auditLog)
 
 	// Annexure V — board-approved AI policy lives in YAML, not Go code.
 	policyPath := os.Getenv("GENIE_AI_POLICY")
@@ -223,11 +253,45 @@ func run() error {
 
 	incidentStore := postgres.NewIncidentStore(db)
 
+	// Build AGT governance bundle.
+	agentIDs := []string{
+		"ingestor", "normalizer", "enricher", "analyzer", "forecaster",
+		"anomaly", "recommender", "reporter", "supervisor", "currency",
+		"macro", "rates", "loan", "educator", "auditor",
+		"portfolio_advisor", "portfolio_advisor_fallback", "recommender_fallback",
+		"aa_fetcher", "voice", "tax_estimator", "kyc_orchestrator",
+		"claim_adjudicator", "sme_loan_workflow", "invoice_processor",
+		"deep_research", "bulk_statement_analyzer", "mpc_research",
+		"auto_insurance", "health_preauth", "supply_chain_finance",
+		"payment_orchestrator", "cyber_guardian", "google_trends",
+	}
+	govBundle, err := agentgov.NewBundle(agentIDs)
+	if err != nil {
+		return fmt.Errorf("agentgov bundle: %w", err)
+	}
+
+	govOnDeny, govOnError := govBundle.OrchestratorHooks()
+
+	// ── Lesson 16: OPA policy engine ────────────────────────────────────────
+	// Build an OPA engine from the AI policy YAML + agent ring assignments so
+	// every message can be evaluated against Rego rules at /v1/governance/opa/*.
+	opaCfg := opa.DefaultPolicyConfig()
+	opaCfg.AgentRings = agentgov.RingMap(agentIDs)
+	opaCfg.HomeRegion = string(homeRegion)
+	opaCfg.AdminBypass = true
+	opaEngine, opaErr := opa.New(ctx, opaCfg, nil) // nil → load embedded policies/
+	if opaErr != nil {
+		logger.Error("opa engine init", "error", opaErr)
+		// Non-fatal: API runs without OPA introspection endpoints.
+		opaEngine = nil
+	}
+
 	orch := orchestration.NewOrchestrator(reg, bus, composite, env)
 	orch.SetFallback("portfolio_advisor", "portfolio_advisor_fallback")
 	orch.SetFallback("recommender", "recommender_fallback")
 	orch.WithHooks(orchestration.Hooks{
 		OnPolicyDeny: func(ctx context.Context, msg agent.Message, reason string) {
+			govOnDeny(ctx, msg, reason)
 			_, _ = incidentStore.Create(ctx, incidents.Incident{
 				UseCase:     msg.Type,
 				Description: "policy denied message: " + reason,
@@ -237,6 +301,7 @@ func run() error {
 			})
 		},
 		OnAgentError: func(ctx context.Context, agentID string, msg agent.Message, err error) {
+			govOnError(ctx, agentID, msg, err)
 			_, _ = incidentStore.Create(ctx, incidents.Incident{
 				UseCase:     agentID,
 				Description: "agent error: " + err.Error(),
@@ -336,6 +401,19 @@ func run() error {
 		RateLimit: mid.NewRateLimit(60, 1.0), // 60-req burst, 1/sec refill
 		AIBOM:     &handlers.AIBOM{Reg: reg, Builder: aibom.NewBuilder()},
 		Feedback:  &handlers.Feedback{Store: synth.NewInMemoryFeedbackStore()},
+		// Elevation — PCSE §1.4 analog: time-bound privileged access with
+		// audit chain integration. Routes registered under /v1/elevation/*.
+		Elevation: &handlers.Elevation{Service: elevationSvc},
+		// AGT governance endpoints — admin-gated under /v1/governance/*.
+		AgentGov: &handlers.AgentGov{Bundle: govBundle},
+		// OPA policy introspection — admin-gated under /v1/governance/opa/*.
+		// Nil when the engine failed to init (degraded mode).
+		OPAHandler: func() *handlers.OPAHandler {
+			if opaEngine != nil {
+				return &handlers.OPAHandler{Engine: opaEngine}
+			}
+			return nil
+		}(),
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui
@@ -375,6 +453,9 @@ func run() error {
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("graceful shutdown failed", "error", err)
+	}
+	if err := metricsSrv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("metrics server shutdown failed", "error", err)
 	}
 	return nil
 }

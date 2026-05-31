@@ -1272,13 +1272,14 @@ on-call-only procedures specific to a security event.
    [`packages/oauth-token-exchange.md`](packages/oauth-token-exchange.md),
    [`packages/agent-tier.md`](packages/agent-tier.md) — the Q1
    security primitives in detail.
-3. [`linkedin-article-security-complete.md`](linkedin-article-security-complete.md)
-   — the long-form security narrative for the non-engineer audience.
-4. [`linkedin-article-agentic-security-operations.md`](linkedin-article-agentic-security-operations.md)
-   — the runtime operations playbook.
-5. [`free-ai-mapping.md`](free-ai-mapping.md) — recommendation-by-
+3. The long-form security narratives now live on the blog:
+   [Consolidated security deep-dive](https://pratikdhanave.github.io/blog/2026/04/22/consolidated-security-deep-dive/)
+   (RBAC, RLS, token exchange, encryption, audit) and
+   [Agentic security in production](https://pratikdhanave.github.io/blog/2026/04/20/agentic-security-in-production/)
+   (the runtime operations playbook).
+4. [`free-ai-mapping.md`](free-ai-mapping.md) — recommendation-by-
    recommendation index.
-6. [`operations.md`](operations.md) — the runbook.
+5. [`operations.md`](operations.md) — the runbook.
 
 ### 19.4 If you find a gap
 
@@ -1359,9 +1360,9 @@ docs/
 ├── packages/oauth-token-exchange.md
 ├── packages/agent-tier.md
 ├── free-ai-mapping.md
-├── operations.md
-├── linkedin-article-security-complete.md
-└── linkedin-article-agentic-security-operations.md
+└── operations.md
+
+(Long-form articles have moved to https://pratikdhanave.github.io/blog/ — see §19.3.)
 
 config/
 ├── ai-policy.example.yaml             board-approved policy (replace in deploy)

@@ -6,9 +6,24 @@ datasources:
     access: proxy
     url: http://tempo:3200
     uid: tempo
+    isDefault: false
+    editable: true
+    jsonData:
+      httpMethod: GET
+      tracesToMetrics:
+        datasourceUid: prometheus
+      tracesToLogs:
+        datasourceUid: ''
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    uid: prometheus
     isDefault: true
     editable: true
     jsonData:
       httpMethod: GET
-      tracesToLogs:
-        datasourceUid: ''
+      exemplarTraceIdDestinations:
+        - name: traceID
+          datasourceUid: tempo
