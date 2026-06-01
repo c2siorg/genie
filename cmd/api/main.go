@@ -67,8 +67,13 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/cbdc"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commerce"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeecompliance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeepayment"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/incidents"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
@@ -82,6 +87,27 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/handlers"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
+
+// Mock stubs for commerce workflow (integrate with agent bus in production)
+type mockPaymentAgentStub struct{}
+
+func (m *mockPaymentAgentStub) InitiatePayment(ctx context.Context, req commerce.PaymentInitiationRequest) (string, error) {
+	return "txn-" + req.OrderID, nil
+}
+
+func (m *mockPaymentAgentStub) PollPaymentStatus(ctx context.Context, transactionID string) (*commerce.PaymentConfirmation, error) {
+	return &commerce.PaymentConfirmation{TransactionID: transactionID, Success: true, ConfirmedAt: time.Now()}, nil
+}
+
+type mockSettlementAgentStub struct{}
+
+func (m *mockSettlementAgentStub) InitiateSettlement(ctx context.Context, req commerce.SettlementInitiationRequest) (string, error) {
+	return "settle-" + req.OrderID, nil
+}
+
+func (m *mockSettlementAgentStub) WaitSettlementCompletion(ctx context.Context, settlementID string) (*commerce.SettlementResult, error) {
+	return &commerce.SettlementResult{SettlementID: settlementID, Success: true, CompletedAt: time.Now()}, nil
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -343,6 +369,30 @@ func run() error {
 		"recommender":       "recommender_fallback",
 	}
 
+	// E-Rupee Commerce Module Initialization
+	// Payment Agent
+	acctMgr := erupeepayment.NewInMemoryAccountManager(nil)
+	txnLog := erupeepayment.NewInMemoryTransactionLog(nil)
+	paymentAgent := erupeepayment.NewPaymentAgent(acctMgr, txnLog)
+
+	// Commerce Workflow (mock stubs for payment & settlement agents)
+	orderMgr := commerce.NewInMemoryOrderManager()
+	mockPaymentStub := &mockPaymentAgentStub{}
+	mockSettlementStub := &mockSettlementAgentStub{}
+	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, mockPaymentStub, mockSettlementStub)
+
+	// Merchant Onboarding
+	merchantMgr := merchant.NewInMemoryMerchantManager()
+	onboardingWf := merchant.NewInMemoryOnboardingWorkflow(merchantMgr)
+
+	// CBDC Ledger & Settlement
+	cbdcLedger := cbdc.NewInMemoryLedger()
+	cbdcBridge := cbdc.NewMockCBDCBridge(2)
+	rbiLimits := cbdc.NewRBILimitsValidator()
+
+	// Payment Compliance Engine
+	complianceEngine := erupeecompliance.NewComplianceEngine()
+
 	deps := web.Deps{
 		Issuer:    issuer,
 		Logger:    logger,
@@ -414,6 +464,16 @@ func run() error {
 			}
 			return nil
 		}(),
+		// E-Rupee Commerce Handlers
+		Payment: &handlers.Payment{
+			PaymentAgent:   paymentAgent,
+			AccountManager: acctMgr,
+			TransactionLog: txnLog,
+		},
+		Commerce: handlers.NewCommerceHandler(orderMgr, workflowOrch),
+		Merchant: handlers.NewMerchantHandler(merchantMgr, onboardingWf),
+		Compliance: handlers.NewComplianceHandler(complianceEngine),
+		CBDC: handlers.NewCBDCHandler(cbdcBridge, cbdcLedger, rbiLimits),
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui

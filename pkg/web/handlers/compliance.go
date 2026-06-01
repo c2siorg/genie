@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/c2siorg/genie/pkg/erupeecompliance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeecompliance"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )

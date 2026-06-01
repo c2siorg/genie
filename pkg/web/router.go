@@ -35,6 +35,12 @@ type Deps struct {
 	AML          *handlers.AMLHandler       // optional: AML Risk Scoring
 	Consent      *handlers.ConsentHandler   // optional: Consent Registry
 	Lineage      *handlers.LineageHandler   // optional: Data Lineage Tracker
+	// E-Rupee Commerce APIs
+	Payment      *handlers.Payment        // optional: e-Rupee Payment Agent
+	Commerce     *handlers.CommerceHandler // optional: Commerce Workflow Engine
+	Merchant     *handlers.MerchantHandler // optional: Merchant Onboarding
+	Compliance   *handlers.ComplianceHandler // optional: Payment Compliance
+	CBDC         *handlers.CBDCHandler     // optional: CBDC Ledger & Settlement
 	RateLimit    *mid.RateLimit       // optional global limiter
 	Logger       mid.Logger
 }
@@ -136,8 +142,8 @@ func NewRouter(d Deps) http.Handler {
 					r.Route("/settlement", func(r chi.Router) {
 						r.Route("/request", func(r chi.Router) {
 							r.Post("/", d.Settlement.CreateRequest)
-							r.Get("/{request_id}", d.Settlement.GetStatus)
-							r.Post("/{request_id}/execute", d.Settlement.ExecuteRequest)
+							r.Get("/{request_id}", d.Settlement.GetRequest)
+							r.Post("/{request_id}/execute", d.Settlement.ExecuteSettlement)
 							r.Get("/{request_id}/audit", d.Settlement.GetAuditLog)
 						})
 					})
@@ -145,29 +151,80 @@ func NewRouter(d Deps) http.Handler {
 
 				if d.AML != nil {
 					r.Route("/aml", func(r chi.Router) {
-						r.Post("/screen", d.AML.ScreenTransactions)
-						r.Get("/result/{result_id}", d.AML.GetResult)
-						r.Get("/audit/{txn_id}", d.AML.GetAuditLog)
-						r.Get("/profile/{customer_id}", d.AML.GetProfile)
+						r.Post("/score", d.AML.ScoreTransaction)
+						r.Get("/score/{score_id}", d.AML.GetScore)
+						r.Get("/history/{txn_id}", d.AML.GetHistory)
 					})
 				}
 
 				if d.Consent != nil {
 					r.Route("/consent", func(r chi.Router) {
-						r.Post("/request", d.Consent.CreateRequest)
-						r.Get("/{consent_id}", d.Consent.GetConsent)
-						r.Post("/{consent_id}/approve", d.Consent.ApproveConsent)
-						r.Post("/{consent_id}/revoke", d.Consent.RevokeConsent)
-						r.Get("/audit/{consent_id}", d.Consent.GetAuditLog)
+						r.Post("/grant", d.Consent.GrantConsent)
+						r.Post("/revoke", d.Consent.RevokeConsent)
+						r.Get("/list", d.Consent.ListGrants)
+						r.Get("/audit/{consent_id}", d.Consent.GetAuditDecisions)
 					})
 				}
 
 				if d.Lineage != nil {
 					r.Route("/lineage", func(r chi.Router) {
-						r.Post("/trace", d.Lineage.TraceLineage)
-						r.Get("/trace/{trace_id}", d.Lineage.GetTraceResult)
-						r.Get("/audit/{entity_id}", d.Lineage.GetAuditLog)
-						r.Get("/dependencies/{entity_id}", d.Lineage.GetDependencies)
+						r.Post("/query", d.Lineage.QueryLineage)
+						r.Post("/verify", d.Lineage.VerifyIntegrity)
+						r.Get("/export/{entity_id}", d.Lineage.ExportAuditTrail)
+					})
+				}
+
+				// E-Rupee Commerce APIs
+				if d.Payment != nil {
+					r.Route("/payment", func(r chi.Router) {
+						r.Post("/initiate", d.Payment.InitiatePayment)
+						r.Get("/{payment_id}", d.Payment.GetPayment)
+					})
+					r.Route("/account", func(r chi.Router) {
+						r.Post("/", d.Payment.CreateAccount)
+						r.Get("/{account_id}", d.Payment.GetAccount)
+					})
+					r.Route("/transaction", func(r chi.Router) {
+						r.Get("/{transaction_id}", d.Payment.ListTransactions)
+					})
+				}
+
+				if d.Commerce != nil {
+					r.Route("/commerce/order", func(r chi.Router) {
+						r.Post("/", d.Commerce.CreateOrder)
+						r.Get("/{order_id}", d.Commerce.GetOrder)
+						r.Post("/{order_id}/execute", d.Commerce.ExecuteWorkflow)
+						r.Get("/{order_id}/audit", d.Commerce.GetAuditLog)
+					})
+				}
+
+				if d.Merchant != nil {
+					r.Route("/merchant", func(r chi.Router) {
+						r.Post("/onboard", d.Merchant.OnboardMerchant)
+						r.Get("/{merchant_id}", d.Merchant.GetMerchant)
+						r.Get("/{merchant_id}/onboarding", d.Merchant.GetOnboardingStatus)
+						r.Post("/{merchant_id}/approve", d.Merchant.ApproveMerchant)
+						r.Post("/{merchant_id}/limits", d.Merchant.UpdateLimits)
+					})
+				}
+
+				if d.Compliance != nil {
+					r.Route("/compliance", func(r chi.Router) {
+						r.Post("/check", d.Compliance.CheckPayment)
+						r.Get("/check/{check_id}", d.Compliance.GetCheck)
+						r.Get("/account/{account_id}/velocity", d.Compliance.GetVelocity)
+						r.Get("/account/{account_id}/fraud-history", d.Compliance.GetFraudHistory)
+						r.Post("/admin/reset-velocity", d.Compliance.ResetVelocity)
+					})
+				}
+
+				if d.CBDC != nil {
+					r.Route("/cbdc", func(r chi.Router) {
+						r.Post("/transaction", d.CBDC.InitiateTransaction)
+						r.Get("/transaction/{transaction_id}", d.CBDC.GetTransaction)
+						r.Get("/block/{height}", d.CBDC.GetBlock)
+						r.Get("/limits/{account_id}", d.CBDC.GetLimits)
+						r.Get("/health", d.CBDC.Health)
 					})
 				}
 
