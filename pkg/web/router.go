@@ -11,29 +11,32 @@ import (
 
 // Deps bundles the dependencies needed to assemble the HTTP router.
 type Deps struct {
-	Issuer      *auth.Issuer
-	Users       *handlers.Users
-	Accounts    *handlers.Accounts
-	Documents   *handlers.Documents
-	Ask         *handlers.Ask
-	AskStream   *handlers.AskStream
-	Health      *handlers.Health
-	MCPTokens   *handlers.MCPTokens
-	MCPServer   http.Handler // optional: mounted at /mcp when non-nil
-	Incidents   *handlers.Incidents
-	Inventory   *handlers.Inventory
-	Disclosures *handlers.Disclosures
-	AIBOM       *handlers.AIBOM
-	Feedback    *handlers.Feedback
-	ChatWS      *handlers.ChatWS
-	UI          *handlers.UI
-	Elevation   *handlers.Elevation  // optional: time-bound privileged access (PCSE 1.4 analog)
-	AgentGov    *handlers.AgentGov   // optional: AGT governance endpoints
-	OPAHandler  *handlers.OPAHandler // optional: OPA policy introspection endpoints
-	HITL        *handlers.HITLHandler // optional: Human-in-the-Loop approval queue
-	Compliance  *handlers.ComplianceHandler // optional: Payment compliance checking
-	RateLimit   *mid.RateLimit       // optional global limiter
-	Logger      mid.Logger
+	Issuer       *auth.Issuer
+	Users        *handlers.Users
+	Accounts     *handlers.Accounts
+	Documents    *handlers.Documents
+	Ask          *handlers.Ask
+	AskStream    *handlers.AskStream
+	Health       *handlers.Health
+	MCPTokens    *handlers.MCPTokens
+	MCPServer    http.Handler // optional: mounted at /mcp when non-nil
+	Incidents    *handlers.Incidents
+	Inventory    *handlers.Inventory
+	Disclosures  *handlers.Disclosures
+	AIBOM        *handlers.AIBOM
+	Feedback     *handlers.Feedback
+	ChatWS       *handlers.ChatWS
+	UI           *handlers.UI
+	Elevation    *handlers.Elevation  // optional: time-bound privileged access (PCSE 1.4 analog)
+	AgentGov     *handlers.AgentGov   // optional: AGT governance endpoints
+	OPAHandler   *handlers.OPAHandler // optional: OPA policy introspection endpoints
+	HITL         *handlers.HITLHandler // optional: Human-in-the-Loop approval queue
+	Settlement   *handlers.SettlementHandler // optional: Settlement Coordinator
+	AML          *handlers.AMLHandler       // optional: AML Risk Scoring
+	Consent      *handlers.ConsentHandler   // optional: Consent Registry
+	Lineage      *handlers.LineageHandler   // optional: Data Lineage Tracker
+	RateLimit    *mid.RateLimit       // optional global limiter
+	Logger       mid.Logger
 }
 
 // NewRouter builds the chi router with all middleware and routes wired up.
@@ -128,17 +131,46 @@ func NewRouter(d Deps) http.Handler {
 					})
 				}
 
-
-				// Payment Compliance API — check compliance, velocity, fraud history
-				if d.Compliance != nil {
-					r.Route("/compliance", func(r chi.Router) {
-						r.Post("/check", d.Compliance.CheckPayment)
-						r.Get("/check/{compliance_check_id}", d.Compliance.GetCheck)
-						r.Get("/account/{account_id}/velocity", d.Compliance.GetVelocity)
-						r.Get("/account/{account_id}/fraud-history", d.Compliance.GetFraudHistory)
-						r.Post("/admin/reset-velocity", d.Compliance.ResetVelocity)
+				// Finance Module APIs (Settlement, AML, Consent, Lineage)
+				if d.Settlement != nil {
+					r.Route("/settlement", func(r chi.Router) {
+						r.Route("/request", func(r chi.Router) {
+							r.Post("/", d.Settlement.CreateRequest)
+							r.Get("/{request_id}", d.Settlement.GetStatus)
+							r.Post("/{request_id}/execute", d.Settlement.ExecuteRequest)
+							r.Get("/{request_id}/audit", d.Settlement.GetAuditLog)
+						})
 					})
 				}
+
+				if d.AML != nil {
+					r.Route("/aml", func(r chi.Router) {
+						r.Post("/screen", d.AML.ScreenTransactions)
+						r.Get("/result/{result_id}", d.AML.GetResult)
+						r.Get("/audit/{txn_id}", d.AML.GetAuditLog)
+						r.Get("/profile/{customer_id}", d.AML.GetProfile)
+					})
+				}
+
+				if d.Consent != nil {
+					r.Route("/consent", func(r chi.Router) {
+						r.Post("/request", d.Consent.CreateRequest)
+						r.Get("/{consent_id}", d.Consent.GetConsent)
+						r.Post("/{consent_id}/approve", d.Consent.ApproveConsent)
+						r.Post("/{consent_id}/revoke", d.Consent.RevokeConsent)
+						r.Get("/audit/{consent_id}", d.Consent.GetAuditLog)
+					})
+				}
+
+				if d.Lineage != nil {
+					r.Route("/lineage", func(r chi.Router) {
+						r.Post("/trace", d.Lineage.TraceLineage)
+						r.Get("/trace/{trace_id}", d.Lineage.GetTraceResult)
+						r.Get("/audit/{entity_id}", d.Lineage.GetAuditLog)
+						r.Get("/dependencies/{entity_id}", d.Lineage.GetDependencies)
+					})
+				}
+
 				if d.AgentGov != nil || d.OPAHandler != nil {
 					r.With(mid.RequireRole(auth.RoleAdmin)).Route("/governance", func(r chi.Router) {
 						if d.AgentGov != nil {
