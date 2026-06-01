@@ -31,6 +31,7 @@ type Deps struct {
 	AgentGov    *handlers.AgentGov   // optional: AGT governance endpoints
 	OPAHandler  *handlers.OPAHandler // optional: OPA policy introspection endpoints
 	HITL        *handlers.HITLHandler // optional: Human-in-the-Loop approval queue
+	Compliance  *handlers.ComplianceHandler // optional: Payment compliance checking
 	RateLimit   *mid.RateLimit       // optional global limiter
 	Logger      mid.Logger
 }
@@ -127,6 +128,17 @@ func NewRouter(d Deps) http.Handler {
 					})
 				}
 
+
+				// Payment Compliance API — check compliance, velocity, fraud history
+				if d.Compliance != nil {
+					r.Route("/compliance", func(r chi.Router) {
+						r.Post("/check", d.Compliance.CheckPayment)
+						r.Get("/check/{compliance_check_id}", d.Compliance.GetCheck)
+						r.Get("/account/{account_id}/velocity", d.Compliance.GetVelocity)
+						r.Get("/account/{account_id}/fraud-history", d.Compliance.GetFraudHistory)
+						r.Post("/admin/reset-velocity", d.Compliance.ResetVelocity)
+					})
+				}
 				if d.AgentGov != nil || d.OPAHandler != nil {
 					r.With(mid.RequireRole(auth.RoleAdmin)).Route("/governance", func(r chi.Router) {
 						if d.AgentGov != nil {
