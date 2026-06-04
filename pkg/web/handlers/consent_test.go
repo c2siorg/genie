@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/consent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/consent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
 

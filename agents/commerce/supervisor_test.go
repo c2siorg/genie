@@ -15,7 +15,7 @@ type MockEnvironment struct {
 	logged []string
 }
 
-func (e *MockEnvironment) Now() time.Time       { return time.Now().UTC() }
+func (e *MockEnvironment) Now() time.Time { return time.Now().UTC() }
 func (e *MockEnvironment) Logf(fmt string, args ...interface{}) {
 	e.logged = append(e.logged, "log")
 }
@@ -43,9 +43,9 @@ func (m *testPaymentAgent) PollPaymentStatus(ctx context.Context, transactionID 
 		}, nil
 	}
 	return &commerce.PaymentConfirmation{
-		Success:        true,
-		TransactionID:  transactionID,
-		ConfirmedAt:    time.Now().UTC(),
+		Success:       true,
+		TransactionID: transactionID,
+		ConfirmedAt:   time.Now().UTC(),
 	}, nil
 }
 
@@ -63,10 +63,15 @@ func (m *testSettlementAgent) InitiateSettlement(ctx context.Context, req commer
 
 func (m *testSettlementAgent) WaitSettlementCompletion(ctx context.Context, settlementID string) (*commerce.SettlementResult, error) {
 	return &commerce.SettlementResult{
-		Success:        !m.shouldFail,
-		SettlementID:   settlementID,
-		CompletedAt:    time.Now().UTC(),
-		ErrorReason:    func() string { if m.shouldFail { return "settlement failed" }; return "" }(),
+		Success:      !m.shouldFail,
+		SettlementID: settlementID,
+		CompletedAt:  time.Now().UTC(),
+		ErrorReason: func() string {
+			if m.shouldFail {
+				return "settlement failed"
+			}
+			return ""
+		}(),
 		RequiresReview: m.shouldFail,
 	}, nil
 }
@@ -90,10 +95,10 @@ func TestCommerceAgent_PlaceOrder(t *testing.T) {
 		},
 	}
 	reqBody, _ := json.Marshal(map[string]interface{}{
-		"action":       "place_order",
-		"merchant_id":  req.MerchantID,
-		"customer_id":  req.CustomerID,
-		"items":        req.Items,
+		"action":      "place_order",
+		"merchant_id": req.MerchantID,
+		"customer_id": req.CustomerID,
+		"items":       req.Items,
 	})
 
 	msg := agent.NewMessage("test-user", commerceAgent.ID(), agent.RoleUser, TypeIn, string(reqBody), nil)

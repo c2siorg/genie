@@ -105,16 +105,16 @@ type User struct {
 //
 // ─── Claim field reference ────────────────────────────────────────────────
 //
-//   Subject   — the authenticated user's stable id (UUID)
-//   Email     — convenience, used by audit logs and UI labels
-//   Roles     — authorisation tier list (one or more)
-//   IssuedAt  — Unix seconds, UTC
-//   ExpiresAt — Unix seconds, UTC; verifier rejects past this
-//   Issuer    — the minting service (e.g. "genie-api"); used for
-//                cross-issuer routing in federated deployments
-//   Audience  — list of accepted audiences; verifier requires at least
-//                one match if it has a non-empty audience list
-//   Actor     — RFC 8693 `act` claim (see above)
+//	Subject   — the authenticated user's stable id (UUID)
+//	Email     — convenience, used by audit logs and UI labels
+//	Roles     — authorisation tier list (one or more)
+//	IssuedAt  — Unix seconds, UTC
+//	ExpiresAt — Unix seconds, UTC; verifier rejects past this
+//	Issuer    — the minting service (e.g. "genie-api"); used for
+//	             cross-issuer routing in federated deployments
+//	Audience  — list of accepted audiences; verifier requires at least
+//	             one match if it has a non-empty audience list
+//	Actor     — RFC 8693 `act` claim (see above)
 //
 // Wire format is JSON with the JWT-standard short field names (sub,
 // iat, exp, iss, aud, act). Genie does not invent new claim names —
@@ -147,23 +147,23 @@ type Claims struct {
 // Example for a three-hop chain (user → orchestrator → MCP server →
 // upstream API):
 //
-//   claims.Subject                            = user-alice
-//   claims.Actor.Subject                      = mcp_server_or_api  (outermost)
-//   claims.Actor.Nested.Subject               = kyc_orchestrator   (inner)
-//   claims.Actor.Nested.Nested                = nil (chain head)
+//	claims.Subject                            = user-alice
+//	claims.Actor.Subject                      = mcp_server_or_api  (outermost)
+//	claims.Actor.Nested.Subject               = kyc_orchestrator   (inner)
+//	claims.Actor.Nested.Nested                = nil (chain head)
 //
 // To list the chain user-first → outermost-last, collect [Subject],
 // then walk Actor → Actor.Nested → ... and reverse.
 //
 // ─── Field semantics ──────────────────────────────────────────────────────
 //
-//   Subject — the service / agent identity. Same string the registry
-//              uses; same string the audit log records as the actor.
-//   Issuer  — who minted this actor identity. The downstream service
-//              uses this to verify the actor was minted by a trusted
-//              authority (cross-issuer trust check).
-//   Nested  — the previous actor in the chain. nil for a first-hop
-//              exchange; non-nil for second-and-later hops.
+//	Subject — the service / agent identity. Same string the registry
+//	           uses; same string the audit log records as the actor.
+//	Issuer  — who minted this actor identity. The downstream service
+//	           uses this to verify the actor was minted by a trusted
+//	           authority (cross-issuer trust check).
+//	Nested  — the previous actor in the chain. nil for a first-hop
+//	           exchange; non-nil for second-and-later hops.
 type Actor struct {
 	Subject string `json:"sub"`           // agent / service identity
 	Issuer  string `json:"iss,omitempty"` // who minted the actor identity

@@ -203,9 +203,9 @@ func (e *Executor) Run(ctx context.Context, data EvalData) (Result, error) {
 	}
 
 	var (
-		steps         []Step
-		allToolCalls  []string
-		finalText     string
+		steps        []Step
+		allToolCalls []string
+		finalText    string
 	)
 
 	maxSteps := cfg.MaxSteps

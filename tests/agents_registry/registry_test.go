@@ -4,12 +4,12 @@
 //
 // What we check here:
 //
-//   * Every agent package under agents/ declares a stable string ID.
-//   * No two agents share the same ID — the registry would otherwise
+//   - Every agent package under agents/ declares a stable string ID.
+//   - No two agents share the same ID — the registry would otherwise
 //     silently overwrite handlers.
-//   * The set of declared IDs matches the directory list (no orphaned
+//   - The set of declared IDs matches the directory list (no orphaned
 //     directories, no missing IDs).
-//   * Every agent has a unit test file.
+//   - Every agent has a unit test file.
 //
 // Implementation note: rather than import every agent package (≥40
 // imports, brittle), we scan the source tree for the canonical

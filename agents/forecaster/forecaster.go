@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	ID         = "forecaster"
-	CapCash    = "forecast_cashflow"
-	TypeIn     = "analysis_result"
-	TypeOut    = "forecast_result"
-	NextAgent  = "financial_supervisor"
+	ID        = "forecaster"
+	CapCash   = "forecast_cashflow"
+	TypeIn    = "analysis_result"
+	TypeOut   = "forecast_result"
+	NextAgent = "financial_supervisor"
 )
 
 type analyzerView struct {

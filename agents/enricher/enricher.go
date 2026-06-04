@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	ID         = "enricher"
-	CapEnrich  = "enrich_merchant"
-	NextAgent  = "analyzer"
-	TypeIn     = "normalized_transactions"
-	TypeOut    = "enriched_transactions"
+	ID        = "enricher"
+	CapEnrich = "enrich_merchant"
+	NextAgent = "analyzer"
+	TypeIn    = "normalized_transactions"
+	TypeOut   = "enriched_transactions"
 )
 
 // defaultCategories is intentionally small for the demo. Extend via NewWithCategories.

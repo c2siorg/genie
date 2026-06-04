@@ -214,15 +214,15 @@ func (i *Issuer) VerifyIgnoringAudience(token string) (Claims, error) {
 // token.
 //
 // Algorithm:
-//   1. Split on '.' — JWT format is header.payload.signature, 3 parts.
-//   2. Base64-decode the header; require Alg=HS256, Typ=JWT.
-//   3. Recompute the signature over header+'.'+payload and compare with
-//      hmac.Equal (constant-time).
-//   4. Base64-decode the payload into Claims.
-//   5. Check expiry: exp > now.
-//   6. Check issuer: iss == this Issuer's Issuer (if non-empty).
-//   7. Check audience: at least one of our audiences is in the token's
-//      audience list (if our audience is non-empty).
+//  1. Split on '.' — JWT format is header.payload.signature, 3 parts.
+//  2. Base64-decode the header; require Alg=HS256, Typ=JWT.
+//  3. Recompute the signature over header+'.'+payload and compare with
+//     hmac.Equal (constant-time).
+//  4. Base64-decode the payload into Claims.
+//  5. Check expiry: exp > now.
+//  6. Check issuer: iss == this Issuer's Issuer (if non-empty).
+//  7. Check audience: at least one of our audiences is in the token's
+//     audience list (if our audience is non-empty).
 //
 // On any failure, returns ErrInvalidToken (sometimes wrapped with the
 // underlying detail for logs). Returns the parsed Claims on success.
@@ -310,9 +310,9 @@ func audienceContains(have, want []string) bool {
 // encode produces a signed JWT from a header, claims, and secret.
 //
 // Two-stage:
-//   1. Marshal header and claims to JSON, base64-URL encode each.
-//   2. Concatenate header.payload, compute HMAC-SHA256 over the
-//      concatenation, base64-URL encode the signature, append.
+//  1. Marshal header and claims to JSON, base64-URL encode each.
+//  2. Concatenate header.payload, compute HMAC-SHA256 over the
+//     concatenation, base64-URL encode the signature, append.
 //
 // Output: "header.payload.signature".
 func encode(h jwtHeader, c Claims, secret []byte) (string, error) {

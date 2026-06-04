@@ -20,15 +20,15 @@
 // the row's tenant column against. There are three ways to supply that
 // value:
 //
-//   (a) Pass it as a query parameter to every SELECT.
-//       — Forces every caller to know about RLS; defeats the point.
-//   (b) Set a session-level variable on connection open.
-//       — Doesn't work with connection pools; the next request on the
-//         same physical connection inherits the previous tenant.
-//   (c) Set a transaction-local variable.
-//       — Exactly what we want. The GUC dies with the txn; the pool can
-//         hand the connection to anyone, the next caller sets their own
-//         GUC, no leak.
+//	(a) Pass it as a query parameter to every SELECT.
+//	    — Forces every caller to know about RLS; defeats the point.
+//	(b) Set a session-level variable on connection open.
+//	    — Doesn't work with connection pools; the next request on the
+//	      same physical connection inherits the previous tenant.
+//	(c) Set a transaction-local variable.
+//	    — Exactly what we want. The GUC dies with the txn; the pool can
+//	      hand the connection to anyone, the next caller sets their own
+//	      GUC, no leak.
 //
 // We pick (c). The GUC name is "app.current_tenant"; the value is set via
 // set_config(name, value, is_local=true) inside a transaction.
@@ -76,32 +76,32 @@
 //
 // Customer-facing read:
 //
-//     // claims came from the authenticated JWT
-//     err := db.WithTenant(r.Context(), claims.Subject, func(ctx context.Context, tx pgx.Tx) error {
-//         rows, err := tx.Query(ctx, "SELECT id, description FROM documents")
-//         // ↑ No WHERE clause needed. RLS adds the filter implicitly.
-//         //   The GUC scopes the connection; rows for any other tenant
-//         //   are invisible.
-//         return scan(rows)
-//     })
+//	// claims came from the authenticated JWT
+//	err := db.WithTenant(r.Context(), claims.Subject, func(ctx context.Context, tx pgx.Tx) error {
+//	    rows, err := tx.Query(ctx, "SELECT id, description FROM documents")
+//	    // ↑ No WHERE clause needed. RLS adds the filter implicitly.
+//	    //   The GUC scopes the connection; rows for any other tenant
+//	    //   are invisible.
+//	    return scan(rows)
+//	})
 //
 // Admin-only audit reader:
 //
-//     err := db.WithAdminContext(r.Context(), func(ctx context.Context, tx pgx.Tx) error {
-//         rows, err := tx.Query(ctx, "SELECT id, occurred_at, actor FROM audit_log")
-//         // ↑ This route must be gated by RequireRole(RoleAdmin) at the router.
-//         //   The admin sentinel is the only legitimate cross-tenant key.
-//         return scan(rows)
-//     })
+//	err := db.WithAdminContext(r.Context(), func(ctx context.Context, tx pgx.Tx) error {
+//	    rows, err := tx.Query(ctx, "SELECT id, occurred_at, actor FROM audit_log")
+//	    // ↑ This route must be gated by RequireRole(RoleAdmin) at the router.
+//	    //   The admin sentinel is the only legitimate cross-tenant key.
+//	    return scan(rows)
+//	})
 //
 // Bad — query outside a Wither:
 //
-//     rows, _ := db.Pool.Query(ctx, "SELECT * FROM documents")
-//     // ↑ No GUC set. RLS sees app.current_tenant = '' (missing_ok=true on
-//     //   current_setting), the policy compares user_id::text = '', no
-//     //   rows match. Returns empty result — fails closed, but the caller
-//     //   may interpret "empty" as "nothing for this tenant" which is a
-//     //   different bug. Always use a Wither.
+//	rows, _ := db.Pool.Query(ctx, "SELECT * FROM documents")
+//	// ↑ No GUC set. RLS sees app.current_tenant = '' (missing_ok=true on
+//	//   current_setting), the policy compares user_id::text = '', no
+//	//   rows match. Returns empty result — fails closed, but the caller
+//	//   may interpret "empty" as "nothing for this tenant" which is a
+//	//   different bug. Always use a Wither.
 //
 // ─── FREE-AI alignment ──────────────────────────────────────────────────────
 //
@@ -244,12 +244,12 @@ func (db *DB) WithAdminContext(ctx context.Context, fn TenantFunc) error {
 // keeping their preconditions distinct (tenant-id-required vs sentinel).
 //
 // Lifecycle:
-//   1. BeginTx — gets a connection from the pool, starts a txn.
-//   2. SELECT set_config('app.current_tenant', $1, true) — binds the GUC
-//      to the txn. The "true" makes it SET LOCAL semantics.
-//   3. Run fn(ctx, tx) — application work. RLS applies to every query
-//      on tx because the GUC is set on this connection.
-//   4. Commit (on nil error) or Rollback (on any error).
+//  1. BeginTx — gets a connection from the pool, starts a txn.
+//  2. SELECT set_config('app.current_tenant', $1, true) — binds the GUC
+//     to the txn. The "true" makes it SET LOCAL semantics.
+//  3. Run fn(ctx, tx) — application work. RLS applies to every query
+//     on tx because the GUC is set on this connection.
+//  4. Commit (on nil error) or Rollback (on any error).
 //
 // On any failure mid-flight, the txn is rolled back. The GUC dies with
 // the txn — there is no leak path even if Commit itself errors.

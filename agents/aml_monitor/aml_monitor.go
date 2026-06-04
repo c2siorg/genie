@@ -3,11 +3,11 @@
 // (STR) draft ready for a compliance officer to review and submit.
 //
 // Five rule families covered here:
-//   * structuring — multiple cash txns just below the ₹10L reporting bar
-//   * round-tripping — money exiting and returning to the same counterparty
-//   * high-risk jurisdiction — payments to FATF grey/black list countries
-//   * threshold breach — cash transaction ≥₹10L (CTR) or ≥₹50L wire (LTR)
-//   * adverse media match — counterparty hits a sanctions/PEP list
+//   - structuring — multiple cash txns just below the ₹10L reporting bar
+//   - round-tripping — money exiting and returning to the same counterparty
+//   - high-risk jurisdiction — payments to FATF grey/black list countries
+//   - threshold breach — cash transaction ≥₹10L (CTR) or ≥₹50L wire (LTR)
+//   - adverse media match — counterparty hits a sanctions/PEP list
 package aml_monitor
 
 import (

@@ -29,9 +29,9 @@ type InMemoryFraudDetector struct {
 }
 
 type baselineMetrics struct {
-	avgTxnPerHour  float64
-	avgTxnAmount   float64
-	lastUpdated    time.Time
+	avgTxnPerHour float64
+	avgTxnAmount  float64
+	lastUpdated   time.Time
 }
 
 // NewInMemoryFraudDetector creates a new fraud detector with default config.

@@ -78,9 +78,9 @@ func tokenize(s string) []string {
 // OllamaEmbedder calls Ollama's /api/embeddings endpoint. Use for on-prem
 // embeddings — sits behind the same Embedder interface so callers don't change.
 type OllamaEmbedder struct {
-	URL    string       // default http://localhost:11434
-	Model  string       // e.g. "nomic-embed-text"
-	Client *http.Client // optional; default 30s timeout
+	URL       string       // default http://localhost:11434
+	Model     string       // e.g. "nomic-embed-text"
+	Client    *http.Client // optional; default 30s timeout
 	cachedDim int
 }
 

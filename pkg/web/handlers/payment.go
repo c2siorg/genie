@@ -20,45 +20,45 @@ type Payment struct {
 
 // InitiatePaymentRequest is the HTTP request body for POST /v1/payment/initiate.
 type InitiatePaymentRequest struct {
-	FromAccount string                 `json:"from_account"`
-	ToAccount   string                 `json:"to_account"`
-	AmountPaise int64                  `json:"amount_paise"`
-	Reference   string                 `json:"reference"`
-	Metadata    map[string]string      `json:"metadata,omitempty"`
+	FromAccount string            `json:"from_account"`
+	ToAccount   string            `json:"to_account"`
+	AmountPaise int64             `json:"amount_paise"`
+	Reference   string            `json:"reference"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
 }
 
 // InitiatePaymentResponse is the HTTP response for POST /v1/payment/initiate.
 type InitiatePaymentResponse struct {
-	PaymentID  string                  `json:"payment_id"`
-	Status     erupeepayment.PaymentStatus `json:"status"`
-	Timestamp  time.Time               `json:"timestamp"`
-	LedgerID   string                  `json:"ledger_id,omitempty"`
+	PaymentID string                      `json:"payment_id"`
+	Status    erupeepayment.PaymentStatus `json:"status"`
+	Timestamp time.Time                   `json:"timestamp"`
+	LedgerID  string                      `json:"ledger_id,omitempty"`
 }
 
 // GetPaymentResponse is the HTTP response for GET /v1/payment/{payment_id}.
 type GetPaymentResponse struct {
-	PaymentID   string                  `json:"payment_id"`
-	FromAccount string                  `json:"from_account"`
-	ToAccount   string                  `json:"to_account"`
-	AmountPaise int64                   `json:"amount_paise"`
+	PaymentID   string                      `json:"payment_id"`
+	FromAccount string                      `json:"from_account"`
+	ToAccount   string                      `json:"to_account"`
+	AmountPaise int64                       `json:"amount_paise"`
 	Status      erupeepayment.PaymentStatus `json:"status"`
-	Timestamp   time.Time               `json:"timestamp"`
-	LedgerID    string                  `json:"ledger_id,omitempty"`
+	Timestamp   time.Time                   `json:"timestamp"`
+	LedgerID    string                      `json:"ledger_id,omitempty"`
 }
 
 // CreateAccountRequest is the HTTP request body for POST /v1/account.
 type CreateAccountRequest struct {
-	HolderID             string                      `json:"holder_id"`
-	AccountType          erupeepayment.AccountType   `json:"account_type"`
-	InitialBalancePaise  int64                       `json:"initial_balance_paise"`
+	HolderID            string                    `json:"holder_id"`
+	AccountType         erupeepayment.AccountType `json:"account_type"`
+	InitialBalancePaise int64                     `json:"initial_balance_paise"`
 }
 
 // CreateAccountResponse is the HTTP response for POST /v1/account.
 type CreateAccountResponse struct {
-	AccountID       string                      `json:"account_id"`
-	HolderID        string                      `json:"holder_id"`
-	BalancePaise    int64                       `json:"balance_paise"`
-	Status          erupeepayment.AccountStatus `json:"status"`
+	AccountID    string                      `json:"account_id"`
+	HolderID     string                      `json:"holder_id"`
+	BalancePaise int64                       `json:"balance_paise"`
+	Status       erupeepayment.AccountStatus `json:"status"`
 }
 
 // GetAccountResponse is the HTTP response for GET /v1/account/{account_id}.

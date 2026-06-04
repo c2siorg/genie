@@ -133,8 +133,8 @@ type AuditEntry struct {
 // DefaultPolicy returns a sensible default settlement policy.
 func DefaultPolicy() SettlementPolicy {
 	return SettlementPolicy{
-		AutoApproveLimit:     100_000,   // auto-approve up to 100k
-		ManualReviewLimit:    1_000_000, // manual review up to 1M
+		AutoApproveLimit:     100_000,    // auto-approve up to 100k
+		ManualReviewLimit:    1_000_000,  // manual review up to 1M
 		AutoRejectLimit:      10_000_000, // reject anything over 10M
 		PreferredPaths:       []SettlementPath{PathDirect, PathCorrespondent, PathNettingPool},
 		NettingPoolThreshold: 3, // need at least 3 parties to consider netting

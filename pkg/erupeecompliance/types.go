@@ -16,9 +16,9 @@ import (
 type Decision string
 
 const (
-	DecisionAllow  Decision = "allow"   // Transaction allowed
-	DecisionReview Decision = "review"  // Requires manual review
-	DecisionBlock  Decision = "block"   // Transaction blocked
+	DecisionAllow  Decision = "allow"  // Transaction allowed
+	DecisionReview Decision = "review" // Requires manual review
+	DecisionBlock  Decision = "block"  // Transaction blocked
 )
 
 // AMLResult represents the outcome of AML screening.
@@ -34,9 +34,9 @@ const (
 type VelocityResult string
 
 const (
-	VelocityOK      VelocityResult = "ok"       // Within velocity limits
-	VelocityWarning VelocityResult = "warning"  // Approaching limits
-	VelocityBlocked VelocityResult = "blocked"  // Velocity limit exceeded
+	VelocityOK      VelocityResult = "ok"      // Within velocity limits
+	VelocityWarning VelocityResult = "warning" // Approaching limits
+	VelocityBlocked VelocityResult = "blocked" // Velocity limit exceeded
 )
 
 // FraudPattern represents a detected fraud pattern.
@@ -151,12 +151,12 @@ type PaymentRequest struct {
 // FraudDetectionConfig holds thresholds for fraud pattern detection.
 type FraudDetectionConfig struct {
 	// StructuringThreshold: number of transactions under limit in one day
-	StructuringThreshold int `json:"structuring_threshold"` // default 5
+	StructuringThreshold int   `json:"structuring_threshold"` // default 5
 	StructuringLimit     int64 `json:"structuring_limit"`     // default 10_00_000 (₹10k in paise)
 
 	// RoundTripWindow: seconds within which send→receive is suspicious
 	RoundTripWindowSeconds int `json:"round_trip_window_seconds"` // default 3600 (1 hour)
-	RoundTripThreshold     int `json:"round_trip_threshold"`       // default 3 occurrences
+	RoundTripThreshold     int `json:"round_trip_threshold"`      // default 3 occurrences
 
 	// VelocitySpikeThreshold: percentage increase to flag as spike
 	VelocitySpikeThreshold float64 `json:"velocity_spike_threshold"` // default 100.0 (100%)

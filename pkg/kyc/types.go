@@ -11,31 +11,31 @@ import (
 type OnboardingState string
 
 const (
-	StatePending          OnboardingState = "pending"
+	StatePending           OnboardingState = "pending"
 	StateDocumentsUploaded OnboardingState = "documents_uploaded"
-	StateIdentityVerified OnboardingState = "identity_verified"
-	StateSanctionsChecked OnboardingState = "sanctions_checked"
-	StateApprovalPending  OnboardingState = "approval_pending"
-	StateApproved         OnboardingState = "approved"
-	StateFlagged          OnboardingState = "flagged"
-	StateRejected         OnboardingState = "rejected"
+	StateIdentityVerified  OnboardingState = "identity_verified"
+	StateSanctionsChecked  OnboardingState = "sanctions_checked"
+	StateApprovalPending   OnboardingState = "approval_pending"
+	StateApproved          OnboardingState = "approved"
+	StateFlagged           OnboardingState = "flagged"
+	StateRejected          OnboardingState = "rejected"
 )
 
 // OnboardingRequest is the core entity representing a customer onboarding workflow.
 type OnboardingRequest struct {
-	ID               string                       `json:"id"`
-	UserID           string                       `json:"user_id"`
-	RequestedAt      time.Time                    `json:"requested_at"`
-	State            OnboardingState              `json:"state"`
-	UpdatedAt        time.Time                    `json:"updated_at"`
-	ApplicantInfo    ApplicantInfo                `json:"applicant_info"`
-	Documents        []Document                   `json:"documents"`
-	IdentityResult   *IdentificationResult        `json:"identity_result,omitempty"`
-	SanctionsResult  *SanctionsResult             `json:"sanctions_result,omitempty"`
-	ApprovalPolicy   ApprovalPolicyResult         `json:"approval_policy"`
-	ApprovalDecision *ApprovalDecision            `json:"approval_decision,omitempty"`
-	AuditLog         []compliance.AuditEntry      `json:"audit_log"`
-	LineageRecords   []string                     `json:"lineage_records"`
+	ID               string                  `json:"id"`
+	UserID           string                  `json:"user_id"`
+	RequestedAt      time.Time               `json:"requested_at"`
+	State            OnboardingState         `json:"state"`
+	UpdatedAt        time.Time               `json:"updated_at"`
+	ApplicantInfo    ApplicantInfo           `json:"applicant_info"`
+	Documents        []Document              `json:"documents"`
+	IdentityResult   *IdentificationResult   `json:"identity_result,omitempty"`
+	SanctionsResult  *SanctionsResult        `json:"sanctions_result,omitempty"`
+	ApprovalPolicy   ApprovalPolicyResult    `json:"approval_policy"`
+	ApprovalDecision *ApprovalDecision       `json:"approval_decision,omitempty"`
+	AuditLog         []compliance.AuditEntry `json:"audit_log"`
+	LineageRecords   []string                `json:"lineage_records"`
 }
 
 // RiskScore computes a synthetic risk score for the onboarding request.
@@ -50,7 +50,7 @@ type ApplicantInfo struct {
 	FullName       string    `json:"full_name"`
 	DateOfBirth    time.Time `json:"date_of_birth"`
 	Address        string    `json:"address"`
-	Jurisdiction   string    `json:"jurisdiction"`   // ISO 3166-1 alpha-2
+	Jurisdiction   string    `json:"jurisdiction"` // ISO 3166-1 alpha-2
 	Email          string    `json:"email"`
 	PhoneNumber    string    `json:"phone_number"`
 	OccupationCode string    `json:"occupation_code"`
@@ -122,16 +122,16 @@ type SanctionsHit struct {
 
 // ApprovalPolicyResult holds the output of approval policy evaluation.
 type ApprovalPolicyResult struct {
-	Decision   string // "auto_approve" | "manual_review" | "auto_flag"
-	RiskScore  float64
-	Rationale  string
+	Decision    string // "auto_approve" | "manual_review" | "auto_flag"
+	RiskScore   float64
+	Rationale   string
 	EvaluatedAt time.Time
 }
 
 // ApprovalDecision represents a human analyst's decision on a flagged case.
 type ApprovalDecision struct {
 	OnboardingRequestID string
-	Decision            string    // "approve" | "hold" | "reject" | "request_docs"
+	Decision            string // "approve" | "hold" | "reject" | "request_docs"
 	Reason              string
 	DecidedBy           string
 	DecidedAt           time.Time

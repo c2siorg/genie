@@ -309,9 +309,9 @@ func TestAgentExtremeVelocity(t *testing.T) {
 
 func TestAgentRecommendation(t *testing.T) {
 	tests := []struct {
-		level        RiskLevel
-		mustContain  string
-		description  string
+		level       RiskLevel
+		mustContain string
+		description string
 	}{
 		{RiskLevelApprove, "Approve transaction", "approve recommendation"},
 		{RiskLevelMonitor, "monitoring", "monitor recommendation"},

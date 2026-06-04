@@ -81,8 +81,8 @@ func NewDefaultScorer(config *AMLConfig, checker BeneficiaryChecker) *DefaultSco
 func (s *DefaultScorer) ScoreTransaction(ctx context.Context, txn Transaction, profile RiskProfile) (RiskScore, error) {
 	now := time.Now().UTC()
 	rs := RiskScore{
-		ScoredAt:    now,
-		Evidence:    make(map[string]string),
+		ScoredAt:       now,
+		Evidence:       make(map[string]string),
 		TriggeredRules: []string{},
 	}
 

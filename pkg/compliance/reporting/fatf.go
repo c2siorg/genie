@@ -15,19 +15,19 @@ import (
 // to the Financial Intelligence Unit (FIU-IND in India). Each STR is filed individually
 // with supporting evidence and decision reasoning.
 type FATPSTRReport struct {
-	STRID              string            `json:"str_id"`              // Unique STR identifier
-	TransactionID      string            `json:"transaction_id"`
-	FilingDate         time.Time         `json:"filing_date"`
-	Amount             int64             `json:"amount_cents"`        // in minor units
-	Currency           string            `json:"currency"`
-	Parties            TransactionParties `json:"parties"`            // sender/receiver
-	RiskIndicators     []string          `json:"risk_indicators"`     // flags that triggered STR
-	RiskScore          float64           `json:"risk_score"`          // 0-1 scale
-	ReasonForSuspicion string            `json:"reason_for_suspicion"` // narrative
-	AuditTrail         []AuditDetail     `json:"audit_trail"`         // decision reasoning
-	RetentionYears     int               `json:"retention_years"`     // always 7 per regulation
-	Status             string            `json:"status"`              // "pending"|"filed"|"closed"
-	InvestigationNotes string            `json:"investigation_notes,omitempty"`
+	STRID              string             `json:"str_id"` // Unique STR identifier
+	TransactionID      string             `json:"transaction_id"`
+	FilingDate         time.Time          `json:"filing_date"`
+	Amount             int64              `json:"amount_cents"` // in minor units
+	Currency           string             `json:"currency"`
+	Parties            TransactionParties `json:"parties"`              // sender/receiver
+	RiskIndicators     []string           `json:"risk_indicators"`      // flags that triggered STR
+	RiskScore          float64            `json:"risk_score"`           // 0-1 scale
+	ReasonForSuspicion string             `json:"reason_for_suspicion"` // narrative
+	AuditTrail         []AuditDetail      `json:"audit_trail"`          // decision reasoning
+	RetentionYears     int                `json:"retention_years"`      // always 7 per regulation
+	Status             string             `json:"status"`               // "pending"|"filed"|"closed"
+	InvestigationNotes string             `json:"investigation_notes,omitempty"`
 }
 
 // TransactionParties holds sender and receiver info.
@@ -48,9 +48,9 @@ type PartyInfo struct {
 // AuditDetail is a single entry in the STR decision trail.
 type AuditDetail struct {
 	Timestamp time.Time              `json:"timestamp"`
-	Action    string                 `json:"action"`    // e.g. "risk.assessed", "threshold.breached"
-	Score     float64                `json:"score"`     // intermediate risk score
-	Evidence  map[string]interface{} `json:"evidence"`  // supporting data
+	Action    string                 `json:"action"`     // e.g. "risk.assessed", "threshold.breached"
+	Score     float64                `json:"score"`      // intermediate risk score
+	Evidence  map[string]interface{} `json:"evidence"`   // supporting data
 	DecidedBy string                 `json:"decided_by"` // agent/system id
 }
 
@@ -96,7 +96,7 @@ func GenerateSTR(tx finance.Transaction, auditLog []AuditEntry, riskScore float6
 		RiskScore:          riskScore,
 		ReasonForSuspicion: narrative,
 		AuditTrail:         auditDetails,
-		RetentionYears:     7, // Non-negotiable per FATF/RBI
+		RetentionYears:     7,         // Non-negotiable per FATF/RBI
 		Status:             "pending", // Will be "filed" after submission
 	}
 

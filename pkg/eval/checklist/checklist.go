@@ -26,9 +26,9 @@ type Case struct {
 
 // Result records one outcome.
 type Result struct {
-	Name    string
-	Passed  bool
-	Detail  string
+	Name   string
+	Passed bool
+	Detail string
 }
 
 // Run executes every case against the agent and returns aggregated results.

@@ -73,12 +73,12 @@ func TestMockQuoterGetQuote(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name       string
-		from       string
-		amount     float64
-		to         string
-		shouldErr  bool
-		expectFee  bool
+		name      string
+		from      string
+		amount    float64
+		to        string
+		shouldErr bool
+		expectFee bool
 	}{
 		{"USD 1000 to INR", "USD", 1000.0, "INR", false, true},
 		{"EUR 500 to GBP", "EUR", 500.0, "GBP", false, true},

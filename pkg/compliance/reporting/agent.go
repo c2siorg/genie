@@ -28,9 +28,9 @@ type ToolDef struct {
 	Fn              func(ctx context.Context, args map[string]any) (string, error)
 }
 
-func (t *ToolDef) Name() string                { return t.ToolName }
-func (t *ToolDef) Description() string         { return t.ToolDescription }
-func (t *ToolDef) Schema() map[string]any      { return t.ToolSchema }
+func (t *ToolDef) Name() string           { return t.ToolName }
+func (t *ToolDef) Description() string    { return t.ToolDescription }
+func (t *ToolDef) Schema() map[string]any { return t.ToolSchema }
 func (t *ToolDef) Execute(ctx context.Context, args map[string]any) (string, error) {
 	return t.Fn(ctx, args)
 }
@@ -200,7 +200,7 @@ func handleRBIReportRequest(
 			"risky_merchants":    report.RiskyMerchants,
 		},
 		"data_preview": string(data[:min(len(data), 500)]), // first 500 chars
-		"trace_id":     fmt.Sprintf("report_%s", reportID),  // for Laminar integration
+		"trace_id":     fmt.Sprintf("report_%s", reportID), // for Laminar integration
 	}
 
 	b, _ := json.MarshalIndent(result, "", "  ")
@@ -270,17 +270,17 @@ func handleSTRReportRequest(
 
 	// Return summary.
 	result := map[string]any{
-		"status":           "success",
-		"report_type":      "str",
-		"str_id":           strID,
-		"transaction_id":   txnID,
-		"format":           format,
-		"filing_date":      str.FilingDate,
-		"risk_score":       str.RiskScore,
-		"risk_indicators":  str.RiskIndicators,
-		"retention_years":  str.RetentionYears,
-		"data_preview":     string(data[:min(len(data), 500)]),
-		"trace_id":         fmt.Sprintf("report_%s", strID), // for Laminar integration
+		"status":          "success",
+		"report_type":     "str",
+		"str_id":          strID,
+		"transaction_id":  txnID,
+		"format":          format,
+		"filing_date":     str.FilingDate,
+		"risk_score":      str.RiskScore,
+		"risk_indicators": str.RiskIndicators,
+		"retention_years": str.RetentionYears,
+		"data_preview":    string(data[:min(len(data), 500)]),
+		"trace_id":        fmt.Sprintf("report_%s", strID), // for Laminar integration
 	}
 
 	b, _ := json.MarshalIndent(result, "", "  ")

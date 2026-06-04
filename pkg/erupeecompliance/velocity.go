@@ -26,10 +26,10 @@ type VelocityMonitor interface {
 // InMemoryVelocityMonitor is a thread-safe in-memory velocity monitor.
 // Production systems would use Redis or similar.
 type InMemoryVelocityMonitor struct {
-	mu      sync.RWMutex
-	config  *VelocityConfig
-	hourly  map[string]*VelocityRecord // hourly records
-	daily   map[string]*VelocityRecord  // daily records
+	mu     sync.RWMutex
+	config *VelocityConfig
+	hourly map[string]*VelocityRecord // hourly records
+	daily  map[string]*VelocityRecord // daily records
 }
 
 // NewInMemoryVelocityMonitor creates a new velocity monitor with default config.

@@ -53,9 +53,9 @@ func (s *Ed25519Signer) PublicKey() ed25519.PublicKey {
 // SignedDocument bundles the AIBOM with a detached signature.
 type SignedDocument struct {
 	Document  Document `json:"document"`
-	Signature string   `json:"signature"`     // base64
-	PublicKey string   `json:"public_key"`    // base64
-	Algorithm string   `json:"algorithm"`     // "ed25519-sha256"
+	Signature string   `json:"signature"`  // base64
+	PublicKey string   `json:"public_key"` // base64
+	Algorithm string   `json:"algorithm"`  // "ed25519-sha256"
 }
 
 // Sign returns a SignedDocument over the canonical JSON of d.

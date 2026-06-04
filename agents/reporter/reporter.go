@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	ID         = "reporter"
-	CapReport  = "render_report"
-	TypeIn     = "final_report_request"
-	TypeOut    = "final_report"
-	NextAgent  = "user"
+	ID        = "reporter"
+	CapReport = "render_report"
+	TypeIn    = "final_report_request"
+	TypeOut   = "final_report"
+	NextAgent = "user"
 )
 
 // Bundle is what the supervisor publishes to the reporter.

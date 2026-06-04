@@ -98,18 +98,18 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 
 // handleCreateBatch processes a create_settlement_batch request.
 type CreateBatchRequest struct {
-	SettlementDate string            `json:"settlement_date"` // YYYY-MM-DD
-	MerchantIDs    []string          `json:"merchant_ids"`
-	AmountsPaise   map[string]int64   `json:"amounts_paise"` // merchant_id -> amount in paise
+	SettlementDate string           `json:"settlement_date"` // YYYY-MM-DD
+	MerchantIDs    []string         `json:"merchant_ids"`
+	AmountsPaise   map[string]int64 `json:"amounts_paise"` // merchant_id -> amount in paise
 }
 
 type CreateBatchResponse struct {
-	BatchID              string    `json:"batch_id"`
-	SettlementDate       string    `json:"settlement_date"`
-	TotalAmountPaise     int64     `json:"total_amount_paise"`
-	MerchantCount        int       `json:"merchant_count"`
-	Status               string    `json:"status"`
-	Message              string    `json:"message"`
+	BatchID          string `json:"batch_id"`
+	SettlementDate   string `json:"settlement_date"`
+	TotalAmountPaise int64  `json:"total_amount_paise"`
+	MerchantCount    int    `json:"merchant_count"`
+	Status           string `json:"status"`
+	Message          string `json:"message"`
 }
 
 func (a *Agent) handleCreateBatch(msg agent.Message, env agent.Environment) (interface{}, error) {
@@ -163,15 +163,15 @@ type SettleBatchRequest struct {
 }
 
 type SettleBatchResponse struct {
-	BatchID              string            `json:"batch_id"`
-	Status               string            `json:"status"`
-	GrossAmountPaise     int64             `json:"gross_amount_paise"`
-	NetAmountPaise       int64             `json:"net_amount_paise"`
-	NettingSavingsPaise  int64             `json:"netting_savings_paise"`
-	SettlementTxnCount   int               `json:"settlement_txn_count"`
-	SettlementTxnIDs     []string          `json:"settlement_txn_ids"`
-	NetPositions         map[string]int64  `json:"net_positions"`
-	Message              string            `json:"message"`
+	BatchID             string           `json:"batch_id"`
+	Status              string           `json:"status"`
+	GrossAmountPaise    int64            `json:"gross_amount_paise"`
+	NetAmountPaise      int64            `json:"net_amount_paise"`
+	NettingSavingsPaise int64            `json:"netting_savings_paise"`
+	SettlementTxnCount  int              `json:"settlement_txn_count"`
+	SettlementTxnIDs    []string         `json:"settlement_txn_ids"`
+	NetPositions        map[string]int64 `json:"net_positions"`
+	Message             string           `json:"message"`
 }
 
 func (a *Agent) handleSettleBatch(msg agent.Message, env agent.Environment) (interface{}, error) {
@@ -232,15 +232,15 @@ func (a *Agent) handleSettleBatch(msg agent.Message, env agent.Environment) (int
 	env.Logf("[%s] Settlement executed: %d transactions, %.2f paise savings", ID, len(txnIDs), float64(pool.NettingSavings))
 
 	return SettleBatchResponse{
-		BatchID:              req.BatchID,
-		Status:               string(batch.Status),
-		GrossAmountPaise:     pool.GrossAmount,
-		NetAmountPaise:       pool.NetAmount,
-		NettingSavingsPaise:  pool.NettingSavings,
-		SettlementTxnCount:   len(txnIDs),
-		SettlementTxnIDs:     txnIDs,
-		NetPositions:         pool.NetPosition,
-		Message:              fmt.Sprintf("Settlement completed: %d merchants, %.2f paise saved via netting", len(batch.Entries), float64(pool.NettingSavings)),
+		BatchID:             req.BatchID,
+		Status:              string(batch.Status),
+		GrossAmountPaise:    pool.GrossAmount,
+		NetAmountPaise:      pool.NetAmount,
+		NettingSavingsPaise: pool.NettingSavings,
+		SettlementTxnCount:  len(txnIDs),
+		SettlementTxnIDs:    txnIDs,
+		NetPositions:        pool.NetPosition,
+		Message:             fmt.Sprintf("Settlement completed: %d merchants, %.2f paise saved via netting", len(batch.Entries), float64(pool.NettingSavings)),
 	}, nil
 }
 
@@ -250,17 +250,17 @@ type GetStatusRequest struct {
 }
 
 type GetStatusResponse struct {
-	BatchID              string            `json:"batch_id"`
-	SettlementDate       string            `json:"settlement_date"`
-	Status               string            `json:"status"`
-	MerchantCount        int               `json:"merchant_count"`
-	GrossAmountPaise     int64             `json:"gross_amount_paise"`
-	NetAmountPaise       int64             `json:"net_amount_paise"`
-	NettingSavingsPaise  int64             `json:"netting_savings_paise"`
-	SettlementTxnIDs     []string          `json:"settlement_txn_ids"`
-	CreatedAt            string            `json:"created_at"`
-	SettledAt            *string           `json:"settled_at,omitempty"`
-	IsIdempotent         bool              `json:"is_idempotent"`
+	BatchID             string   `json:"batch_id"`
+	SettlementDate      string   `json:"settlement_date"`
+	Status              string   `json:"status"`
+	MerchantCount       int      `json:"merchant_count"`
+	GrossAmountPaise    int64    `json:"gross_amount_paise"`
+	NetAmountPaise      int64    `json:"net_amount_paise"`
+	NettingSavingsPaise int64    `json:"netting_savings_paise"`
+	SettlementTxnIDs    []string `json:"settlement_txn_ids"`
+	CreatedAt           string   `json:"created_at"`
+	SettledAt           *string  `json:"settled_at,omitempty"`
+	IsIdempotent        bool     `json:"is_idempotent"`
 }
 
 func (a *Agent) handleGetStatus(msg agent.Message, env agent.Environment) (interface{}, error) {
@@ -279,16 +279,16 @@ func (a *Agent) handleGetStatus(msg agent.Message, env agent.Environment) (inter
 	isIdempotent, _ := a.executor.VerifySettlement(req.BatchID)
 
 	response := GetStatusResponse{
-		BatchID:              batch.ID,
-		SettlementDate:       batch.SettlementDate.Format("2006-01-02"),
-		Status:               string(batch.Status),
-		MerchantCount:        len(batch.Entries),
-		GrossAmountPaise:     batch.TotalAmountPaise,
-		NetAmountPaise:       calculateNetAmount(batch.NettedPositions),
-		NettingSavingsPaise:  batch.NettingSavings,
-		SettlementTxnIDs:     batch.SettlementTxnIDs,
-		CreatedAt:            batch.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		IsIdempotent:         isIdempotent,
+		BatchID:             batch.ID,
+		SettlementDate:      batch.SettlementDate.Format("2006-01-02"),
+		Status:              string(batch.Status),
+		MerchantCount:       len(batch.Entries),
+		GrossAmountPaise:    batch.TotalAmountPaise,
+		NetAmountPaise:      calculateNetAmount(batch.NettedPositions),
+		NettingSavingsPaise: batch.NettingSavings,
+		SettlementTxnIDs:    batch.SettlementTxnIDs,
+		CreatedAt:           batch.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		IsIdempotent:        isIdempotent,
 	}
 
 	if batch.SettledAt != nil {

@@ -89,10 +89,10 @@ func New() *Agent {
 	}
 }
 
-func (a *Agent) ID() string                     { return ID }
-func (a *Agent) Name() string                   { return "Fraud Detector" }
-func (a *Agent) Capabilities() []string         { return []string{Capability} }
-func (a *Agent) RiskLevel() agent.RiskClass     { return agent.RiskMedium }
+func (a *Agent) ID() string                 { return ID }
+func (a *Agent) Name() string               { return "Fraud Detector" }
+func (a *Agent) Capabilities() []string     { return []string{Capability} }
+func (a *Agent) RiskLevel() agent.RiskClass { return agent.RiskMedium }
 
 type analyzerView struct {
 	Transactions []finance.Transaction `json:"transactions"`

@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	ID            = "recommender"
-	CapRecommend  = "recommend"
-	CapSimulate   = "simulate_action"
-	TypeIn        = "analysis_result"
-	TypeOut       = "recommendations"
-	NextAgent     = "financial_supervisor"
+	ID           = "recommender"
+	CapRecommend = "recommend"
+	CapSimulate  = "simulate_action"
+	TypeIn       = "analysis_result"
+	TypeOut      = "recommendations"
+	NextAgent    = "financial_supervisor"
 )
 
 type CategoryTotal struct {
@@ -36,13 +36,13 @@ type analyzerView struct {
 }
 
 type Recommendation struct {
-	Title          string `json:"title"`
-	Category       string `json:"category,omitempty"`
-	ImpactCents    int64  `json:"impact_cents"`
-	Confidence     string `json:"confidence"`
-	Action         string `json:"action"`
-	Rationale      string `json:"rationale"`
-	Informational  bool   `json:"informational"`
+	Title         string `json:"title"`
+	Category      string `json:"category,omitempty"`
+	ImpactCents   int64  `json:"impact_cents"`
+	Confidence    string `json:"confidence"`
+	Action        string `json:"action"`
+	Rationale     string `json:"rationale"`
+	Informational bool   `json:"informational"`
 }
 
 type Result struct {

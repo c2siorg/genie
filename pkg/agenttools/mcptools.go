@@ -63,9 +63,9 @@ func mcpToolAdapter(client *mcp.Client, t mcp.Tool) Tool {
 	}
 
 	return &ToolDef{
-		ToolName:   t.Name,
-		ToolDescription:   t.Description,
-		ToolSchema: schema,
+		ToolName:        t.Name,
+		ToolDescription: t.Description,
+		ToolSchema:      schema,
 		Fn: func(ctx context.Context, args map[string]any) (string, error) {
 			res, err := client.CallTool(ctx, t.Name, args)
 			if err != nil {

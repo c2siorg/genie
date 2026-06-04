@@ -25,7 +25,7 @@ type InMemoryTransactionLog struct {
 	mu            sync.RWMutex
 	transactions  []*TransactionRecord
 	paymentStatus map[string]PaymentStatus // cache of most recent status per payment
-	idGen         func() string             // injectable ID generator for testing
+	idGen         func() string            // injectable ID generator for testing
 }
 
 // NewInMemoryTransactionLog creates a new in-memory transaction log.

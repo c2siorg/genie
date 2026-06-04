@@ -18,11 +18,11 @@ import "time"
 type RiskLevel string
 
 const (
-	RiskLevelApprove  RiskLevel = "approve"   // 0-30
-	RiskLevelMonitor  RiskLevel = "monitor"   // 31-50
-	RiskLevelReview   RiskLevel = "review"    // 51-70
-	RiskLevelEscalate RiskLevel = "escalate"  // 71-100
-	RiskLevelBlock    RiskLevel = "block"     // > 100 or explicit block
+	RiskLevelApprove  RiskLevel = "approve"  // 0-30
+	RiskLevelMonitor  RiskLevel = "monitor"  // 31-50
+	RiskLevelReview   RiskLevel = "review"   // 51-70
+	RiskLevelEscalate RiskLevel = "escalate" // 71-100
+	RiskLevelBlock    RiskLevel = "block"    // > 100 or explicit block
 )
 
 // RiskScore represents the complete risk assessment for a transaction.
@@ -74,17 +74,17 @@ type RiskProfile struct {
 // AMLConfig holds thresholds and rule weights.
 type AMLConfig struct {
 	// Risk score thresholds
-	ThresholdApprove  float64 `json:"threshold_approve"`   // 0-30
-	ThresholdMonitor  float64 `json:"threshold_monitor"`   // 31-50
-	ThresholdReview   float64 `json:"threshold_review"`    // 51-70
-	ThresholdEscalate float64 `json:"threshold_escalate"`  // 71-100
+	ThresholdApprove  float64 `json:"threshold_approve"`  // 0-30
+	ThresholdMonitor  float64 `json:"threshold_monitor"`  // 31-50
+	ThresholdReview   float64 `json:"threshold_review"`   // 51-70
+	ThresholdEscalate float64 `json:"threshold_escalate"` // 71-100
 
 	// Rule weights (must sum to 1.0)
-	WeightThreshold   float64 `json:"weight_threshold"`   // 0.30
-	WeightVelocity    float64 `json:"weight_velocity"`    // 0.25
+	WeightThreshold    float64 `json:"weight_threshold"`    // 0.30
+	WeightVelocity     float64 `json:"weight_velocity"`     // 0.25
 	WeightJurisdiction float64 `json:"weight_jurisdiction"` // 0.25
-	WeightBeneficiary float64 `json:"weight_beneficiary"`  // 0.15
-	WeightAnomaly     float64 `json:"weight_anomaly"`      // 0.05
+	WeightBeneficiary  float64 `json:"weight_beneficiary"`  // 0.15
+	WeightAnomaly      float64 `json:"weight_anomaly"`      // 0.05
 
 	// Velocity config
 	MaxTransactionsPerHour int `json:"max_transactions_per_hour"`
@@ -93,7 +93,7 @@ type AMLConfig struct {
 	CheckPEP            bool `json:"check_pep"`           // Check Politically Exposed Person lists
 	CheckSanctions      bool `json:"check_sanctions"`     // Check OFAC/UN sanctions
 	CheckAdverseMedia   bool `json:"check_adverse_media"` // Check adverse media
-	NewAccountDaysLimit int `json:"new_account_days"`    // Days to flag new accounts (default 7)
+	NewAccountDaysLimit int  `json:"new_account_days"`    // Days to flag new accounts (default 7)
 }
 
 // Transaction represents a financial transaction for AML scoring.
@@ -123,9 +123,9 @@ type Transaction struct {
 // BeneficiaryRiskInfo holds risk indicators for a beneficiary.
 type BeneficiaryRiskInfo struct {
 	// Flags
-	IsPEP           bool   `json:"is_pep"`            // Politically Exposed Person
-	IsSanctioned    bool   `json:"is_sanctioned"`     // OFAC/UN list
-	HasAdverseMedia bool   `json:"has_adverse_media"` // Adverse media flag
+	IsPEP           bool `json:"is_pep"`            // Politically Exposed Person
+	IsSanctioned    bool `json:"is_sanctioned"`     // OFAC/UN list
+	HasAdverseMedia bool `json:"has_adverse_media"` // Adverse media flag
 
 	// Risk score component (0-100)
 	RiskScore float64 `json:"risk_score"`
@@ -150,19 +150,19 @@ var HighRiskCountries = map[string]bool{
 // DefaultAMLConfig returns a production-ready configuration.
 func DefaultAMLConfig() *AMLConfig {
 	return &AMLConfig{
-		ThresholdApprove:   30.0,
-		ThresholdMonitor:   50.0,
-		ThresholdReview:    70.0,
-		ThresholdEscalate:  100.0,
-		WeightThreshold:    0.30,
-		WeightVelocity:     0.25,
-		WeightJurisdiction: 0.25,
-		WeightBeneficiary:  0.15,
-		WeightAnomaly:      0.05,
+		ThresholdApprove:       30.0,
+		ThresholdMonitor:       50.0,
+		ThresholdReview:        70.0,
+		ThresholdEscalate:      100.0,
+		WeightThreshold:        0.30,
+		WeightVelocity:         0.25,
+		WeightJurisdiction:     0.25,
+		WeightBeneficiary:      0.15,
+		WeightAnomaly:          0.05,
 		MaxTransactionsPerHour: 10,
-		CheckPEP:           true,
-		CheckSanctions:     true,
-		CheckAdverseMedia:  true,
-		NewAccountDaysLimit: 7,
+		CheckPEP:               true,
+		CheckSanctions:         true,
+		CheckAdverseMedia:      true,
+		NewAccountDaysLimit:    7,
 	}
 }

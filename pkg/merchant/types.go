@@ -23,36 +23,36 @@ import (
 type MerchantStatus string
 
 const (
-	StatusPending   MerchantStatus = "pending"    // Onboarding in progress
-	StatusApproved  MerchantStatus = "approved"   // Fully approved, active
-	StatusRejected  MerchantStatus = "rejected"   // Onboarding rejected
-	StatusSuspended MerchantStatus = "suspended"  // Active account suspended
+	StatusPending   MerchantStatus = "pending"   // Onboarding in progress
+	StatusApproved  MerchantStatus = "approved"  // Fully approved, active
+	StatusRejected  MerchantStatus = "rejected"  // Onboarding rejected
+	StatusSuspended MerchantStatus = "suspended" // Active account suspended
 )
 
 // BusinessType represents the legal structure of the merchant business.
 type BusinessType string
 
 const (
-	BusinessTypeSole BusinessType = "sole"  // Sole proprietor
-	BusinessTypeLLP  BusinessType = "llp"   // Limited Liability Partnership
-	BusinessTypePvt  BusinessType = "pvt"   // Private Limited Company
-	BusinessTypeGST  BusinessType = "gst"   // GST-registered business
+	BusinessTypeSole BusinessType = "sole" // Sole proprietor
+	BusinessTypeLLP  BusinessType = "llp"  // Limited Liability Partnership
+	BusinessTypePvt  BusinessType = "pvt"  // Private Limited Company
+	BusinessTypeGST  BusinessType = "gst"  // GST-registered business
 )
 
 // OnboardingState represents the current phase of KYC onboarding.
 type OnboardingState string
 
 const (
-	OnboardingPending          OnboardingState = "pending"
-	OnboardingDocumentsReady   OnboardingState = "documents_ready"
-	OnboardingKYCSubmitted     OnboardingState = "kyc_submitted"
-	OnboardingKYCVerified      OnboardingState = "kyc_verified"
-	OnboardingComplianceCheck  OnboardingState = "compliance_check"
-	OnboardingComplianceClear  OnboardingState = "compliance_clear"
-	OnboardingApprovalPending  OnboardingState = "approval_pending"
-	OnboardingApproved         OnboardingState = "approved"
-	OnboardingRejected         OnboardingState = "rejected"
-	OnboardingManualReview     OnboardingState = "manual_review"
+	OnboardingPending         OnboardingState = "pending"
+	OnboardingDocumentsReady  OnboardingState = "documents_ready"
+	OnboardingKYCSubmitted    OnboardingState = "kyc_submitted"
+	OnboardingKYCVerified     OnboardingState = "kyc_verified"
+	OnboardingComplianceCheck OnboardingState = "compliance_check"
+	OnboardingComplianceClear OnboardingState = "compliance_clear"
+	OnboardingApprovalPending OnboardingState = "approval_pending"
+	OnboardingApproved        OnboardingState = "approved"
+	OnboardingRejected        OnboardingState = "rejected"
+	OnboardingManualReview    OnboardingState = "manual_review"
 )
 
 // MerchantProfile represents a merchant entity in the e-Rupee commerce system.
@@ -309,10 +309,10 @@ type MerchantLimits struct {
 // - Monthly total: ₹5,000,000 (500,000,000 paise)
 func DefaultMerchantLimits() MerchantLimits {
 	return MerchantLimits{
-		DailyP2PPaise:        50_000_000,   // ₹500k
-		DailySettlementPaise: 50_000_000,   // ₹500k
-		SingleTxnPaise:       10_000_000,   // ₹100k
-		MonthlyTotalPaise:    500_000_000,  // ₹5M
+		DailyP2PPaise:        50_000_000,  // ₹500k
+		DailySettlementPaise: 50_000_000,  // ₹500k
+		SingleTxnPaise:       10_000_000,  // ₹100k
+		MonthlyTotalPaise:    500_000_000, // ₹5M
 		EffectiveFrom:        time.Now(),
 	}
 }
@@ -325,10 +325,10 @@ func DefaultMerchantLimits() MerchantLimits {
 // - Monthly total: ₹500,000 (50,000,000 paise)
 func RestrictedMerchantLimits() MerchantLimits {
 	return MerchantLimits{
-		DailyP2PPaise:        10_000_000,   // ₹100k
-		DailySettlementPaise: 10_000_000,   // ₹100k
-		SingleTxnPaise:       2_500_000,    // ₹25k
-		MonthlyTotalPaise:    50_000_000,   // ₹500k
+		DailyP2PPaise:        10_000_000, // ₹100k
+		DailySettlementPaise: 10_000_000, // ₹100k
+		SingleTxnPaise:       2_500_000,  // ₹25k
+		MonthlyTotalPaise:    50_000_000, // ₹500k
 		EffectiveFrom:        time.Now(),
 	}
 }

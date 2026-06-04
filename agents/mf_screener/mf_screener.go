@@ -25,23 +25,23 @@ const (
 
 // Fund is one candidate.
 type Fund struct {
-	Scheme            string  `json:"scheme"`
-	Category          string  `json:"category"`     // "equity-large", "debt-corporate", "hybrid", ...
-	NAV               float64 `json:"nav"`
-	AUMCr             float64 `json:"aum_crore"`
-	ExpenseRatio      float64 `json:"expense_ratio"`
-	ThreeYrCAGR       float64 `json:"three_year_cagr"`
-	FiveYrCAGR        float64 `json:"five_year_cagr"`
-	StdDev            float64 `json:"std_dev"`
-	NegativeQuartersL5 int    `json:"neg_quarters_last_5yr"`
+	Scheme             string  `json:"scheme"`
+	Category           string  `json:"category"` // "equity-large", "debt-corporate", "hybrid", ...
+	NAV                float64 `json:"nav"`
+	AUMCr              float64 `json:"aum_crore"`
+	ExpenseRatio       float64 `json:"expense_ratio"`
+	ThreeYrCAGR        float64 `json:"three_year_cagr"`
+	FiveYrCAGR         float64 `json:"five_year_cagr"`
+	StdDev             float64 `json:"std_dev"`
+	NegativeQuartersL5 int     `json:"neg_quarters_last_5yr"`
 }
 
 // Filter applies hard cuts.
 type Filter struct {
-	Category    string  `json:"category,omitempty"`
-	MinAUMCr    float64 `json:"min_aum_crore,omitempty"`
-	MaxExpense  float64 `json:"max_expense_ratio,omitempty"`
-	MinThreeYr  float64 `json:"min_three_yr_cagr,omitempty"`
+	Category   string  `json:"category,omitempty"`
+	MinAUMCr   float64 `json:"min_aum_crore,omitempty"`
+	MaxExpense float64 `json:"max_expense_ratio,omitempty"`
+	MinThreeYr float64 `json:"min_three_yr_cagr,omitempty"`
 }
 
 // Request is the wire payload.
@@ -52,10 +52,10 @@ type Request struct {
 
 // Ranked is one scored result.
 type Ranked struct {
-	Scheme   string  `json:"scheme"`
-	Score    float64 `json:"score_0_100"`
-	Sharpe   float64 `json:"sharpe"`
-	Reason   string  `json:"reason"`
+	Scheme string  `json:"scheme"`
+	Score  float64 `json:"score_0_100"`
+	Sharpe float64 `json:"sharpe"`
+	Reason string  `json:"reason"`
 }
 
 // Result is the wire output.

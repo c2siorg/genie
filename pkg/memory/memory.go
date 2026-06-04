@@ -68,4 +68,3 @@ func (s *InMemoryKV) Delete(key string) {
 	defer s.mu.Unlock()
 	delete(s.m, key)
 }
-

@@ -6,11 +6,11 @@
 // Orders flow through a state machine: pending → paid → fulfilled,
 // with rollback on failures. The workflow orchestrator coordinates:
 //
-//   1. Order creation & validation
-//   2. Payment initiation (via Payment Agent)
-//   3. Payment confirmation polling (via CBDC Bridge)
-//   4. Settlement coordination (via Settlement Coordinator)
-//   5. Order fulfillment
+//  1. Order creation & validation
+//  2. Payment initiation (via Payment Agent)
+//  3. Payment confirmation polling (via CBDC Bridge)
+//  4. Settlement coordination (via Settlement Coordinator)
+//  5. Order fulfillment
 //
 // On payment failure, the order transitions to payment_failed and
 // awaits manual retry. On settlement failure, the order remains paid
@@ -26,26 +26,26 @@
 //
 // Example Usage:
 //
-//   // Create dependencies
-//   orderMgr := commerce.NewInMemoryOrderManager()
-//   paymentAgent := paymentAgentImpl{}
-//   settlementAgent := settlementAgentImpl{}
-//   orchestrator := commerce.NewDefaultWorkflowOrchestrator(
-//       orderMgr, paymentAgent, settlementAgent,
-//   )
+//	// Create dependencies
+//	orderMgr := commerce.NewInMemoryOrderManager()
+//	paymentAgent := paymentAgentImpl{}
+//	settlementAgent := settlementAgentImpl{}
+//	orchestrator := commerce.NewDefaultWorkflowOrchestrator(
+//	    orderMgr, paymentAgent, settlementAgent,
+//	)
 //
-//   // Create an order
-//   items := []commerce.OrderItem{
-//       {SKU: "WIDGET", Description: "Widget", Quantity: 2, UnitPricePaise: 50_000},
-//   }
-//   order, err := orderMgr.CreateOrder("merchant-1", "customer-1", items)
+//	// Create an order
+//	items := []commerce.OrderItem{
+//	    {SKU: "WIDGET", Description: "Widget", Quantity: 2, UnitPricePaise: 50_000},
+//	}
+//	order, err := orderMgr.CreateOrder("merchant-1", "customer-1", items)
 //
-//   // Execute the workflow (payment + settlement + fulfillment)
-//   success, finalStatus, err := orchestrator.ExecuteWorkflow(ctx, order.ID)
+//	// Execute the workflow (payment + settlement + fulfillment)
+//	success, finalStatus, err := orchestrator.ExecuteWorkflow(ctx, order.ID)
 //
-//   // Retrieve final state
-//   workflow, _ := orchestrator.GetWorkflow(order.ID)
-//   auditLog, _ := orchestrator.GetAuditLog(order.ID)
+//	// Retrieve final state
+//	workflow, _ := orchestrator.GetWorkflow(order.ID)
+//	auditLog, _ := orchestrator.GetAuditLog(order.ID)
 //
 // Thread Safety:
 //

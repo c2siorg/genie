@@ -15,7 +15,7 @@ type MockEnvironment struct {
 	logs []string
 }
 
-func (m *MockEnvironment) Now() time.Time             { return time.Now() }
+func (m *MockEnvironment) Now() time.Time { return time.Now() }
 func (m *MockEnvironment) Logf(format string, args ...interface{}) {
 	m.logs = append(m.logs, "log")
 }
@@ -29,11 +29,11 @@ func TestFXRouterHandleMessage(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name          string
-		messageType   string
-		requestBody   interface{}
-		shouldErr     bool
-		expectPaths   bool
+		name        string
+		messageType string
+		requestBody interface{}
+		shouldErr   bool
+		expectPaths bool
 	}{
 		{
 			name:        "Valid settlement request",
@@ -110,19 +110,19 @@ func TestFXRouterChooseRecommendedPath(t *testing.T) {
 
 	paths := []fx.SettlementPath{
 		{
-			Route:           fx.RouteDirect,
+			Route:            fx.RouteDirect,
 			EstimatedCostBps: 100,
-			ExecutionTimeMs: 14400000,
+			ExecutionTimeMs:  14400000,
 		},
 		{
-			Route:           fx.RouteCorrespondent,
+			Route:            fx.RouteCorrespondent,
 			EstimatedCostBps: 75,
-			ExecutionTimeMs: 28800000,
+			ExecutionTimeMs:  28800000,
 		},
 		{
-			Route:           fx.RouteNettingPool,
+			Route:            fx.RouteNettingPool,
 			EstimatedCostBps: 50,
-			ExecutionTimeMs: 86400000,
+			ExecutionTimeMs:  86400000,
 		},
 	}
 
@@ -131,10 +131,10 @@ func TestFXRouterChooseRecommendedPath(t *testing.T) {
 		policy        string
 		expectedRoute fx.SettlementRoute
 	}{
-		{"Cost policy", "cost", fx.RouteDirect},           // First path (lowest cost)
-		{"Speed policy", "speed", fx.RouteDirect},         // Fastest execution
-		{"Balanced policy", "balanced", fx.RouteDirect},   // Prefers direct
-		{"Unknown policy", "unknown", fx.RouteDirect},     // Falls back to cost
+		{"Cost policy", "cost", fx.RouteDirect},         // First path (lowest cost)
+		{"Speed policy", "speed", fx.RouteDirect},       // Fastest execution
+		{"Balanced policy", "balanced", fx.RouteDirect}, // Prefers direct
+		{"Unknown policy", "unknown", fx.RouteDirect},   // Falls back to cost
 	}
 
 	for _, tt := range tests {
@@ -160,9 +160,9 @@ func TestFXRouterIntegration(t *testing.T) {
 	request := SettlementRequest{
 		RequestID: "settlement-20240531-001",
 		NetAmounts: []fx.NetAmount{
-			{Currency: "USD", Amount: -100_000.0},  // Outflow
-			{Currency: "EUR", Amount: 50_000.0},    // Inflow
-			{Currency: "GBP", Amount: 30_000.0},    // Inflow
+			{Currency: "USD", Amount: -100_000.0},   // Outflow
+			{Currency: "EUR", Amount: 50_000.0},     // Inflow
+			{Currency: "GBP", Amount: 30_000.0},     // Inflow
 			{Currency: "INR", Amount: -5_000_000.0}, // Outflow
 		},
 		PreferredRoute: "cost",

@@ -4,10 +4,10 @@
 // executes settlement payments via the Payment Agent + CBDC Bridge.
 //
 // Typical flow:
-//   1. CreateBatch: aggregate merchant receivables for settlement_date
-//   2. CalculateNetPositions: bilateral/multilateral netting
-//   3. ExecuteBatch: create e-Rupee payments, emit settlement_txn_ids
-//   4. QueryByDate: retrieve historical settlement batches
+//  1. CreateBatch: aggregate merchant receivables for settlement_date
+//  2. CalculateNetPositions: bilateral/multilateral netting
+//  3. ExecuteBatch: create e-Rupee payments, emit settlement_txn_ids
+//  4. QueryByDate: retrieve historical settlement batches
 package commercesettlement
 
 import (
@@ -18,54 +18,54 @@ import (
 type SettlementStatus string
 
 const (
-	StatusPending  SettlementStatus = "pending"
-	StatusNetted   SettlementStatus = "netted"
-	StatusSettled  SettlementStatus = "settled"
-	StatusFailed   SettlementStatus = "failed"
+	StatusPending SettlementStatus = "pending"
+	StatusNetted  SettlementStatus = "netted"
+	StatusSettled SettlementStatus = "settled"
+	StatusFailed  SettlementStatus = "failed"
 )
 
 // SettlementBatch represents a batch of settlements scheduled for a given date.
 // All amounts are in paise (smallest unit of e-Rupee).
 type SettlementBatch struct {
-	ID                string                       `json:"id"`
-	SettlementDate    time.Time                    `json:"settlement_date"`
-	MerchantIDs       []string                     `json:"merchant_ids"`
-	TotalAmountPaise  int64                        `json:"total_amount_paise"`
-	Status            SettlementStatus             `json:"status"`
-	CreatedAt         time.Time                    `json:"created_at"`
-	SettledAt         *time.Time                   `json:"settled_at,omitempty"`
-	Entries           map[string]*SettlementEntry  `json:"entries"`           // keyed by merchant_id
-	NettedPositions   map[string]int64             `json:"netted_positions"`  // net position per merchant (after netting)
-	NettingSavings    int64                        `json:"netting_savings_paise"`
-	SettlementTxnIDs  []string                     `json:"settlement_txn_ids"`
+	ID               string                      `json:"id"`
+	SettlementDate   time.Time                   `json:"settlement_date"`
+	MerchantIDs      []string                    `json:"merchant_ids"`
+	TotalAmountPaise int64                       `json:"total_amount_paise"`
+	Status           SettlementStatus            `json:"status"`
+	CreatedAt        time.Time                   `json:"created_at"`
+	SettledAt        *time.Time                  `json:"settled_at,omitempty"`
+	Entries          map[string]*SettlementEntry `json:"entries"`          // keyed by merchant_id
+	NettedPositions  map[string]int64            `json:"netted_positions"` // net position per merchant (after netting)
+	NettingSavings   int64                       `json:"netting_savings_paise"`
+	SettlementTxnIDs []string                    `json:"settlement_txn_ids"`
 }
 
 // SettlementEntry represents one merchant's settlement obligation in a batch.
 type SettlementEntry struct {
-	MerchantID       string `json:"merchant_id"`
-	AmountOwedPaise  int64  `json:"amount_owed_paise"` // gross amount owed (before netting)
-	SettlementTxnID  string `json:"settlement_txn_id"`  // CBDC transaction ID (populated after settlement)
+	MerchantID      string `json:"merchant_id"`
+	AmountOwedPaise int64  `json:"amount_owed_paise"` // gross amount owed (before netting)
+	SettlementTxnID string `json:"settlement_txn_id"` // CBDC transaction ID (populated after settlement)
 }
 
 // NettingPool holds entries and computes bilateral/multilateral net positions.
 type NettingPool struct {
-	Date           time.Time                `json:"date"`
-	Entries        []*SettlementEntry       `json:"entries"`
-	NetPosition    map[string]int64         `json:"net_position"`  // merchant -> net amount (positive = owes, negative = owed)
-	GrossAmount    int64                    `json:"gross_amount"`  // sum of all entries before netting
-	NetAmount      int64                    `json:"net_amount"`    // sum of absolute net positions (after netting)
-	NettingSavings int64                    `json:"netting_savings_paise"` // gross - net
+	Date           time.Time          `json:"date"`
+	Entries        []*SettlementEntry `json:"entries"`
+	NetPosition    map[string]int64   `json:"net_position"`          // merchant -> net amount (positive = owes, negative = owed)
+	GrossAmount    int64              `json:"gross_amount"`          // sum of all entries before netting
+	NetAmount      int64              `json:"net_amount"`            // sum of absolute net positions (after netting)
+	NettingSavings int64              `json:"netting_savings_paise"` // gross - net
 }
 
 // SettlementReport summarizes a completed settlement batch.
 type SettlementReport struct {
-	BatchID              string    `json:"batch_id"`
-	TotalEntries         int       `json:"total_entries"`
-	GrossAmountPaise     int64     `json:"gross_amount_paise"`
-	NetAmountPaise       int64     `json:"net_amount_paise"`
-	NettingSavingsPaise  int64     `json:"netting_savings_paise"`
-	SettledAt            time.Time `json:"settled_at"`
-	SettlementTxnCount   int       `json:"settlement_txn_count"`
+	BatchID             string    `json:"batch_id"`
+	TotalEntries        int       `json:"total_entries"`
+	GrossAmountPaise    int64     `json:"gross_amount_paise"`
+	NetAmountPaise      int64     `json:"net_amount_paise"`
+	NettingSavingsPaise int64     `json:"netting_savings_paise"`
+	SettledAt           time.Time `json:"settled_at"`
+	SettlementTxnCount  int       `json:"settlement_txn_count"`
 }
 
 // New creates a new SettlementBatch with generated ID.

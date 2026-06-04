@@ -58,28 +58,29 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agentgov"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/cbdc"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commerce"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commercesettlement"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeecompliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeepayment"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/incidents"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/opa"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/sovereignty"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/synth"
@@ -88,25 +89,53 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
 
-// Mock stubs for commerce workflow (integrate with agent bus in production)
-type mockPaymentAgentStub struct{}
-
-func (m *mockPaymentAgentStub) InitiatePayment(ctx context.Context, req commerce.PaymentInitiationRequest) (string, error) {
-	return "txn-" + req.OrderID, nil
+// InMemorySettlementExecutor implements the settlement executor interface
+// for testing and in-memory operation.
+type InMemorySettlementExecutor struct {
+	batches map[string]*commercesettlement.SettlementBatch
 }
 
-func (m *mockPaymentAgentStub) PollPaymentStatus(ctx context.Context, transactionID string) (*commerce.PaymentConfirmation, error) {
-	return &commerce.PaymentConfirmation{TransactionID: transactionID, Success: true, ConfirmedAt: time.Now()}, nil
+func NewInMemorySettlementExecutor() *InMemorySettlementExecutor {
+	return &InMemorySettlementExecutor{
+		batches: make(map[string]*commercesettlement.SettlementBatch),
+	}
 }
 
-type mockSettlementAgentStub struct{}
+func (e *InMemorySettlementExecutor) ExecuteBatch(ctx context.Context, batchID string, positions map[string]int64) error {
+	// Create settlement entries from positions
+	entries := make(map[string]*commercesettlement.SettlementEntry)
+	totalAmount := int64(0)
+	merchantIDs := []string{}
 
-func (m *mockSettlementAgentStub) InitiateSettlement(ctx context.Context, req commerce.SettlementInitiationRequest) (string, error) {
-	return "settle-" + req.OrderID, nil
+	for merchantID, amount := range positions {
+		entries[merchantID] = &commercesettlement.SettlementEntry{
+			MerchantID:      merchantID,
+			AmountOwedPaise: amount,
+			SettlementTxnID: batchID + "-" + merchantID,
+		}
+		totalAmount += amount
+		merchantIDs = append(merchantIDs, merchantID)
+	}
+
+	batch := &commercesettlement.SettlementBatch{
+		ID:               batchID,
+		SettlementDate:   time.Now().UTC(),
+		MerchantIDs:      merchantIDs,
+		TotalAmountPaise: totalAmount,
+		Status:           commercesettlement.StatusSettled,
+		CreatedAt:        time.Now().UTC(),
+		Entries:          entries,
+	}
+	e.batches[batchID] = batch
+	return nil
 }
 
-func (m *mockSettlementAgentStub) WaitSettlementCompletion(ctx context.Context, settlementID string) (*commerce.SettlementResult, error) {
-	return &commerce.SettlementResult{SettlementID: settlementID, Success: true, CompletedAt: time.Now()}, nil
+func (e *InMemorySettlementExecutor) GetBatchStatus(ctx context.Context, batchID string) (string, error) {
+	batch, exists := e.batches[batchID]
+	if !exists {
+		return "pending", nil
+	}
+	return string(batch.Status), nil
 }
 
 func main() {
@@ -375,11 +404,12 @@ func run() error {
 	txnLog := erupeepayment.NewInMemoryTransactionLog(nil)
 	paymentAgent := erupeepayment.NewPaymentAgent(acctMgr, txnLog)
 
-	// Commerce Workflow (mock stubs for payment & settlement agents)
+	// Commerce Workflow (real stubs for payment & settlement agents)
 	orderMgr := commerce.NewInMemoryOrderManager()
-	mockPaymentStub := &mockPaymentAgentStub{}
-	mockSettlementStub := &mockSettlementAgentStub{}
-	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, mockPaymentStub, mockSettlementStub)
+	paymentStub := commerce.NewRealPaymentAgentStub(paymentAgent)
+	settlementExecutor := NewInMemorySettlementExecutor()
+	settlementStub := commerce.NewRealSettlementAgentStub(settlementExecutor)
+	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, paymentStub, settlementStub)
 
 	// Merchant Onboarding
 	merchantMgr := merchant.NewInMemoryMerchantManager()
@@ -470,10 +500,10 @@ func run() error {
 			AccountManager: acctMgr,
 			TransactionLog: txnLog,
 		},
-		Commerce: handlers.NewCommerceHandler(orderMgr, workflowOrch),
-		Merchant: handlers.NewMerchantHandler(merchantMgr, onboardingWf),
+		Commerce:   handlers.NewCommerceHandler(orderMgr, workflowOrch),
+		Merchant:   handlers.NewMerchantHandler(merchantMgr, onboardingWf),
 		Compliance: handlers.NewComplianceHandler(complianceEngine),
-		CBDC: handlers.NewCBDCHandler(cbdcBridge, cbdcLedger, rbiLimits),
+		CBDC:       handlers.NewCBDCHandler(cbdcBridge, cbdcLedger, rbiLimits),
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui

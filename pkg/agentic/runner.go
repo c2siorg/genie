@@ -18,11 +18,11 @@ import (
 // ─── Wire types (OpenAI-compatible) ───────────────────────────────────────
 
 type wireMessage struct {
-	Role       string          `json:"role"`
-	Content    any             `json:"content"`
-	ToolCallID string          `json:"tool_call_id,omitempty"`
-	Name       string          `json:"name,omitempty"`
-	ToolCalls  []wireToolCall  `json:"tool_calls,omitempty"`
+	Role       string         `json:"role"`
+	Content    any            `json:"content"`
+	ToolCallID string         `json:"tool_call_id,omitempty"`
+	Name       string         `json:"name,omitempty"`
+	ToolCalls  []wireToolCall `json:"tool_calls,omitempty"`
 }
 
 type wireToolCall struct {
@@ -44,9 +44,9 @@ type wireTool struct {
 }
 
 type wireRequest struct {
-	Model    string         `json:"model"`
-	Messages []wireMessage  `json:"messages"`
-	Tools    []wireTool     `json:"tools,omitempty"`
+	Model    string        `json:"model"`
+	Messages []wireMessage `json:"messages"`
+	Tools    []wireTool    `json:"tools,omitempty"`
 }
 
 type wireResponse struct {

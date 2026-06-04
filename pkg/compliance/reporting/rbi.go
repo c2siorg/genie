@@ -21,25 +21,25 @@ import (
 //
 // Quarter is 1-4; Year is YYYY.
 type RBIQuarterlyReport struct {
-	Quarter            int       `json:"quarter"`
-	Year               int       `json:"year"`
-	ReportID           string    `json:"report_id"` // unique identifier for this report
-	GeneratedAt        time.Time `json:"generated_at"`
-	TotalTransactions  int64     `json:"total_transactions"`
-	TotalVolumeCents   int64     `json:"total_volume_cents"` // in minor units (paise/cents)
-	SuspiciousCount    int       `json:"suspicious_count"`
-	RiskyMerchants     int       `json:"risky_merchants"`
-	ComplianceNotes    string    `json:"compliance_notes"`
-	AttestationSignee  string    `json:"attestation_signee,omitempty"`
-	MerchantBreakdown  []MerchantVolume `json:"merchant_breakdown,omitempty"`
+	Quarter           int              `json:"quarter"`
+	Year              int              `json:"year"`
+	ReportID          string           `json:"report_id"` // unique identifier for this report
+	GeneratedAt       time.Time        `json:"generated_at"`
+	TotalTransactions int64            `json:"total_transactions"`
+	TotalVolumeCents  int64            `json:"total_volume_cents"` // in minor units (paise/cents)
+	SuspiciousCount   int              `json:"suspicious_count"`
+	RiskyMerchants    int              `json:"risky_merchants"`
+	ComplianceNotes   string           `json:"compliance_notes"`
+	AttestationSignee string           `json:"attestation_signee,omitempty"`
+	MerchantBreakdown []MerchantVolume `json:"merchant_breakdown,omitempty"`
 }
 
 // MerchantVolume is the transaction count and volume for a single merchant.
 type MerchantVolume struct {
-	Merchant      string `json:"merchant"`
+	Merchant         string `json:"merchant"`
 	TransactionCount int64  `json:"transaction_count"`
-	VolumeCents   int64  `json:"volume_cents"`
-	SuspiciousCount int    `json:"suspicious_count"`
+	VolumeCents      int64  `json:"volume_cents"`
+	SuspiciousCount  int    `json:"suspicious_count"`
 }
 
 // GenerateRBIReport compiles a quarterly report from transactions and audit log.
@@ -203,9 +203,9 @@ func exportRBIAsJSON(report *RBIQuarterlyReport) ([]byte, error) {
 func exportRBIAsPDF(report *RBIQuarterlyReport) ([]byte, error) {
 	// Placeholder: return a JSON structure that describes what the PDF would contain.
 	pdfStruct := map[string]any{
-		"format":  "pdf",
-		"report":  report,
-		"note":    "PDF generation requires external library (e.g., gofpdf); this is a JSON placeholder",
+		"format": "pdf",
+		"report": report,
+		"note":   "PDF generation requires external library (e.g., gofpdf); this is a JSON placeholder",
 	}
 	b, _ := json.MarshalIndent(pdfStruct, "", "  ")
 	return b, nil

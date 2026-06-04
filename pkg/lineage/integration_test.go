@@ -374,4 +374,3 @@ func TestManager_VerifyIntegrity(t *testing.T) {
 		t.Errorf("TotalEntries: expected 3, got %d", result.TotalEntries)
 	}
 }
-

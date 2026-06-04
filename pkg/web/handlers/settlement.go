@@ -1,10 +1,11 @@
 // settlement.go — HTTP surface for Settlement Coordinator module.
 //
 // Routes wired by pkg/web/router.go:
-//   POST /v1/settlement/request — Create settlement request
-//   GET  /v1/settlement/request/{request_id} — Get status
-//   POST /v1/settlement/request/{request_id}/execute — Execute settlement
-//   GET  /v1/settlement/request/{request_id}/audit — Get audit trail
+//
+//	POST /v1/settlement/request — Create settlement request
+//	GET  /v1/settlement/request/{request_id} — Get status
+//	POST /v1/settlement/request/{request_id}/execute — Execute settlement
+//	GET  /v1/settlement/request/{request_id}/audit — Get audit trail
 //
 // All endpoints require authentication. Settlement execution may require
 // admin approval via router-level gates.
@@ -39,9 +40,9 @@ type createSettlementRequest struct {
 
 // createSettlementResponse wraps the created SettlementRequest.
 type createSettlementResponse struct {
-	ID        string                      `json:"id"`
-	State     settlement.SettlementState  `json:"state"`
-	CreatedAt string                      `json:"created_at"`
+	ID        string                     `json:"id"`
+	State     settlement.SettlementState `json:"state"`
+	CreatedAt string                     `json:"created_at"`
 }
 
 // executeSettlementRequest is the POST /v1/settlement/request/{id}/execute body.
@@ -52,20 +53,20 @@ type executeSettlementRequest struct {
 
 // settlementStatusResponse wraps a SettlementRequest for HTTP responses.
 type settlementStatusResponse struct {
-	ID             string                      `json:"id"`
-	State          settlement.SettlementState  `json:"state"`
-	Transactions   []settlement.Transaction    `json:"transactions,omitempty"`
-	Counterparties []string                    `json:"counterparties,omitempty"`
-	NetAmounts     []settlement.NetAmount      `json:"net_amounts,omitempty"`
-	CreatedAt      string                      `json:"created_at"`
-	UpdatedAt      string                      `json:"updated_at"`
-	Metadata       map[string]string           `json:"metadata,omitempty"`
+	ID             string                     `json:"id"`
+	State          settlement.SettlementState `json:"state"`
+	Transactions   []settlement.Transaction   `json:"transactions,omitempty"`
+	Counterparties []string                   `json:"counterparties,omitempty"`
+	NetAmounts     []settlement.NetAmount     `json:"net_amounts,omitempty"`
+	CreatedAt      string                     `json:"created_at"`
+	UpdatedAt      string                     `json:"updated_at"`
+	Metadata       map[string]string          `json:"metadata,omitempty"`
 }
 
 // auditLogResponse wraps a slice of AuditEntry for HTTP responses.
 type auditLogResponse struct {
-	SettlementID string                    `json:"settlement_id"`
-	Entries      []settlement.AuditEntry   `json:"entries"`
+	SettlementID string                  `json:"settlement_id"`
+	Entries      []settlement.AuditEntry `json:"entries"`
 }
 
 // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -95,12 +96,12 @@ func (h *SettlementHandler) CreateRequest(w http.ResponseWriter, r *http.Request
 
 	// Create the settlement request in pending state
 	req := &settlement.SettlementRequest{
-		ID:             reqID,
-		Transactions:   body.Transactions,
-		State:          settlement.StatePending,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-		Metadata:       body.Metadata,
+		ID:           reqID,
+		Transactions: body.Transactions,
+		State:        settlement.StatePending,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+		Metadata:     body.Metadata,
 	}
 
 	// Extract counterparties from transactions

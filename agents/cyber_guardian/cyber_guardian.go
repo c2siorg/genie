@@ -42,19 +42,19 @@ type Event struct {
 
 // Request is the inbound batch — last K events for this user, oldest first.
 type Request struct {
-	UserID    string  `json:"user_id"`
-	Events    []Event `json:"events"`
+	UserID         string   `json:"user_id"`
+	Events         []Event  `json:"events"`
 	KnownDeviceFPs []string `json:"known_device_fps"` // user's enrolled devices
 }
 
 // Verdict is the structured output.
 type Verdict struct {
-	UserID         string   `json:"user_id"`
-	RiskScore0To1  float64  `json:"risk_score_0_1"`
-	Label          string   `json:"label"` // "low" | "medium" | "high"
-	Flags          []string `json:"flags"`
-	RecommendAction string  `json:"recommend_action"`
-	Disclaimer     string   `json:"disclaimer"`
+	UserID          string   `json:"user_id"`
+	RiskScore0To1   float64  `json:"risk_score_0_1"`
+	Label           string   `json:"label"` // "low" | "medium" | "high"
+	Flags           []string `json:"flags"`
+	RecommendAction string   `json:"recommend_action"`
+	Disclaimer      string   `json:"disclaimer"`
 }
 
 type Agent struct{}

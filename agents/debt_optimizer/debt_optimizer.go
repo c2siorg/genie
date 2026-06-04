@@ -28,26 +28,26 @@ const (
 
 // Debt is one outstanding obligation.
 type Debt struct {
-	Name              string  `json:"name"`
-	BalanceRupees     float64 `json:"balance_rupees"`
-	APR               float64 `json:"apr"`           // annual rate, decimal (0.12 = 12%)
-	MinPaymentRupees  float64 `json:"min_payment_rupees"`
+	Name             string  `json:"name"`
+	BalanceRupees    float64 `json:"balance_rupees"`
+	APR              float64 `json:"apr"` // annual rate, decimal (0.12 = 12%)
+	MinPaymentRupees float64 `json:"min_payment_rupees"`
 }
 
 // Request is the wire payload.
 type Request struct {
-	Debts           []Debt  `json:"debts"`
-	Strategy        string  `json:"strategy"` // "avalanche" (default) | "snowball"
-	ExtraPerMonth   float64 `json:"extra_per_month_rupees"`
+	Debts         []Debt  `json:"debts"`
+	Strategy      string  `json:"strategy"` // "avalanche" (default) | "snowball"
+	ExtraPerMonth float64 `json:"extra_per_month_rupees"`
 }
 
 // Plan is the wire output.
 type Plan struct {
-	Strategy       string             `json:"strategy"`
-	Order          []string           `json:"order"`           // debt names, in payoff order
-	MonthsToFree   int                `json:"months_to_freedom"`
-	TotalInterest  float64            `json:"total_interest_rupees"`
-	Disclaimer     string             `json:"disclaimer"`
+	Strategy      string   `json:"strategy"`
+	Order         []string `json:"order"` // debt names, in payoff order
+	MonthsToFree  int      `json:"months_to_freedom"`
+	TotalInterest float64  `json:"total_interest_rupees"`
+	Disclaimer    string   `json:"disclaimer"`
 }
 
 type Agent struct{}

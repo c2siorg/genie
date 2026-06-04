@@ -17,8 +17,8 @@ const (
 
 // Agent implements the Merchant Onboarding Agent for the Genie platform.
 type Agent struct {
-	manager   merchant.MerchantManager
-	workflow  merchant.OnboardingWorkflow
+	manager  merchant.MerchantManager
+	workflow merchant.OnboardingWorkflow
 }
 
 // New constructs a Merchant Agent with dependencies.
@@ -30,8 +30,8 @@ func New(manager merchant.MerchantManager, workflow merchant.OnboardingWorkflow)
 		workflow = merchant.NewInMemoryOnboardingWorkflow(manager)
 	}
 	return &Agent{
-		manager:   manager,
-		workflow:  workflow,
+		manager:  manager,
+		workflow: workflow,
 	}
 }
 
@@ -103,9 +103,9 @@ func (a *Agent) handleOnboardMerchant(ctx context.Context, msg agent.Message, en
 	env.Logf("[merchant_agent] created merchant: %s (%s)", profile.ID, profile.BusinessName)
 
 	res := OnboardMerchantResponse{
-		MerchantID:    profile.ID,
-		Status:        string(profile.Status),
-		Message:       "Merchant registered. Please submit KYC documents.",
+		MerchantID: profile.ID,
+		Status:     string(profile.Status),
+		Message:    "Merchant registered. Please submit KYC documents.",
 	}
 
 	body, _ := json.Marshal(res)
@@ -172,11 +172,11 @@ func (a *Agent) handleSubmitKYC(ctx context.Context, msg agent.Message, env agen
 	env.Logf("[merchant_agent] submitted KYC for merchant %s: onboarding_id=%s", req.MerchantID, onboardReq.ID)
 
 	res := SubmitKYCResponse{
-		OnboardingID: onboardReq.ID,
-		MerchantID:   onboardReq.MerchantID,
-		Status:       string(onboardReq.State),
+		OnboardingID:  onboardReq.ID,
+		MerchantID:    onboardReq.MerchantID,
+		Status:        string(onboardReq.State),
 		DocumentCount: len(docs),
-		Message:      "KYC documents submitted. Verification in progress.",
+		Message:       "KYC documents submitted. Verification in progress.",
 	}
 
 	body, _ := json.Marshal(res)
@@ -201,13 +201,13 @@ func (a *Agent) handleVerifyKYC(ctx context.Context, msg agent.Message, env agen
 	env.Logf("[merchant_agent] KYC verification: status=%s", kycResult.Status)
 
 	res := VerifyKYCResponse{
-		OnboardingID:       req.OnboardingID,
-		Status:             kycResult.Status,
-		GSTVerified:        kycResult.GSTVerified,
-		PANVerified:        kycResult.PANVerified,
-		AddressConfirmed:   kycResult.BusinessAddressConfirmed,
-		IdentityVerified:   kycResult.OwnerIdentityVerified,
-		Issues:             kycResult.Issues,
+		OnboardingID:     req.OnboardingID,
+		Status:           kycResult.Status,
+		GSTVerified:      kycResult.GSTVerified,
+		PANVerified:      kycResult.PANVerified,
+		AddressConfirmed: kycResult.BusinessAddressConfirmed,
+		IdentityVerified: kycResult.OwnerIdentityVerified,
+		Issues:           kycResult.Issues,
 	}
 
 	body, _ := json.Marshal(res)
@@ -446,10 +446,10 @@ type GetMerchantStatusResponse struct {
 type SubmitKYCRequest struct {
 	MerchantID string `json:"merchant_id"`
 	Documents  []struct {
-		ID                string            `json:"id"`
-		Type              string            `json:"type"`
-		URL               string            `json:"url"`
-		ExtractionFields  map[string]string `json:"extraction_fields"`
+		ID               string            `json:"id"`
+		Type             string            `json:"type"`
+		URL              string            `json:"url"`
+		ExtractionFields map[string]string `json:"extraction_fields"`
 	} `json:"documents"`
 }
 
@@ -466,13 +466,13 @@ type VerifyKYCRequest struct {
 }
 
 type VerifyKYCResponse struct {
-	OnboardingID   string   `json:"onboarding_id"`
-	Status         string   `json:"status"`
-	GSTVerified    bool     `json:"gst_verified"`
-	PANVerified    bool     `json:"pan_verified"`
-	AddressConfirmed bool   `json:"address_confirmed"`
-	IdentityVerified bool   `json:"identity_verified"`
-	Issues         []string `json:"issues,omitempty"`
+	OnboardingID     string   `json:"onboarding_id"`
+	Status           string   `json:"status"`
+	GSTVerified      bool     `json:"gst_verified"`
+	PANVerified      bool     `json:"pan_verified"`
+	AddressConfirmed bool     `json:"address_confirmed"`
+	IdentityVerified bool     `json:"identity_verified"`
+	Issues           []string `json:"issues,omitempty"`
 }
 
 type CheckComplianceRequest struct {

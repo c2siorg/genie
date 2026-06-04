@@ -1,10 +1,11 @@
 // consent.go — HTTP surface for Consent Registry (A2A) module.
 //
 // Routes wired by pkg/web/router.go:
-//   POST /v1/consent/grant — Grant consent (user, resource, permission, ttl)
-//   DELETE /v1/consent/{consent_id} — Revoke consent
-//   GET /v1/consent/user/{user_id} — List grants for user
-//   GET /v1/audit/decisions — Query audit log (user, resource, since, until)
+//
+//	POST /v1/consent/grant — Grant consent (user, resource, permission, ttl)
+//	DELETE /v1/consent/{consent_id} — Revoke consent
+//	GET /v1/consent/user/{user_id} — List grants for user
+//	GET /v1/audit/decisions — Query audit log (user, resource, since, until)
 //
 // All endpoints require authentication.
 package handlers
@@ -45,26 +46,26 @@ type grantConsentRequest struct {
 
 // grantConsentResponse wraps the created ConsentRecord.
 type grantConsentResponse struct {
-	ID         string `json:"id"`
-	UserID     string `json:"user_id"`
+	ID           string `json:"id"`
+	UserID       string `json:"user_id"`
 	ResourceType string `json:"resource_type"`
-	Permissions string `json:"permissions"`
-	ExpiresAt  string `json:"expires_at,omitempty"`
-	Reason     string `json:"reason"`
-	CreatedAt  string `json:"created_at"`
+	Permissions  string `json:"permissions"`
+	ExpiresAt    string `json:"expires_at,omitempty"`
+	Reason       string `json:"reason"`
+	CreatedAt    string `json:"created_at"`
 }
 
 // consentRecordResponse represents a consent grant for HTTP responses.
 type consentRecordResponse struct {
-	ID         string `json:"id"`
-	UserID     string `json:"user_id"`
+	ID           string `json:"id"`
+	UserID       string `json:"user_id"`
 	ResourceType string `json:"resource_type"`
-	Permissions string `json:"permissions"`
-	ExpiresAt  string `json:"expires_at,omitempty"`
-	Reason     string `json:"reason"`
-	GrantedBy  string `json:"granted_by"`
-	CreatedAt  string `json:"created_at"`
-	IsExpired  bool   `json:"is_expired"`
+	Permissions  string `json:"permissions"`
+	ExpiresAt    string `json:"expires_at,omitempty"`
+	Reason       string `json:"reason"`
+	GrantedBy    string `json:"granted_by"`
+	CreatedAt    string `json:"created_at"`
+	IsExpired    bool   `json:"is_expired"`
 }
 
 // listGrantsResponse wraps consent records for a user.

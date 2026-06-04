@@ -34,8 +34,8 @@ const (
 // Interest is the Google Trends 0..100 normalised score.
 type Series struct {
 	Keyword string `json:"keyword"`
-	Geo     string `json:"geo"`     // "IN", "IN-MH", etc.
-	Points  []int  `json:"points"`  // 0..100, oldest first
+	Geo     string `json:"geo"`    // "IN", "IN-MH", etc.
+	Points  []int  `json:"points"` // 0..100, oldest first
 }
 
 // Request asks for an analysis across a set of keyword series.
@@ -47,12 +47,12 @@ type Request struct {
 
 // Signal is one keyword's classified trend.
 type Signal struct {
-	Keyword           string  `json:"keyword"`
-	Direction         string  `json:"direction"` // "surging" | "fading" | "steady"
-	LatestMean        float64 `json:"latest_mean"`
-	BaselineMean      float64 `json:"baseline_mean"`
-	ChangeMultiple    float64 `json:"change_multiple"`
-	NoteToDownstream  string  `json:"note_to_downstream"`
+	Keyword          string  `json:"keyword"`
+	Direction        string  `json:"direction"` // "surging" | "fading" | "steady"
+	LatestMean       float64 `json:"latest_mean"`
+	BaselineMean     float64 `json:"baseline_mean"`
+	ChangeMultiple   float64 `json:"change_multiple"`
+	NoteToDownstream string  `json:"note_to_downstream"`
 }
 
 // Response is the structured output.

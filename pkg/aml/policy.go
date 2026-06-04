@@ -37,20 +37,20 @@ type PolicyConfig struct {
 
 // PolicyRule defines how a risk score maps to a decision.
 type PolicyRule struct {
-	Level     string `yaml:"level"`      // approve | monitor | review | escalate | block
+	Level     string  `yaml:"level"` // approve | monitor | review | escalate | block
 	MinScore  float64 `yaml:"min_score"`
 	MaxScore  float64 `yaml:"max_score"`
-	Action    string `yaml:"action"`      // post | hold | review | escalate | block
-	Reasoning string `yaml:"reasoning"`
+	Action    string  `yaml:"action"` // post | hold | review | escalate | block
+	Reasoning string  `yaml:"reasoning"`
 }
 
 // PolicyOverride allows policy adjustments for specific users or scenarios.
 type PolicyOverride struct {
-	UserID       string  `yaml:"user_id"`
-	Level        string  `yaml:"level"`
-	Reason       string  `yaml:"reason"`
-	ExpiresAt    string  `yaml:"expires_at"` // RFC3339 timestamp
-	ApprovedBy   string  `yaml:"approved_by"`
+	UserID     string `yaml:"user_id"`
+	Level      string `yaml:"level"`
+	Reason     string `yaml:"reason"`
+	ExpiresAt  string `yaml:"expires_at"` // RFC3339 timestamp
+	ApprovedBy string `yaml:"approved_by"`
 }
 
 // EscalationRule defines when to escalate beyond the standard policy.

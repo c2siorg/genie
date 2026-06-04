@@ -1,10 +1,47 @@
 {
   "permissions": {
     "allow": [
-      "Bash(golangci-lint run *)",
+      "Bash(go test *)",
+      "Bash(go build *)",
+      "Bash(go run *)",
       "Bash(go list *)",
+      "Bash(go mod *)",
+      "Bash(go fmt *)",
+      "Bash(go vet *)",
+      "Bash(golangci-lint run *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh run view *)",
+      "Bash(gh api *)",
+      "Bash(grep -r *)",
+      "Bash(rg *)",
+      "Bash(find . *)",
       "Bash(opa eval *)",
       "Bash(opa test *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push *)",
+      "Bash(git reset --hard)"
     ]
+  },
+  "env": {
+    "GO_VERSION": "1.25.0",
+    "GOPROXY": "https://proxy.golang.org",
+    "GOSUMDB": "sum.golang.org"
+  },
+  "enabledPlugins": {
+    "code-review@anthropic-tools": true,
+    "frontend-design@anthropic-tools": true,
+    "security-guidance@anthropic-tools": true,
+    "feature-dev@anthropic-tools": true,
+    "pr-review-toolkit@anthropic-tools": true
   }
 }

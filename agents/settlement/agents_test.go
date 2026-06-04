@@ -80,20 +80,20 @@ func TestCalculatorNetAmounts(t *testing.T) {
 	// Use map representation that's easier to marshal
 	txns := []map[string]any{
 		{
-			"id":               "txn1",
+			"id":                "txn1",
 			"from_counterparty": "BANK_A",
 			"to_counterparty":   "BANK_B",
-			"amount":           100_000,
-			"currency":         "USD",
-			"settlement_date":  time.Now().Add(24 * time.Hour).Format("2006-01-02"),
+			"amount":            100_000,
+			"currency":          "USD",
+			"settlement_date":   time.Now().Add(24 * time.Hour).Format("2006-01-02"),
 		},
 		{
-			"id":               "txn2",
+			"id":                "txn2",
 			"from_counterparty": "BANK_B",
 			"to_counterparty":   "BANK_A",
-			"amount":           60_000,
-			"currency":         "USD",
-			"settlement_date":  time.Now().Add(24 * time.Hour).Format("2006-01-02"),
+			"amount":            60_000,
+			"currency":          "USD",
+			"settlement_date":   time.Now().Add(24 * time.Hour).Format("2006-01-02"),
 		},
 	}
 
@@ -294,4 +294,3 @@ func TestRouterRegistry(t *testing.T) {
 func contains(s, substr string) bool {
 	return strings.Contains(s, substr)
 }
-

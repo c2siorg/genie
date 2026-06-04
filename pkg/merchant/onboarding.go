@@ -67,12 +67,12 @@ func (w *InMemoryOnboardingWorkflow) SubmitKYC(ctx context.Context, merchantID s
 	now := time.Now()
 
 	req := &MerchantOnboardingRequest{
-		ID:         id,
-		MerchantID: merchantID,
-		State:      OnboardingDocumentsReady,
-		Documents:  documents,
+		ID:          id,
+		MerchantID:  merchantID,
+		State:       OnboardingDocumentsReady,
+		Documents:   documents,
 		SubmittedAt: now,
-		UpdatedAt:  now,
+		UpdatedAt:   now,
 		AuditTrail: []AuditEntry{
 			{
 				ID:        fmt.Sprintf("audit_%d", w.nextID),
@@ -103,13 +103,13 @@ func (w *InMemoryOnboardingWorkflow) VerifyKYC(ctx context.Context, requestID st
 
 	// Simulate KYC verification
 	result := &KYCVerificationResult{
-		Status:                  "verified",
-		GSTVerified:             true,
-		PANVerified:             true,
+		Status:                   "verified",
+		GSTVerified:              true,
+		PANVerified:              true,
 		BusinessAddressConfirmed: true,
-		OwnerIdentityVerified:   true,
-		VerificationDate:        time.Now(),
-		VerifierID:              "kyc_agent",
+		OwnerIdentityVerified:    true,
+		VerificationDate:         time.Now(),
+		VerifierID:               "kyc_agent",
 	}
 
 	// Check if any documents are missing critical fields

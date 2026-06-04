@@ -16,11 +16,11 @@ import (
 // We talk HTTP directly to avoid pulling the SDK; if you outgrow this, swap
 // for the official SDK behind the same interface.
 type AnthropicProvider struct {
-	APIKey    string
-	BaseURL   string // default "https://api.anthropic.com"
-	Model     string // default "claude-sonnet-4-6"
+	APIKey     string
+	BaseURL    string // default "https://api.anthropic.com"
+	Model      string // default "claude-sonnet-4-6"
 	APIVersion string // default "2023-06-01"
-	Client    *http.Client
+	Client     *http.Client
 }
 
 // NewAnthropic builds the provider.
@@ -46,11 +46,11 @@ type anthropicMessage struct {
 }
 
 type anthropicRequest struct {
-	Model     string             `json:"model"`
-	System    string             `json:"system,omitempty"`
-	Messages  []anthropicMessage `json:"messages"`
-	MaxTokens int                `json:"max_tokens"`
-	Temperature float64          `json:"temperature,omitempty"`
+	Model       string             `json:"model"`
+	System      string             `json:"system,omitempty"`
+	Messages    []anthropicMessage `json:"messages"`
+	MaxTokens   int                `json:"max_tokens"`
+	Temperature float64            `json:"temperature,omitempty"`
 }
 
 type anthropicResponse struct {
@@ -58,9 +58,9 @@ type anthropicResponse struct {
 		Type string `json:"type"`
 		Text string `json:"text"`
 	} `json:"content"`
-	Model     string `json:"model"`
+	Model      string `json:"model"`
 	StopReason string `json:"stop_reason"`
-	Usage     struct {
+	Usage      struct {
 		InputTokens  int `json:"input_tokens"`
 		OutputTokens int `json:"output_tokens"`
 	} `json:"usage"`

@@ -12,10 +12,10 @@ import (
 type OrderStatus string
 
 const (
-	StatusPending      OrderStatus = "pending"      // order created, awaiting payment
-	StatusPaid         OrderStatus = "paid"         // payment confirmed
-	StatusFulfilled    OrderStatus = "fulfilled"    // order fulfilled to customer
-	StatusCancelled    OrderStatus = "cancelled"    // order cancelled or reverted
+	StatusPending       OrderStatus = "pending"        // order created, awaiting payment
+	StatusPaid          OrderStatus = "paid"           // payment confirmed
+	StatusFulfilled     OrderStatus = "fulfilled"      // order fulfilled to customer
+	StatusCancelled     OrderStatus = "cancelled"      // order cancelled or reverted
 	StatusPaymentFailed OrderStatus = "payment_failed" // payment failed, awaiting retry/manual intervention
 )
 
@@ -23,20 +23,20 @@ const (
 type WorkflowStep string
 
 const (
-	StepOrderCreated      WorkflowStep = "order_created"
-	StepPaymentInitiated  WorkflowStep = "payment_initiated"
-	StepPaymentConfirmed  WorkflowStep = "payment_confirmed"
+	StepOrderCreated        WorkflowStep = "order_created"
+	StepPaymentInitiated    WorkflowStep = "payment_initiated"
+	StepPaymentConfirmed    WorkflowStep = "payment_confirmed"
 	StepSettlementInitiated WorkflowStep = "settlement_initiated"
 	StepSettlementCompleted WorkflowStep = "settlement_completed"
-	StepFulfilled         WorkflowStep = "fulfilled"
+	StepFulfilled           WorkflowStep = "fulfilled"
 )
 
 // OrderItem is one line item in an order.
 type OrderItem struct {
-	SKU             string `json:"sku"`
-	Description     string `json:"description"`
-	Quantity        int    `json:"quantity"`
-	UnitPricePaise  int64  `json:"unit_price_paise"` // price in paise (₹0.01 units)
+	SKU            string `json:"sku"`
+	Description    string `json:"description"`
+	Quantity       int    `json:"quantity"`
+	UnitPricePaise int64  `json:"unit_price_paise"` // price in paise (₹0.01 units)
 }
 
 // Order represents a customer order with items and payment status.
@@ -83,11 +83,11 @@ type CommerceWorkflow struct {
 
 // PaymentInitiationRequest is sent to the Payment Agent.
 type PaymentInitiationRequest struct {
-	OrderID    string `json:"order_id"`
-	MerchantID string `json:"merchant_id"`
-	CustomerID string `json:"customer_id"`
+	OrderID     string `json:"order_id"`
+	MerchantID  string `json:"merchant_id"`
+	CustomerID  string `json:"customer_id"`
 	AmountPaise int64  `json:"amount_paise"`
-	Currency   string `json:"currency"` // e.g., "INR"
+	Currency    string `json:"currency"` // e.g., "INR"
 }
 
 // PaymentConfirmation is received from Payment Agent / CBDC Bridge polling.

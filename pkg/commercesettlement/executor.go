@@ -52,18 +52,18 @@ func (c *CBDCPaymentAdapter) CreatePayment(fromMerchant, toMerchant string, amou
 
 // DefaultSettlementExecutor implements SettlementExecutor with idempotency safeguards.
 type DefaultSettlementExecutor struct {
-	batchManager SettlementBatchManager
+	batchManager  SettlementBatchManager
 	paymentBridge PaymentBridgeAdapter
-	mu           sync.Mutex
-	executed     map[string]bool // idempotency check: batch_id -> executed
+	mu            sync.Mutex
+	executed      map[string]bool // idempotency check: batch_id -> executed
 }
 
 // NewDefaultSettlementExecutor creates a new settlement executor.
 func NewDefaultSettlementExecutor(bm SettlementBatchManager, pb PaymentBridgeAdapter) *DefaultSettlementExecutor {
 	return &DefaultSettlementExecutor{
-		batchManager: bm,
+		batchManager:  bm,
 		paymentBridge: pb,
-		executed:     make(map[string]bool),
+		executed:      make(map[string]bool),
 	}
 }
 
@@ -179,12 +179,12 @@ func (e *DefaultSettlementExecutor) VerifySettlement(batchID string) (bool, erro
 
 // SettlementAuditEntry records a settlement action for compliance.
 type SettlementAuditEntry struct {
-	ID          string            `json:"id"`
-	BatchID     string            `json:"batch_id"`
-	Action      string            `json:"action"`
-	Details     map[string]any    `json:"details"`
-	ExecutedAt  time.Time         `json:"executed_at"`
-	ExecutedBy  string            `json:"executed_by"`
+	ID         string         `json:"id"`
+	BatchID    string         `json:"batch_id"`
+	Action     string         `json:"action"`
+	Details    map[string]any `json:"details"`
+	ExecutedAt time.Time      `json:"executed_at"`
+	ExecutedBy string         `json:"executed_by"`
 }
 
 // AuditLog manages audit records for settlement operations (thread-safe).

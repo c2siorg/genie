@@ -154,4 +154,3 @@ func jsonString(s string) json.RawMessage {
 	b, _ := json.Marshal(s)
 	return b
 }
-

@@ -57,11 +57,11 @@ type ReportRepository interface {
 // InMemoryReportRepository is a thread-safe in-memory implementation for testing.
 // All operations are O(n) since there's no indexing. For production, use PostgreSQL.
 type InMemoryReportRepository struct {
-	mu          sync.RWMutex
-	rbiReports  map[string]*RBIQuarterlyReport
-	strReports  map[string]*FATPSTRReport
-	rbiByTime   []*RBIQuarterlyReport // unsorted; used for range queries
-	strByTime   []*FATPSTRReport      // unsorted; used for range queries
+	mu         sync.RWMutex
+	rbiReports map[string]*RBIQuarterlyReport
+	strReports map[string]*FATPSTRReport
+	rbiByTime  []*RBIQuarterlyReport // unsorted; used for range queries
+	strByTime  []*FATPSTRReport      // unsorted; used for range queries
 }
 
 // NewInMemoryReportRepository returns an empty in-memory repository.

@@ -17,7 +17,7 @@ func (testEnv) Logf(format string, args ...any) {}
 
 func TestCleanProfileLow(t *testing.T) {
 	v := New().Inspect(Request{
-		UserID:        "u-1",
+		UserID:         "u-1",
 		KnownDeviceFPs: []string{"fp-pixel"},
 		Events: []Event{
 			{SuccessfulAuth: true, Lat: 19.05, Lng: 72.85, DeviceFP: "fp-pixel", UnixMillis: 1_700_000_000_000},
@@ -31,7 +31,7 @@ func TestCleanProfileLow(t *testing.T) {
 func TestImpossibleTravel(t *testing.T) {
 	// Bombay → New York in 1 hour.
 	v := New().Inspect(Request{
-		UserID: "u-2",
+		UserID:         "u-2",
 		KnownDeviceFPs: []string{"fp-1"},
 		Events: []Event{
 			{SuccessfulAuth: true, Lat: 19.05, Lng: 72.85, DeviceFP: "fp-1", UnixMillis: 1_700_000_000_000},

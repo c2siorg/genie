@@ -48,25 +48,25 @@ type Used struct {
 
 // Request is the wire payload.
 type Request struct {
-	BorrowerSlabPct  float64 `json:"borrower_slab_pct"`   // e.g. 30
+	BorrowerSlabPct  float64 `json:"borrower_slab_pct"` // e.g. 30
 	Used             Used    `json:"used_so_far"`
 	ParentsSeniorCit bool    `json:"parents_senior_citizen"`
 }
 
 // Suggestion is one ranked recommendation.
 type Suggestion struct {
-	Section       string  `json:"section"`
-	HeadroomINR   float64 `json:"headroom_rupees"`
-	TaxSavedINR   float64 `json:"tax_saved_rupees"`
-	Instruments   string  `json:"sample_instruments"`
+	Section     string  `json:"section"`
+	HeadroomINR float64 `json:"headroom_rupees"`
+	TaxSavedINR float64 `json:"tax_saved_rupees"`
+	Instruments string  `json:"sample_instruments"`
 }
 
 // Plan is the wire output.
 type Plan struct {
-	Suggestions      []Suggestion `json:"suggestions"`
-	TotalSavingINR   float64      `json:"total_potential_saving_rupees"`
-	RegimeNote       string       `json:"regime_note"`
-	Disclaimer       string       `json:"disclaimer"`
+	Suggestions    []Suggestion `json:"suggestions"`
+	TotalSavingINR float64      `json:"total_potential_saving_rupees"`
+	RegimeNote     string       `json:"regime_note"`
+	Disclaimer     string       `json:"disclaimer"`
 }
 
 type Agent struct{}

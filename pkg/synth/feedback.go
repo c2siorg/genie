@@ -20,15 +20,15 @@ const (
 // Feedback is one captured preference signal. Aggregated traces become an
 // RLAIF / DPO training set when you're ready to fine-tune.
 type Feedback struct {
-	ID           string                 `json:"id"`
-	UserID       string                 `json:"user_id"`
-	TraceID      string                 `json:"trace_id"`
-	Kind         FeedbackKind           `json:"kind"`
-	Original     string                 `json:"original"`
-	Preferred    string                 `json:"preferred,omitempty"` // populated when Kind=edit
-	Tags         []string               `json:"tags,omitempty"`
-	Metadata     map[string]any         `json:"metadata,omitempty"`
-	RecordedAt   time.Time              `json:"recorded_at"`
+	ID         string         `json:"id"`
+	UserID     string         `json:"user_id"`
+	TraceID    string         `json:"trace_id"`
+	Kind       FeedbackKind   `json:"kind"`
+	Original   string         `json:"original"`
+	Preferred  string         `json:"preferred,omitempty"` // populated when Kind=edit
+	Tags       []string       `json:"tags,omitempty"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
+	RecordedAt time.Time      `json:"recorded_at"`
 }
 
 // FeedbackStore is the persistence layer. Genie ships an in-memory store;

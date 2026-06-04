@@ -13,18 +13,18 @@ import (
 )
 
 const (
-	ID            = "loan_advisor"
-	CapEligible   = "loan_eligibility"
-	CapSimulate   = "simulate_loan"
-	TypeSimulate  = "simulate_loan"
-	TypeOut       = "loan_simulation"
+	ID           = "loan_advisor"
+	CapEligible  = "loan_eligibility"
+	CapSimulate  = "simulate_loan"
+	TypeSimulate = "simulate_loan"
+	TypeOut      = "loan_simulation"
 )
 
 type Request struct {
-	PrincipalCents    int64   `json:"principal_cents"`
-	APRPct            float64 `json:"apr_pct"`
-	TermMonths        int     `json:"term_months"`
-	MonthlyNetCents   int64   `json:"monthly_net_cents"`
+	PrincipalCents  int64   `json:"principal_cents"`
+	APRPct          float64 `json:"apr_pct"`
+	TermMonths      int     `json:"term_months"`
+	MonthlyNetCents int64   `json:"monthly_net_cents"`
 }
 
 type Response struct {

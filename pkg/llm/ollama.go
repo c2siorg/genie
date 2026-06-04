@@ -20,9 +20,9 @@ import (
 // llama3.1:8b+, etc.). The smaller llama3.2:1b model does not reliably
 // produce structured tool_calls — use a >= 7B parameter model for tool use.
 type OllamaProvider struct {
-	URL    string        // e.g. "http://localhost:11434"
-	Model  string        // e.g. "qwen3.5:latest"
-	Client *http.Client  // optional; default 60s timeout
+	URL    string       // e.g. "http://localhost:11434"
+	Model  string       // e.g. "qwen3.5:latest"
+	Client *http.Client // optional; default 60s timeout
 }
 
 // NewOllamaProvider builds a provider; URL defaults to localhost:11434.
@@ -73,10 +73,10 @@ type oaiTool struct {
 }
 
 type oaiChatRequest struct {
-	Model    string        `json:"model"`
-	Messages []oaiMessage  `json:"messages"`
-	Tools    []oaiTool     `json:"tools,omitempty"`
-	Stream   bool          `json:"stream"`
+	Model    string         `json:"model"`
+	Messages []oaiMessage   `json:"messages"`
+	Tools    []oaiTool      `json:"tools,omitempty"`
+	Stream   bool           `json:"stream"`
 	Options  map[string]any `json:"options,omitempty"`
 }
 

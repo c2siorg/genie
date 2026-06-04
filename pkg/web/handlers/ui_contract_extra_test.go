@@ -221,13 +221,14 @@ func TestUI_LoginSuccessEntersApp(t *testing.T) {
 
 	// sliceBetween isn't quote/brace-aware, and the handler bodies contain
 	// `});` from `api(..., {...})` calls, so we walk a fixed window after
-	// each anchor instead.
+	// each anchor instead. Window of 1500 chars accommodates signup validation
+	// logic (229-248) plus the success path (256-258) — longer than login.
 	mustContainNear := func(label, anchor string, want []string) {
 		i := strings.Index(js, anchor)
 		if i < 0 {
 			t.Fatalf("%s: anchor %q not found", label, anchor)
 		}
-		end := i + 800
+		end := i + 1500
 		if end > len(js) {
 			end = len(js)
 		}

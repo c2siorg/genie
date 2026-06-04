@@ -11,38 +11,38 @@ import (
 
 // Deps bundles the dependencies needed to assemble the HTTP router.
 type Deps struct {
-	Issuer       *auth.Issuer
-	Users        *handlers.Users
-	Accounts     *handlers.Accounts
-	Documents    *handlers.Documents
-	Ask          *handlers.Ask
-	AskStream    *handlers.AskStream
-	Health       *handlers.Health
-	MCPTokens    *handlers.MCPTokens
-	MCPServer    http.Handler // optional: mounted at /mcp when non-nil
-	Incidents    *handlers.Incidents
-	Inventory    *handlers.Inventory
-	Disclosures  *handlers.Disclosures
-	AIBOM        *handlers.AIBOM
-	Feedback     *handlers.Feedback
-	ChatWS       *handlers.ChatWS
-	UI           *handlers.UI
-	Elevation    *handlers.Elevation  // optional: time-bound privileged access (PCSE 1.4 analog)
-	AgentGov     *handlers.AgentGov   // optional: AGT governance endpoints
-	OPAHandler   *handlers.OPAHandler // optional: OPA policy introspection endpoints
-	HITL         *handlers.HITLHandler // optional: Human-in-the-Loop approval queue
-	Settlement   *handlers.SettlementHandler // optional: Settlement Coordinator
-	AML          *handlers.AMLHandler       // optional: AML Risk Scoring
-	Consent      *handlers.ConsentHandler   // optional: Consent Registry
-	Lineage      *handlers.LineageHandler   // optional: Data Lineage Tracker
+	Issuer      *auth.Issuer
+	Users       *handlers.Users
+	Accounts    *handlers.Accounts
+	Documents   *handlers.Documents
+	Ask         *handlers.Ask
+	AskStream   *handlers.AskStream
+	Health      *handlers.Health
+	MCPTokens   *handlers.MCPTokens
+	MCPServer   http.Handler // optional: mounted at /mcp when non-nil
+	Incidents   *handlers.Incidents
+	Inventory   *handlers.Inventory
+	Disclosures *handlers.Disclosures
+	AIBOM       *handlers.AIBOM
+	Feedback    *handlers.Feedback
+	ChatWS      *handlers.ChatWS
+	UI          *handlers.UI
+	Elevation   *handlers.Elevation         // optional: time-bound privileged access (PCSE 1.4 analog)
+	AgentGov    *handlers.AgentGov          // optional: AGT governance endpoints
+	OPAHandler  *handlers.OPAHandler        // optional: OPA policy introspection endpoints
+	HITL        *handlers.HITLHandler       // optional: Human-in-the-Loop approval queue
+	Settlement  *handlers.SettlementHandler // optional: Settlement Coordinator
+	AML         *handlers.AMLHandler        // optional: AML Risk Scoring
+	Consent     *handlers.ConsentHandler    // optional: Consent Registry
+	Lineage     *handlers.LineageHandler    // optional: Data Lineage Tracker
 	// E-Rupee Commerce APIs
-	Payment      *handlers.Payment        // optional: e-Rupee Payment Agent
-	Commerce     *handlers.CommerceHandler // optional: Commerce Workflow Engine
-	Merchant     *handlers.MerchantHandler // optional: Merchant Onboarding
-	Compliance   *handlers.ComplianceHandler // optional: Payment Compliance
-	CBDC         *handlers.CBDCHandler     // optional: CBDC Ledger & Settlement
-	RateLimit    *mid.RateLimit       // optional global limiter
-	Logger       mid.Logger
+	Payment    *handlers.Payment           // optional: e-Rupee Payment Agent
+	Commerce   *handlers.CommerceHandler   // optional: Commerce Workflow Engine
+	Merchant   *handlers.MerchantHandler   // optional: Merchant Onboarding
+	Compliance *handlers.ComplianceHandler // optional: Payment Compliance
+	CBDC       *handlers.CBDCHandler       // optional: CBDC Ledger & Settlement
+	RateLimit  *mid.RateLimit              // optional global limiter
+	Logger     mid.Logger
 }
 
 // NewRouter builds the chi router with all middleware and routes wired up.

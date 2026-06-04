@@ -10,7 +10,9 @@
 //
 // Immutable recording: Entries are append-only; no updates or deletes.
 // Hash chain integrity: Each entry hashes the previous entry's hash,
-//   detecting tampering or reordering.
+//
+//	detecting tampering or reordering.
+//
 // Thread-safe: Concurrent Record calls are serialized and ordered.
 // Multiple backends: In-memory (testing) and PostgreSQL (production).
 // Regulatory export: CSV and JSON formats for audit submissions.
@@ -89,9 +91,11 @@
 // ─── FREE-AI alignment ─────────────────────────────────────────────────────────
 //
 // Rec 16 (Human oversight of AI decisions):
+//
 //	Every approval is recorded with who decided and why.
 //
 // Rec 22 (Tamper-evident audit):
+//
 //	Hash chain detects modifications; each entry includes previous hash.
 //
 // ─── Types overview ───────────────────────────────────────────────────────────
@@ -109,12 +113,12 @@
 //
 // The package includes comprehensive unit tests covering:
 //
-//	- Hash chain integrity (deterministic, ordered, unbroken)
-//	- Concurrent recording (no duplicates, thread-safe)
-//	- Query filters (user, resource, decision, time range, pagination)
-//	- Export formats (CSV with headers, JSON parseable)
-//	- Compliance reports (counts, denied-by-reason, high-risk events)
-//	- Integration scenarios (policy, agent, approval listeners)
+//   - Hash chain integrity (deterministic, ordered, unbroken)
+//   - Concurrent recording (no duplicates, thread-safe)
+//   - Query filters (user, resource, decision, time range, pagination)
+//   - Export formats (CSV with headers, JSON parseable)
+//   - Compliance reports (counts, denied-by-reason, high-risk events)
+//   - Integration scenarios (policy, agent, approval listeners)
 //
 // Run: go test ./pkg/lineage/...
 package lineage

@@ -40,14 +40,14 @@ type WorkflowOrchestrator interface {
 
 // DefaultWorkflowOrchestrator implements the order automation workflow.
 type DefaultWorkflowOrchestrator struct {
-	orderMgr         OrderManager
-	paymentAgent     PaymentAgentStub
-	settlementAgent  SettlementAgentStub
-	mu               sync.RWMutex
-	workflows        map[string]*CommerceWorkflow
-	auditLog         map[string][]*AuditEntry // keyed by orderID
+	orderMgr          OrderManager
+	paymentAgent      PaymentAgentStub
+	settlementAgent   SettlementAgentStub
+	mu                sync.RWMutex
+	workflows         map[string]*CommerceWorkflow
+	auditLog          map[string][]*AuditEntry // keyed by orderID
 	maxPaymentRetries int
-	paymentPollWait  time.Duration
+	paymentPollWait   time.Duration
 }
 
 // NewDefaultWorkflowOrchestrator creates a new orchestrator.
@@ -84,12 +84,12 @@ func (o *DefaultWorkflowOrchestrator) ExecuteWorkflow(ctx context.Context, order
 
 	// Initialize workflow
 	workflow := &CommerceWorkflow{
-		OrderID:   orderID,
-		Steps:     []WorkflowStep{},
+		OrderID:     orderID,
+		Steps:       []WorkflowStep{},
 		CurrentStep: StepOrderCreated,
-		Status:    StatusPending,
-		CreatedAt: time.Now().UTC(),
-		Metadata:  make(map[string]string),
+		Status:      StatusPending,
+		CreatedAt:   time.Now().UTC(),
+		Metadata:    make(map[string]string),
 	}
 
 	o.mu.Lock()

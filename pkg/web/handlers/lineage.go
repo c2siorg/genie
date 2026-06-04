@@ -1,9 +1,10 @@
 // lineage.go — HTTP surface for Data Lineage (Audit Trail) module.
 //
 // Routes wired by pkg/web/router.go:
-//   GET /v1/lineage/query — Query lineage entries (user, resource, since, until)
-//   GET /v1/lineage/verify — Verify hash chain integrity
-//   GET /v1/lineage/export — Export audit trail (csv/json)
+//
+//	GET /v1/lineage/query — Query lineage entries (user, resource, since, until)
+//	GET /v1/lineage/verify — Verify hash chain integrity
+//	GET /v1/lineage/export — Export audit trail (csv/json)
 //
 // All endpoints require authentication.
 package handlers
@@ -46,16 +47,16 @@ type lineageEntryResponse struct {
 
 // lineageQueryResponse wraps a set of lineage entries.
 type lineageQueryResponse struct {
-	Total   int                      `json:"total"`
-	Entries []lineageEntryResponse   `json:"entries"`
+	Total   int                    `json:"total"`
+	Entries []lineageEntryResponse `json:"entries"`
 }
 
 // lineageVerifyResponse indicates hash chain integrity status.
 type lineageVerifyResponse struct {
-	Valid         bool   `json:"valid"`
-	TotalEntries  int    `json:"total_entries"`
-	BrokenAt      string `json:"broken_at,omitempty"`
-	Error         string `json:"error,omitempty"`
+	Valid        bool   `json:"valid"`
+	TotalEntries int    `json:"total_entries"`
+	BrokenAt     string `json:"broken_at,omitempty"`
+	Error        string `json:"error,omitempty"`
 }
 
 // lineageExportResponse contains the exported audit trail.

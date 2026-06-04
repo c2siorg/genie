@@ -337,13 +337,13 @@ func TestFraudDetector_OldAccountNotFlagged(t *testing.T) {
 
 func TestFraudDetector_CustomConfig(t *testing.T) {
 	config := &FraudDetectionConfig{
-		StructuringThreshold:   3, // Lower threshold
+		StructuringThreshold:   3,        // Lower threshold
 		StructuringLimit:       5_00_000, // ₹5k
 		RoundTripWindowSeconds: 1800,     // 30 minutes
 		RoundTripThreshold:     2,
-		VelocitySpikeThreshold: 50.0,     // 50% increase
-		NewAccountAgeSeconds:   3 * 24 * 60 * 60,    // 3 days
-		NewAccountHighValue:    30_00_000,            // ₹30k
+		VelocitySpikeThreshold: 50.0,             // 50% increase
+		NewAccountAgeSeconds:   3 * 24 * 60 * 60, // 3 days
+		NewAccountHighValue:    30_00_000,        // ₹30k
 	}
 
 	_ = NewInMemoryFraudDetectorWithConfig(config)

@@ -67,9 +67,9 @@ func TestRoadsideDispatch(t *testing.T) {
 
 func TestRenewalQuoteCleanYear(t *testing.T) {
 	r := New(nil).Service(Request{
-		Kind:        "renewal_quote",
-		IDVRupees:   500_000,
-		NCBPct:      20,
+		Kind:            "renewal_quote",
+		IDVRupees:       500_000,
+		NCBPct:          20,
 		ClaimedThisYear: false,
 	})
 	if r.NewNCBPct != 25 {

@@ -122,7 +122,7 @@ func TestRunner_ToolCall_ThenAnswer(t *testing.T) {
 	})
 
 	fc := &fakeChat{t: t, responses: []chatResponse{
-		{ToolName: "echo", ToolArgs: `{}`},          // step 1: call tool
+		{ToolName: "echo", ToolArgs: `{}`},           // step 1: call tool
 		{Content: "Final answer after echo result."}, // step 2: final text
 	}}
 	runner, srv := newRunner(t, fc)
@@ -270,8 +270,8 @@ func TestRunner_Memory_SeedsSystemPrompt(t *testing.T) {
 
 func TestRunner_Reflexion_CritiquesAndRefines(t *testing.T) {
 	fc := &fakeChat{t: t, responses: []chatResponse{
-		{Content: "Initial answer."},             // main loop answer
-		{Content: "The answer is incomplete."},   // critique
+		{Content: "Initial answer."},              // main loop answer
+		{Content: "The answer is incomplete."},    // critique
 		{Content: "Refined and complete answer."}, // refinement
 	}}
 	runner, srv := newRunner(t, fc)

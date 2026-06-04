@@ -221,10 +221,10 @@ func TestInMemoryReportRepository_QuerySTRReports_TimeFiltering(t *testing.T) {
 
 	// STR filed yesterday.
 	strYesterday := &FATPSTRReport{
-		STRID:       "str-yesterday",
-		FilingDate:  yesterday,
+		STRID:         "str-yesterday",
+		FilingDate:    yesterday,
 		TransactionID: "txn1",
-		Amount:      1_000_000,
+		Amount:        1_000_000,
 	}
 
 	// STR filed today.

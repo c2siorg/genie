@@ -14,11 +14,11 @@ import (
 
 // ComplianceHandler handles payment compliance checking endpoints.
 type ComplianceHandler struct {
-	engine          *erupeecompliance.ComplianceEngine
-	mu              sync.RWMutex
-	checkResults    map[string]*erupeecompliance.ComplianceCheck
-	pendingChecks   map[string]bool
-	patternHistory  map[string][]*FraudPatternEntry
+	engine         *erupeecompliance.ComplianceEngine
+	mu             sync.RWMutex
+	checkResults   map[string]*erupeecompliance.ComplianceCheck
+	pendingChecks  map[string]bool
+	patternHistory map[string][]*FraudPatternEntry
 }
 
 // FraudPatternEntry represents a fraud pattern detection with timestamp.
@@ -50,34 +50,34 @@ type checkPaymentRequest struct {
 
 // checkPaymentResponse is the response body for POST /v1/compliance/check
 type checkPaymentResponse struct {
-	ComplianceCheckID string   `json:"compliance_check_id"`
-	AMLResult         string   `json:"aml_result"`
-	VelocityResult    string   `json:"velocity_result"`
-	FraudScore        float64  `json:"fraud_score"`
-	Decision          string   `json:"decision"`
-	Reasons           []string `json:"reasons"`
+	ComplianceCheckID string    `json:"compliance_check_id"`
+	AMLResult         string    `json:"aml_result"`
+	VelocityResult    string    `json:"velocity_result"`
+	FraudScore        float64   `json:"fraud_score"`
+	Decision          string    `json:"decision"`
+	Reasons           []string  `json:"reasons"`
 	CheckedAt         time.Time `json:"checked_at,omitempty"`
 }
 
 // getCheckResponse is the response body for GET /v1/compliance/check/{id}
 type getCheckResponse struct {
-	ComplianceCheckID string   `json:"compliance_check_id"`
-	PaymentID         string   `json:"payment_id"`
-	AMLResult         string   `json:"aml_result"`
-	VelocityResult    string   `json:"velocity_result"`
-	FraudScore        float64  `json:"fraud_score"`
-	Decision          string   `json:"decision"`
+	ComplianceCheckID string    `json:"compliance_check_id"`
+	PaymentID         string    `json:"payment_id"`
+	AMLResult         string    `json:"aml_result"`
+	VelocityResult    string    `json:"velocity_result"`
+	FraudScore        float64   `json:"fraud_score"`
+	Decision          string    `json:"decision"`
 	CheckedAt         time.Time `json:"checked_at"`
 }
 
 // velocityResponse is the response body for GET /v1/compliance/account/{id}/velocity
 type velocityResponse struct {
-	AccountID             string                 `json:"account_id"`
-	TransactionCountHourly int                   `json:"txn_count_hourly"`
-	TotalAmountHourly     int64                  `json:"total_amount_hourly"`
-	DailyTotal            int64                  `json:"daily_total"`
-	Limits                velocityLimits         `json:"limits"`
-	Status                string                 `json:"status"`
+	AccountID              string         `json:"account_id"`
+	TransactionCountHourly int            `json:"txn_count_hourly"`
+	TotalAmountHourly      int64          `json:"total_amount_hourly"`
+	DailyTotal             int64          `json:"daily_total"`
+	Limits                 velocityLimits `json:"limits"`
+	Status                 string         `json:"status"`
 }
 
 type velocityLimits struct {
@@ -88,10 +88,10 @@ type velocityLimits struct {
 
 // fraudHistoryResponse is the response body for GET /v1/compliance/account/{id}/fraud-history
 type fraudHistoryResponse struct {
-	AccountID      string                  `json:"account_id"`
-	FraudPatterns  []*FraudPatternEntry    `json:"fraud_patterns"`
-	FraudScore     float64                 `json:"fraud_score"`
-	RiskLevel      string                  `json:"risk_level"`
+	AccountID     string               `json:"account_id"`
+	FraudPatterns []*FraudPatternEntry `json:"fraud_patterns"`
+	FraudScore    float64              `json:"fraud_score"`
+	RiskLevel     string               `json:"risk_level"`
 }
 
 // resetVelocityRequest is the request body for POST /v1/compliance/admin/reset-velocity
@@ -270,12 +270,12 @@ func (h *ComplianceHandler) GetVelocity(w http.ResponseWriter, r *http.Request) 
 	}
 
 	resp := velocityResponse{
-		AccountID:             accountID,
+		AccountID:              accountID,
 		TransactionCountHourly: record.TransactionCount,
-		TotalAmountHourly:     record.TotalAmount,
-		DailyTotal:            dailyTotal,
-		Limits:                limits,
-		Status:                status,
+		TotalAmountHourly:      record.TotalAmount,
+		DailyTotal:             dailyTotal,
+		Limits:                 limits,
+		Status:                 status,
 	}
 
 	respondJSON(w, http.StatusOK, resp)

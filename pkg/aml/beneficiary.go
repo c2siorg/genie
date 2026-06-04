@@ -56,7 +56,7 @@ func (m *MockBeneficiaryChecker) CheckBeneficiary(ctx context.Context, txn Trans
 
 	// Simulate adverse media: check for known patterns in name
 	adversePatterns := map[string]bool{
-		"terrorist": true,
+		"terrorist":       true,
 		"money launderer": true,
 		"drug lord":       true,
 	}

@@ -168,10 +168,10 @@ func TestExportRBIReport_CSV(t *testing.T) {
 		ComplianceNotes:   "Test notes",
 		MerchantBreakdown: []MerchantVolume{
 			{
-				Merchant:        "store_a",
+				Merchant:         "store_a",
 				TransactionCount: 50,
-				VolumeCents:     30_000_000,
-				SuspiciousCount: 2,
+				VolumeCents:      30_000_000,
+				SuspiciousCount:  2,
 			},
 		},
 	}

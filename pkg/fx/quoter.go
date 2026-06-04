@@ -25,12 +25,12 @@ type FXQuoter interface {
 // MockQuoter provides test rates for phase 1 currencies without external API calls.
 // Useful for development and unit testing. In production, replace with real provider.
 type MockQuoter struct {
-	mu              sync.RWMutex
-	rateCache       map[string]map[string]FXRate
-	cacheExpiry     map[string]time.Time
-	midRates        map[string]map[string]float64
-	providerFeeBps  int
-	cacheTTL        time.Duration
+	mu             sync.RWMutex
+	rateCache      map[string]map[string]FXRate
+	cacheExpiry    map[string]time.Time
+	midRates       map[string]map[string]float64
+	providerFeeBps int
+	cacheTTL       time.Duration
 }
 
 // NewMockQuoter creates a quoter with mock rates for phase 1 currencies.

@@ -23,14 +23,14 @@ const (
 
 // Request is the wire payload.
 type Request struct {
-	MonthlyRevenue       float64 `json:"monthly_revenue_rupees"`
-	GrossMarginPct       float64 `json:"gross_margin_pct"`
+	MonthlyRevenue        float64 `json:"monthly_revenue_rupees"`
+	GrossMarginPct        float64 `json:"gross_margin_pct"`
 	OperatingCostsMonthly float64 `json:"operating_costs_monthly_rupees"`
-	DSO                  int     `json:"dso_days"`
-	DIO                  int     `json:"dio_days"`
-	DPO                  int     `json:"dpo_days"`
-	OpeningCashINR       float64 `json:"opening_cash_rupees"`
-	HorizonMonths        int     `json:"horizon_months"`
+	DSO                   int     `json:"dso_days"`
+	DIO                   int     `json:"dio_days"`
+	DPO                   int     `json:"dpo_days"`
+	OpeningCashINR        float64 `json:"opening_cash_rupees"`
+	HorizonMonths         int     `json:"horizon_months"`
 }
 
 // MonthRow is one period of the forecast.
@@ -44,11 +44,11 @@ type MonthRow struct {
 
 // Result is the wire output.
 type Result struct {
-	CCC              int        `json:"cash_conversion_cycle_days"`
-	RunwayMonths     int        `json:"runway_months"`
-	Forecast         []MonthRow `json:"forecast"`
-	WorkingCapitalGap float64   `json:"working_capital_gap_rupees"`
-	Recommendation   string     `json:"recommendation"`
+	CCC               int        `json:"cash_conversion_cycle_days"`
+	RunwayMonths      int        `json:"runway_months"`
+	Forecast          []MonthRow `json:"forecast"`
+	WorkingCapitalGap float64    `json:"working_capital_gap_rupees"`
+	Recommendation    string     `json:"recommendation"`
 }
 
 type Agent struct{}

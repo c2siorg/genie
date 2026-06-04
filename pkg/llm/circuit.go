@@ -14,9 +14,9 @@ var ErrCircuitOpen = errors.New("llm circuit breaker open")
 type CircuitState int
 
 const (
-	CircuitClosed CircuitState = iota // normal: all calls go through
-	CircuitOpen                       // tripped: short-circuit with ErrCircuitOpen
-	CircuitHalfOpen                   // recovery: allow one probe
+	CircuitClosed   CircuitState = iota // normal: all calls go through
+	CircuitOpen                         // tripped: short-circuit with ErrCircuitOpen
+	CircuitHalfOpen                     // recovery: allow one probe
 )
 
 // CircuitProvider wraps any Provider with a textbook circuit breaker. When
@@ -27,10 +27,10 @@ type CircuitProvider struct {
 	Threshold int
 	CoolDown  time.Duration
 
-	mu          sync.Mutex
-	state       CircuitState
-	failures    int
-	openedAt    time.Time
+	mu       sync.Mutex
+	state    CircuitState
+	failures int
+	openedAt time.Time
 }
 
 // NewCircuit constructs a breaker. threshold defaults to 5; cooldown 30s.

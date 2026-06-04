@@ -34,10 +34,10 @@ const (
 type EdgeKind string
 
 const (
-	EdgeOwns           EdgeKind = "OWNS"
-	EdgeHasTxn         EdgeKind = "HAS_TXN"
-	EdgePaidTo         EdgeKind = "PAID_TO"
-	EdgeCategorisedAs  EdgeKind = "CATEGORISED_AS"
+	EdgeOwns          EdgeKind = "OWNS"
+	EdgeHasTxn        EdgeKind = "HAS_TXN"
+	EdgePaidTo        EdgeKind = "PAID_TO"
+	EdgeCategorisedAs EdgeKind = "CATEGORISED_AS"
 )
 
 // Node is one entity in the graph. ID is unique within a Kind ("merchant:swiggy").

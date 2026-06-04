@@ -21,26 +21,26 @@ import (
 
 // CheckResult captures one check's outcome.
 type CheckResult struct {
-	Name    string `json:"name"`
-	Sutra   string `json:"sutra"`
-	Passed  bool   `json:"passed"`
-	Detail  string `json:"detail,omitempty"`
+	Name   string `json:"name"`
+	Sutra  string `json:"sutra"`
+	Passed bool   `json:"passed"`
+	Detail string `json:"detail,omitempty"`
 }
 
 // Scorecard is the aggregate response.
 type Scorecard struct {
-	AgentID string         `json:"agent_id"`
-	Results []CheckResult  `json:"results"`
-	Passed  int            `json:"passed"`
-	Failed  int            `json:"failed"`
+	AgentID string        `json:"agent_id"`
+	Results []CheckResult `json:"results"`
+	Passed  int           `json:"passed"`
+	Failed  int           `json:"failed"`
 }
 
 // Subject is what each check evaluates: an agent and the composite policy
 // guarding it.
 type Subject struct {
-	Agent    agent.Agent
-	Policy   governance.Policy
-	Sample   agent.Message // a representative input the agent should accept
+	Agent  agent.Agent
+	Policy governance.Policy
+	Sample agent.Message // a representative input the agent should accept
 }
 
 // Check is the contract any custom check implements.

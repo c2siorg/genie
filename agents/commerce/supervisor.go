@@ -19,8 +19,8 @@ const (
 
 // CommerceAgent handles place_order, get_order_status, fulfill_order messages.
 type CommerceAgent struct {
-	orderMgr  commerce.OrderManager
-	workflow  commerce.WorkflowOrchestrator
+	orderMgr commerce.OrderManager
+	workflow commerce.WorkflowOrchestrator
 }
 
 // New creates a new CommerceAgent with dependencies.
@@ -45,9 +45,10 @@ func (a *CommerceAgent) Capabilities() []string {
 
 // HandleMessage processes incoming commerce requests.
 // Supported message formats:
-//   {"action": "place_order", "merchant_id": "...", "customer_id": "...", "items": [...]}
-//   {"action": "get_order_status", "order_id": "..."}
-//   {"action": "execute_workflow", "order_id": "..."}
+//
+//	{"action": "place_order", "merchant_id": "...", "customer_id": "...", "items": [...]}
+//	{"action": "get_order_status", "order_id": "..."}
+//	{"action": "execute_workflow", "order_id": "..."}
 func (a *CommerceAgent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
 	if msg.Type != TypeIn {
 		return nil, nil
@@ -92,17 +93,17 @@ func (a *CommerceAgent) HandleMessage(ctx context.Context, msg agent.Message, en
 
 // PlaceOrderRequest is the schema for place_order.
 type PlaceOrderRequest struct {
-	MerchantID string                `json:"merchant_id"`
-	CustomerID string                `json:"customer_id"`
+	MerchantID string               `json:"merchant_id"`
+	CustomerID string               `json:"customer_id"`
 	Items      []commerce.OrderItem `json:"items"`
 }
 
 // PlaceOrderResponse is returned after creating an order.
 type PlaceOrderResponse struct {
-	Success bool          `json:"success"`
-	OrderID string        `json:"order_id,omitempty"`
+	Success bool            `json:"success"`
+	OrderID string          `json:"order_id,omitempty"`
 	Order   *commerce.Order `json:"order,omitempty"`
-	Error   string        `json:"error,omitempty"`
+	Error   string          `json:"error,omitempty"`
 }
 
 // handlePlaceOrder creates a new order.
@@ -132,10 +133,10 @@ type GetOrderStatusRequest struct {
 
 // GetOrderStatusResponse returns order details.
 type GetOrderStatusResponse struct {
-	Success   bool             `json:"success"`
-	Order     *commerce.Order    `json:"order,omitempty"`
-	Workflow  *commerce.CommerceWorkflow `json:"workflow,omitempty"`
-	Error     string           `json:"error,omitempty"`
+	Success  bool                       `json:"success"`
+	Order    *commerce.Order            `json:"order,omitempty"`
+	Workflow *commerce.CommerceWorkflow `json:"workflow,omitempty"`
+	Error    string                     `json:"error,omitempty"`
 }
 
 // handleGetOrderStatus retrieves order and workflow status.
@@ -167,11 +168,11 @@ type ExecuteWorkflowRequest struct {
 
 // ExecuteWorkflowResponse returns the result of workflow execution.
 type ExecuteWorkflowResponse struct {
-	Success     bool               `json:"success"`
-	OrderID     string             `json:"order_id,omitempty"`
-	FinalStatus commerce.OrderStatus `json:"final_status,omitempty"`
+	Success     bool                       `json:"success"`
+	OrderID     string                     `json:"order_id,omitempty"`
+	FinalStatus commerce.OrderStatus       `json:"final_status,omitempty"`
 	Workflow    *commerce.CommerceWorkflow `json:"workflow,omitempty"`
-	Error       string             `json:"error,omitempty"`
+	Error       string                     `json:"error,omitempty"`
 }
 
 // handleExecuteWorkflow executes the complete order workflow.
@@ -210,10 +211,10 @@ type GetAuditLogRequest struct {
 
 // GetAuditLogResponse returns audit entries for an order.
 type GetAuditLogResponse struct {
-	Success bool                 `json:"success"`
-	OrderID string               `json:"order_id,omitempty"`
+	Success bool                   `json:"success"`
+	OrderID string                 `json:"order_id,omitempty"`
 	Entries []*commerce.AuditEntry `json:"entries,omitempty"`
-	Error   string               `json:"error,omitempty"`
+	Error   string                 `json:"error,omitempty"`
 }
 
 // handleGetAuditLog retrieves the audit log for an order.

@@ -2,12 +2,12 @@
 //
 // Routes wired by pkg/web/router.go:
 //
-//   POST /v1/elevation/requests            — authenticated user files a request
-//   POST /v1/elevation/requests/{id}/approve  — admin approves
-//   POST /v1/elevation/requests/{id}/deny     — admin denies
-//   POST /v1/elevation/requests/{id}/revoke   — admin terminates active grant
-//   GET  /v1/elevation/requests            — admin lists (paginated)
-//   GET  /v1/elevation/requests/{id}       — admin or subject reads one
+//	POST /v1/elevation/requests            — authenticated user files a request
+//	POST /v1/elevation/requests/{id}/approve  — admin approves
+//	POST /v1/elevation/requests/{id}/deny     — admin denies
+//	POST /v1/elevation/requests/{id}/revoke   — admin terminates active grant
+//	GET  /v1/elevation/requests            — admin lists (paginated)
+//	GET  /v1/elevation/requests/{id}       — admin or subject reads one
 //
 // The approve/deny/revoke routes require RoleAdmin via the router-level
 // gate; the Service double-checks via auth.Claims so a misrouted call

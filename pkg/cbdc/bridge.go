@@ -30,11 +30,11 @@ type CBDCBridge interface {
 
 // MockCBDCBridge is a mock RBI CBDC service with configurable finality delay.
 type MockCBDCBridge struct {
-	mu             sync.RWMutex
-	ledger         Ledger
+	mu                  sync.RWMutex
+	ledger              Ledger
 	finalityDelayBlocks uint64 // blocks to wait before finalization (1-5 typical)
-	rbiAvailable   bool        // simulation of RBI backend availability
-	lastError      error
+	rbiAvailable        bool   // simulation of RBI backend availability
+	lastError           error
 }
 
 // NewMockCBDCBridge creates a bridge with the given finality delay (in blocks).

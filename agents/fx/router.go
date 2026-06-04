@@ -16,27 +16,27 @@ import (
 )
 
 const (
-	ID                  = "fx_router"
-	CapRouteSettlement  = "route_multi_currency_settlement"
-	TypeSettlementIn    = "multi_currency_settlement_request"
-	TypeSettlementOut   = "settlement_paths"
-	NextAgent           = "settlement_coordinator"
+	ID                 = "fx_router"
+	CapRouteSettlement = "route_multi_currency_settlement"
+	TypeSettlementIn   = "multi_currency_settlement_request"
+	TypeSettlementOut  = "settlement_paths"
+	NextAgent          = "settlement_coordinator"
 )
 
 // SettlementRequest is the inbound multi-currency settlement request.
 type SettlementRequest struct {
-	RequestID      string           `json:"request_id"`       // Correlation ID / trace_id
-	NetAmounts     []fx.NetAmount   `json:"net_amounts"`      // Currency flows to settle
-	PreferredRoute string           `json:"preferred_route"`  // "cost" | "speed" | "balanced"
-	Metadata       map[string]any   `json:"metadata,omitempty"`
+	RequestID      string         `json:"request_id"`      // Correlation ID / trace_id
+	NetAmounts     []fx.NetAmount `json:"net_amounts"`     // Currency flows to settle
+	PreferredRoute string         `json:"preferred_route"` // "cost" | "speed" | "balanced"
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
 // SettlementResponse is the outbound set of ranked settlement paths.
 type SettlementResponse struct {
-	RequestID  string               `json:"request_id"`
-	Paths      []fx.SettlementPath  `json:"paths"`            // Ranked by cost (lower first)
-	Recommend  fx.SettlementPath    `json:"recommended"`      // Best path given policy
-	Error      string               `json:"error,omitempty"`
+	RequestID string              `json:"request_id"`
+	Paths     []fx.SettlementPath `json:"paths"`       // Ranked by cost (lower first)
+	Recommend fx.SettlementPath   `json:"recommended"` // Best path given policy
+	Error     string              `json:"error,omitempty"`
 }
 
 // Agent routes multi-currency settlement requests through the FX optimization engine.

@@ -37,8 +37,8 @@ const MetaKeyRegion = "region"
 
 // Provider describes an external service Genie may call (LLM, MCP, payment API).
 type Provider struct {
-	Name             string
-	Region           Region
+	Name   string
+	Region Region
 	// AllowedClassifications enumerates which data classifications may be
 	// sent to this provider. Empty list means none (default deny).
 	AllowedClassifications []protocol.Classification

@@ -11,10 +11,10 @@ import (
 // critique, and the refined answer. Persisting traces lets the agent
 // "remember" its past failure modes — verbal RL without weight updates.
 type ReflexionTrace struct {
-	Initial   string
-	Critique  string
-	Refined   string
-	Improved  bool
+	Initial  string
+	Critique string
+	Refined  string
+	Improved bool
 }
 
 // Reflexion runs Initial -> Critique -> Refined in three LLM calls. Self-

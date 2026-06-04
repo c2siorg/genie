@@ -4,14 +4,14 @@
 //
 // Six tests covering the invariants the dispatch gate depends on:
 //
-//   1. A declared tier is reported back as-is.
-//   2. An undeclared tier defaults to TierPrototype (the safe default
-//      that keeps undeclared agents out of production traffic).
-//   3. The Production predicate is true ONLY for TierProduction.
-//   4. TierOrdinal is strictly increasing across the four declared tiers.
-//   5. AtLeast respects the floor (equal counts, lower fails).
-//   6. An unknown tier returns ordinal -1 so AtLeast always fails it
-//      against any required floor — fail-closed for typo'd tiers.
+//  1. A declared tier is reported back as-is.
+//  2. An undeclared tier defaults to TierPrototype (the safe default
+//     that keeps undeclared agents out of production traffic).
+//  3. The Production predicate is true ONLY for TierProduction.
+//  4. TierOrdinal is strictly increasing across the four declared tiers.
+//  5. AtLeast respects the floor (equal counts, lower fails).
+//  6. An unknown tier returns ordinal -1 so AtLeast always fails it
+//     against any required floor — fail-closed for typo'd tiers.
 //
 // ─── Test fixtures ─────────────────────────────────────────────────────────
 //

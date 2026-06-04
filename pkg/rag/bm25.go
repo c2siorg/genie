@@ -18,9 +18,9 @@ type BM25Store struct {
 	k1, b float64
 	mu    sync.RWMutex
 
-	docs   []bm25Doc
-	df     map[string]int     // document frequency per term
-	avgDL  float64
+	docs  []bm25Doc
+	df    map[string]int // document frequency per term
+	avgDL float64
 }
 
 type bm25Doc struct {

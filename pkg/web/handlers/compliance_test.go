@@ -39,7 +39,7 @@ func TestCheckPayment(t *testing.T) {
 		FromAccount:   "account_001",
 		ToAccount:     "account_002",
 		ToName:        "Recipient Name",
-		AmountPaise:   100000, // ₹1000
+		AmountPaise:   100000,  // ₹1000
 		AccountAgeSec: 7776000, // 90 days
 	}
 
@@ -529,11 +529,11 @@ func TestComplianceCheckWithVelocityTracking(t *testing.T) {
 	// Submit multiple checks from same account
 	for i := 0; i < 5; i++ {
 		payment := erupeecompliance.PaymentRequest{
-			PaymentID:     fmt.Sprintf("payment_%d", i),
-			FromAccountID: accountID,
-			ToAccountID:   "account_target",
-			Amount:        100000 + int64(i*10000),
-			Timestamp:     time.Now().UTC(),
+			PaymentID:         fmt.Sprintf("payment_%d", i),
+			FromAccountID:     accountID,
+			ToAccountID:       "account_target",
+			Amount:            100000 + int64(i*10000),
+			Timestamp:         time.Now().UTC(),
 			AccountAgeSeconds: 7776000,
 		}
 

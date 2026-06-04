@@ -34,20 +34,20 @@ type PaymentInitiationRequest struct {
 
 // PaymentResult is the outbound message indicating success or failure.
 type PaymentResult struct {
-	PaymentID   string        `json:"payment_id"`
-	Status      PaymentStatus `json:"status"`
-	Error       string        `json:"error,omitempty"`
-	CorrelationID string      `json:"correlation_id"` // for tracing
-	Timestamp   time.Time     `json:"timestamp"`
+	PaymentID     string        `json:"payment_id"`
+	Status        PaymentStatus `json:"status"`
+	Error         string        `json:"error,omitempty"`
+	CorrelationID string        `json:"correlation_id"` // for tracing
+	Timestamp     time.Time     `json:"timestamp"`
 }
 
 // PaymentAgent orchestrates e-Rupee fund transfers with validation and account management.
 type PaymentAgent struct {
-	accountMgr  AccountManager
-	txnLog      TransactionLog
-	idGen       func() string    // injectable ID generator
-	clock       func() time.Time // injectable clock for testing
-	cbdcBridge  CBDCBridge       // for ledger commitment (can be nil for testing)
+	accountMgr AccountManager
+	txnLog     TransactionLog
+	idGen      func() string    // injectable ID generator
+	clock      func() time.Time // injectable clock for testing
+	cbdcBridge CBDCBridge       // for ledger commitment (can be nil for testing)
 }
 
 // CBDCBridge interface allows pluggable ledger backends.

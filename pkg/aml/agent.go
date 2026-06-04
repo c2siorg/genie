@@ -37,13 +37,13 @@ type ScoreRequest struct {
 
 // ScoreResponse is the output of the score_transaction tool.
 type ScoreResponse struct {
-	TransactionID  string                 `json:"transaction_id"`
-	RiskScore      float64                `json:"risk_score"`
-	RiskLevel      RiskLevel              `json:"risk_level"`
-	TriggeredRules []string               `json:"triggered_rules"`
-	Evidence       map[string]string      `json:"evidence"`
-	Recommendation string                 `json:"recommendation"`
-	TraceID        string                 `json:"trace_id"` // For linking with Laminar observability
+	TransactionID  string            `json:"transaction_id"`
+	RiskScore      float64           `json:"risk_score"`
+	RiskLevel      RiskLevel         `json:"risk_level"`
+	TriggeredRules []string          `json:"triggered_rules"`
+	Evidence       map[string]string `json:"evidence"`
+	Recommendation string            `json:"recommendation"`
+	TraceID        string            `json:"trace_id"` // For linking with Laminar observability
 }
 
 // New constructs an AML agent with default configuration.
@@ -223,4 +223,3 @@ func (a *Agent) recommendAction(level RiskLevel) string {
 		return "Unknown risk level; escalate to compliance."
 	}
 }
-

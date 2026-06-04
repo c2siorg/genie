@@ -18,14 +18,14 @@
 //
 // Nurse Alice's medical-assistant agent queries patient records:
 //
-//   1. Alice signs in to Genie → first-party JWT (Subject=alice)
-//   2. Agent runtime exchanges Alice's token for a downstream token:
-//        Subject = alice (unchanged — Alice initiated)
-//        Actor   = medical_assistant_agent (the agent currently acting)
-//        Audience = mcp://patient-records-server
-//   3. Agent calls the MCP server with the dual-identity token
-//   4. MCP server's audit log writes: "alice / via medical_assistant_agent
-//      / read patient #1234 at 14:23 UTC"
+//  1. Alice signs in to Genie → first-party JWT (Subject=alice)
+//  2. Agent runtime exchanges Alice's token for a downstream token:
+//     Subject = alice (unchanged — Alice initiated)
+//     Actor   = medical_assistant_agent (the agent currently acting)
+//     Audience = mcp://patient-records-server
+//  3. Agent calls the MCP server with the dual-identity token
+//  4. MCP server's audit log writes: "alice / via medical_assistant_agent
+//     / read patient #1234 at 14:23 UTC"
 //
 // Without RFC 8693 the audit row would either blame Alice for an
 // automated action (single-identity = user) or blame the service and
@@ -37,9 +37,9 @@
 // assistant → MCP server → upstream EMR API is three hops. RFC 8693
 // supports nesting via Actor.Nested:
 //
-//   claims.Subject              = alice
-//   claims.Actor.Subject        = patient_records_mcp_server  (outermost)
-//   claims.Actor.Nested.Subject = medical_assistant_agent     (inner hop)
+//	claims.Subject              = alice
+//	claims.Actor.Subject        = patient_records_mcp_server  (outermost)
+//	claims.Actor.Nested.Subject = medical_assistant_agent     (inner hop)
 //
 // Walking the chain from claims.Actor outward yields the full audit
 // trail. The test TestNestedActorChain exercises this.
@@ -211,8 +211,8 @@ func (l looseVerifier) Verify(token string) (auth.Claims, error) {
 // SafetyMargin defaults to 60 seconds. Override after construction if
 // your environment has unusual clock skew or latency:
 //
-//   svc := tokenexchange.New(issuer, "genie-api")
-//   svc.SafetyMargin = 120 * time.Second   // cross-region deployment
+//	svc := tokenexchange.New(issuer, "genie-api")
+//	svc.SafetyMargin = 120 * time.Second   // cross-region deployment
 //
 // For a federated deployment (verifier is a different IdP), construct
 // the Service directly with your own Verifier instead of calling New.

@@ -4,39 +4,39 @@
 //
 // Every error path + every state transition is exercised at least once:
 //
-//   Request:
-//     - Empty subject  → ErrSubjectRequired
-//     - Empty reason   → ErrReasonRequired
-//     - Non-allowlist role → ErrRoleNotElevatable
-//     - TTL ≤ 0 or > MaxDuration → ErrTTLOutOfRange
-//     - Happy path → grant stored, audit entry written, status Pending
-//   Approve:
-//     - Approver not admin → ErrApproverIneligible
-//     - Self-approval     → ErrApproverIsSubject
-//     - Wrong status      → ErrGrantNotPending
-//     - Unknown grant id  → ErrGrantNotFound
-//     - Duplicate approver → ErrDuplicateApprover
-//     - Single-approver happy path → status Active, ExpiresAt set
-//     - 4-eyes (RequireApprovers=2) → pending until 2nd approver
-//   Deny:
-//     - Non-admin denier → ErrApproverIneligible
-//     - Already approved → ErrGrantNotPending
-//     - Happy path → status Denied
-//   Revoke:
-//     - Non-admin revoker → ErrApproverIneligible
-//     - Not Active        → ErrGrantNotActive
-//     - Happy path → status Revoked
-//   Lazy expiry:
-//     - Active past ExpiresAt → Expired on next read
-//     - Audit entry written exactly once per grant (idempotent)
-//   EffectiveRoles:
-//     - Base roles preserved
-//     - Active grant adds elevated role
-//     - Expired grant does NOT add
-//     - De-dup if user already holds the role
-//   ActiveFor / List:
-//     - ActiveFor returns only active grants for the subject
-//     - List respects limit
+//	Request:
+//	  - Empty subject  → ErrSubjectRequired
+//	  - Empty reason   → ErrReasonRequired
+//	  - Non-allowlist role → ErrRoleNotElevatable
+//	  - TTL ≤ 0 or > MaxDuration → ErrTTLOutOfRange
+//	  - Happy path → grant stored, audit entry written, status Pending
+//	Approve:
+//	  - Approver not admin → ErrApproverIneligible
+//	  - Self-approval     → ErrApproverIsSubject
+//	  - Wrong status      → ErrGrantNotPending
+//	  - Unknown grant id  → ErrGrantNotFound
+//	  - Duplicate approver → ErrDuplicateApprover
+//	  - Single-approver happy path → status Active, ExpiresAt set
+//	  - 4-eyes (RequireApprovers=2) → pending until 2nd approver
+//	Deny:
+//	  - Non-admin denier → ErrApproverIneligible
+//	  - Already approved → ErrGrantNotPending
+//	  - Happy path → status Denied
+//	Revoke:
+//	  - Non-admin revoker → ErrApproverIneligible
+//	  - Not Active        → ErrGrantNotActive
+//	  - Happy path → status Revoked
+//	Lazy expiry:
+//	  - Active past ExpiresAt → Expired on next read
+//	  - Audit entry written exactly once per grant (idempotent)
+//	EffectiveRoles:
+//	  - Base roles preserved
+//	  - Active grant adds elevated role
+//	  - Expired grant does NOT add
+//	  - De-dup if user already holds the role
+//	ActiveFor / List:
+//	  - ActiveFor returns only active grants for the subject
+//	  - List respects limit
 package elevation
 
 import (

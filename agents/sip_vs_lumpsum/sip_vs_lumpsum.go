@@ -34,12 +34,12 @@ type Request struct {
 
 // Result is the wire output.
 type Result struct {
-	LumpsumP50           float64 `json:"lumpsum_p50"`
-	SIPP50               float64 `json:"sip_p50"`
-	LumpsumWinProb       float64 `json:"lumpsum_win_probability"`
-	ExpectedRegretINR    float64 `json:"expected_regret_rupees_at_p50"`
-	Recommendation       string  `json:"recommendation"`
-	Disclaimer           string  `json:"disclaimer"`
+	LumpsumP50        float64 `json:"lumpsum_p50"`
+	SIPP50            float64 `json:"sip_p50"`
+	LumpsumWinProb    float64 `json:"lumpsum_win_probability"`
+	ExpectedRegretINR float64 `json:"expected_regret_rupees_at_p50"`
+	Recommendation    string  `json:"recommendation"`
+	Disclaimer        string  `json:"disclaimer"`
 }
 
 type Agent struct{}

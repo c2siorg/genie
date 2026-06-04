@@ -124,7 +124,7 @@ func TestPolicyUserOverride(t *testing.T) {
 		Level:          RiskLevelEscalate,
 		TriggeredRules: []string{"threshold", "jurisdiction"},
 		Evidence: map[string]string{
-			"threshold":   "amount exceeds limit",
+			"threshold":    "amount exceeds limit",
 			"jurisdiction": "sanctioned country",
 		},
 	}

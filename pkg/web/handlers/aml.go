@@ -1,9 +1,10 @@
 // aml.go — HTTP surface for AML Risk Scoring module.
 //
 // Routes wired by pkg/web/router.go:
-//   POST /v1/aml/score — Score transaction (amount, parties, jurisdiction)
-//   GET  /v1/aml/score/{score_id} — Get risk score result
-//   GET  /v1/aml/account/{account_id}/history — Risk history
+//
+//	POST /v1/aml/score — Score transaction (amount, parties, jurisdiction)
+//	GET  /v1/aml/score/{score_id} — Get risk score result
+//	GET  /v1/aml/account/{account_id}/history — Risk history
 //
 // All endpoints require authentication.
 package handlers
@@ -48,34 +49,34 @@ type scoreTransactionRequest struct {
 
 // scoreTransactionResponse wraps the RiskScore result.
 type scoreTransactionResponse struct {
-	ScoreID        string                `json:"score_id"`
-	Score          float64               `json:"score"`
-	Level          aml.RiskLevel         `json:"level"`
-	TriggeredRules []string              `json:"triggered_rules"`
-	Evidence       map[string]string     `json:"evidence"`
-	PolicyOverride bool                  `json:"policy_override"`
-	ScoredAt       string                `json:"scored_at"`
+	ScoreID        string            `json:"score_id"`
+	Score          float64           `json:"score"`
+	Level          aml.RiskLevel     `json:"level"`
+	TriggeredRules []string          `json:"triggered_rules"`
+	Evidence       map[string]string `json:"evidence"`
+	PolicyOverride bool              `json:"policy_override"`
+	ScoredAt       string            `json:"scored_at"`
 }
 
 // getRiskScoreResponse returns a previously computed risk score.
 type getRiskScoreResponse struct {
-	ScoreID        string                `json:"score_id"`
-	UserID         string                `json:"user_id"`
-	Amount         int64                 `json:"amount"`
-	BeneficiaryID  string                `json:"beneficiary_id"`
+	ScoreID            string            `json:"score_id"`
+	UserID             string            `json:"user_id"`
+	Amount             int64             `json:"amount"`
+	BeneficiaryID      string            `json:"beneficiary_id"`
 	BeneficiaryCountry string            `json:"beneficiary_country"`
-	Score          float64               `json:"score"`
-	Level          aml.RiskLevel         `json:"level"`
-	TriggeredRules []string              `json:"triggered_rules"`
-	Evidence       map[string]string     `json:"evidence"`
-	ScoredAt       string                `json:"scored_at"`
+	Score              float64           `json:"score"`
+	Level              aml.RiskLevel     `json:"level"`
+	TriggeredRules     []string          `json:"triggered_rules"`
+	Evidence           map[string]string `json:"evidence"`
+	ScoredAt           string            `json:"scored_at"`
 }
 
 // getRiskHistoryResponse lists recent risk scores for an account.
 type getRiskHistoryResponse struct {
-	AccountID string                   `json:"account_id"`
-	Scores    []getRiskScoreResponse   `json:"scores"`
-	Summary   map[string]interface{}   `json:"summary,omitempty"`
+	AccountID string                 `json:"account_id"`
+	Scores    []getRiskScoreResponse `json:"scores"`
+	Summary   map[string]interface{} `json:"summary,omitempty"`
 }
 
 // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -103,13 +104,13 @@ func (h *AMLHandler) ScoreTransaction(w http.ResponseWriter, r *http.Request) {
 
 	// In production, look up the risk profile from a database
 	profile := &aml.RiskProfile{
-		UserID:              body.UserID,
-		RiskLevel:           aml.RiskLevelApprove,
-		DailyLimit:          500000, // 5000.00 in major units
-		VelocityLimit:       10,
-		FirstSeen:           time.Now().AddDate(0, 0, -30),
-		AnomalyBaseline:     "baseline-hash",
-		PolicyOverrides:     make(map[string]float64),
+		UserID:          body.UserID,
+		RiskLevel:       aml.RiskLevelApprove,
+		DailyLimit:      500000, // 5000.00 in major units
+		VelocityLimit:   10,
+		FirstSeen:       time.Now().AddDate(0, 0, -30),
+		AnomalyBaseline: "baseline-hash",
+		PolicyOverrides: make(map[string]float64),
 	}
 
 	// Create transaction for scoring

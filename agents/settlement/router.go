@@ -161,11 +161,11 @@ func (ra *RouterAgent) validateCounterparty(ctx context.Context, args map[string
 
 	// Stub: approve common banks
 	approvedList := map[string]bool{
-		"BANK_A":         true,
-		"BANK_B":         true,
-		"BANK_C":         true,
-		"SWIFT_POOL":     true,
-		"CORRESPONDENT":  true,
+		"BANK_A":        true,
+		"BANK_B":        true,
+		"BANK_C":        true,
+		"SWIFT_POOL":    true,
+		"CORRESPONDENT": true,
 	}
 
 	if approvedList[cp] {

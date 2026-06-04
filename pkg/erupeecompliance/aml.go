@@ -24,11 +24,11 @@ type AMLScreener struct {
 func NewAMLScreener() *AMLScreener {
 	return &AMLScreener{
 		knownPEPs: map[string]bool{
-			"Vladimir Putin":     true,
-			"Xi Jinping":         true,
-			"Kim Jong Un":        true,
-			"Nicolás Maduro":     true,
-			"Bashar al-Assad":    true,
+			"Vladimir Putin":  true,
+			"Xi Jinping":      true,
+			"Kim Jong Un":     true,
+			"Nicolás Maduro":  true,
+			"Bashar al-Assad": true,
 		},
 		sanctionedList: map[string]bool{
 			"KP": true, // North Korea
@@ -38,9 +38,9 @@ func NewAMLScreener() *AMLScreener {
 			"MM": true, // Myanmar
 		},
 		adverseMedia: map[string]bool{
-			"terrorist": true,
+			"terrorist":       true,
 			"money launderer": true,
-			"drug lord": true,
+			"drug lord":       true,
 		},
 	}
 }

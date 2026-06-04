@@ -30,15 +30,15 @@ const (
 
 // Plan is the insurer-supplied health-policy rulebook.
 type Plan struct {
-	ProductCode             string             `json:"product_code"`
-	SumInsuredRupees        float64            `json:"sum_insured_rupees"`
-	RoomRentSubLimitRupees  float64            `json:"room_rent_sublimit_rupees"`
-	ICURentSubLimitRupees   float64            `json:"icu_rent_sublimit_rupees"`
-	CoPayPct                float64            `json:"copay_pct"`            // 0..1
-	PEDWaitingMonths        int                `json:"ped_waiting_months"`   // pre-existing disease
-	SpecificWaitingMonths   int                `json:"specific_waiting_months"` // hernia, cataract etc.
-	ExcludedProcedures      []string           `json:"excluded_procedures"`
-	ProcedurePackageRupees  map[string]float64 `json:"procedure_package_rupees"` // capped payouts
+	ProductCode            string             `json:"product_code"`
+	SumInsuredRupees       float64            `json:"sum_insured_rupees"`
+	RoomRentSubLimitRupees float64            `json:"room_rent_sublimit_rupees"`
+	ICURentSubLimitRupees  float64            `json:"icu_rent_sublimit_rupees"`
+	CoPayPct               float64            `json:"copay_pct"`               // 0..1
+	PEDWaitingMonths       int                `json:"ped_waiting_months"`      // pre-existing disease
+	SpecificWaitingMonths  int                `json:"specific_waiting_months"` // hernia, cataract etc.
+	ExcludedProcedures     []string           `json:"excluded_procedures"`
+	ProcedurePackageRupees map[string]float64 `json:"procedure_package_rupees"` // capped payouts
 }
 
 // Request is the inbound pre-auth packet from the network hospital.
@@ -48,7 +48,7 @@ type Request struct {
 	Patient              string  `json:"patient"`
 	HospitalCode         string  `json:"hospital_code"`
 	NetworkPPN           bool    `json:"network_ppn"`
-	Procedure            string  `json:"procedure"`           // e.g. "cataract", "appendectomy"
+	Procedure            string  `json:"procedure"` // e.g. "cataract", "appendectomy"
 	IsPED                bool    `json:"is_pre_existing"`
 	IsSpecificWaiting    bool    `json:"is_specific_waiting"` // procedure under specific waiting list
 	PolicyMonthsAtAdmit  int     `json:"policy_months_at_admit"`
@@ -61,13 +61,13 @@ type Request struct {
 
 // Decision is the structured output.
 type Decision struct {
-	PreauthID          string   `json:"preauth_id"`
-	Action             string   `json:"action"` // "approve_full" | "approve_partial" | "approve_with_deduction" | "deny" | "hitl"
-	ApprovedRupees     float64  `json:"approved_rupees"`
-	DeductionsRupees   float64  `json:"deductions_rupees"`
-	DeductionReasons   []string `json:"deduction_reasons"`
-	Reasons            []string `json:"reasons"`
-	Disclaimer         string   `json:"disclaimer"`
+	PreauthID        string   `json:"preauth_id"`
+	Action           string   `json:"action"` // "approve_full" | "approve_partial" | "approve_with_deduction" | "deny" | "hitl"
+	ApprovedRupees   float64  `json:"approved_rupees"`
+	DeductionsRupees float64  `json:"deductions_rupees"`
+	DeductionReasons []string `json:"deduction_reasons"`
+	Reasons          []string `json:"reasons"`
+	Disclaimer       string   `json:"disclaimer"`
 }
 
 type Agent struct{}
@@ -192,7 +192,7 @@ func (a *Agent) Decide(r Request, p Plan) Decision {
 		DeductionsRupees: round2(deductions),
 		DeductionReasons: reasons,
 		Reasons:          []string{"Standard cashless pre-authorisation flow"},
-		Disclaimer: stdDisclaimer(),
+		Disclaimer:       stdDisclaimer(),
 	}
 }
 

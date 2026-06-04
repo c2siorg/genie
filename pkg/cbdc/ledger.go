@@ -41,7 +41,7 @@ type InMemoryLedger struct {
 	mu       sync.RWMutex
 	blocks   []LedgerBlock
 	txIndex  map[string]*LedgerEntry // payment_id -> entry for O(1) lookup
-	blockTxn map[string]uint64        // payment_id -> block_height for finality tracking
+	blockTxn map[string]uint64       // payment_id -> block_height for finality tracking
 }
 
 // NewInMemoryLedger creates an empty ledger with a genesis block.

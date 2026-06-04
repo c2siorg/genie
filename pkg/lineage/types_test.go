@@ -90,25 +90,25 @@ func TestLineageEntry_ComputeHash(t *testing.T) {
 
 func TestLineageEntry_ComputeHash_Chain(t *testing.T) {
 	entry1 := &LineageEntry{
-		ID:        "entry:1",
-		Timestamp: time.Now().UTC(),
-		UserID:    "user:alice",
-		ResourceID: "msg:1",
+		ID:           "entry:1",
+		Timestamp:    time.Now().UTC(),
+		UserID:       "user:alice",
+		ResourceID:   "msg:1",
 		ResourceType: "message",
-		Action:    ActionRead,
-		Decision:  DecisionAllowed,
-		ReasonCode: "ok",
+		Action:       ActionRead,
+		Decision:     DecisionAllowed,
+		ReasonCode:   "ok",
 	}
 
 	entry2 := &LineageEntry{
-		ID:        "entry:2",
-		Timestamp: time.Now().UTC().Add(time.Second),
-		UserID:    "user:bob",
-		ResourceID: "msg:2",
+		ID:           "entry:2",
+		Timestamp:    time.Now().UTC().Add(time.Second),
+		UserID:       "user:bob",
+		ResourceID:   "msg:2",
 		ResourceType: "message",
-		Action:    ActionWrite,
-		Decision:  DecisionDenied,
-		ReasonCode: "denied",
+		Action:       ActionWrite,
+		Decision:     DecisionDenied,
+		ReasonCode:   "denied",
 	}
 
 	// Compute hash chain

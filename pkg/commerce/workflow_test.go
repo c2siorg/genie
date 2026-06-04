@@ -9,9 +9,9 @@ import (
 
 // MockPaymentAgent simulates the Payment Agent behavior.
 type MockPaymentAgent struct {
-	ShouldFail      bool
-	ConfirmOnRetry  int
-	confirmAttempt  int
+	ShouldFail     bool
+	ConfirmOnRetry int
+	confirmAttempt int
 }
 
 func (m *MockPaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiationRequest) (string, error) {
@@ -25,14 +25,14 @@ func (m *MockPaymentAgent) PollPaymentStatus(ctx context.Context, transactionID 
 	m.confirmAttempt++
 	if m.confirmAttempt < m.ConfirmOnRetry {
 		return &PaymentConfirmation{
-			Success: false,
+			Success:     false,
 			ErrorReason: "payment pending",
 		}, nil
 	}
 	return &PaymentConfirmation{
-		Success:     true,
+		Success:       true,
 		TransactionID: transactionID,
-		ConfirmedAt: time.Now().UTC(),
+		ConfirmedAt:   time.Now().UTC(),
 	}, nil
 }
 
@@ -50,9 +50,9 @@ func (m *MockSettlementAgent) InitiateSettlement(ctx context.Context, req Settle
 
 func (m *MockSettlementAgent) WaitSettlementCompletion(ctx context.Context, settlementID string) (*SettlementResult, error) {
 	return &SettlementResult{
-		Success:     !m.ShouldFail,
+		Success:      !m.ShouldFail,
 		SettlementID: settlementID,
-		CompletedAt: time.Now().UTC(),
+		CompletedAt:  time.Now().UTC(),
 		ErrorReason: func() string {
 			if m.ShouldFail {
 				return "settlement failed"

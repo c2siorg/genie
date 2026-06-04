@@ -66,8 +66,8 @@ type ToolCall struct {
 
 // TestCase combines input and expected output for dataset loading.
 type TestCase struct {
-	Data     EvalData   `json:"data"`
-	Target   EvalTarget `json:"target"`
+	Data     EvalData       `json:"data"`
+	Target   EvalTarget     `json:"target"`
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 

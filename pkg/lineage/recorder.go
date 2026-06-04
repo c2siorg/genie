@@ -45,7 +45,7 @@ type InMemoryLineageRecorder struct {
 	mu      sync.RWMutex
 	entries []*LineageEntry
 	byID    map[string]*LineageEntry // for duplicate detection
-	lastIdx int                       // index of last recorded entry
+	lastIdx int                      // index of last recorded entry
 }
 
 // NewInMemoryRecorder constructs a new in-memory recorder.

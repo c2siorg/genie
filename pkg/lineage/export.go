@@ -267,17 +267,17 @@ func (m *Manager) GenerateComplianceReport(
 	integrity := m.recorder.Verify(ctx)
 
 	report := &ComplianceReport{
-		ReportID:         reportID,
-		GeneratedAt:      time.Now().UTC(),
-		Since:            since,
-		Until:            until,
-		TotalEntries:     len(entries),
-		AllowedDecisions: allowedCount,
-		DeniedDecisions:  deniedCount,
-		UniqueUsers:      len(uniqueUsers),
-		UniqueResources:  len(uniqueResources),
-		DeniedByReason:   deniedByReason,
-		IntegrityValid:   integrity.Valid,
+		ReportID:          reportID,
+		GeneratedAt:       time.Now().UTC(),
+		Since:             since,
+		Until:             until,
+		TotalEntries:      len(entries),
+		AllowedDecisions:  allowedCount,
+		DeniedDecisions:   deniedCount,
+		UniqueUsers:       len(uniqueUsers),
+		UniqueResources:   len(uniqueResources),
+		DeniedByReason:    deniedByReason,
+		IntegrityValid:    integrity.Valid,
 		HighestRiskEvents: highRiskEvents,
 	}
 

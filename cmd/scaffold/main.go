@@ -18,15 +18,15 @@ import (
 )
 
 type Spec struct {
-	Name        string
-	Pkg         string
-	StructName  string
-	Constants   string
-	HumanName   string
-	Capability  string
-	InType      string
-	OutType     string
-	NextAgent   string
+	Name       string
+	Pkg        string
+	StructName string
+	Constants  string
+	HumanName  string
+	Capability string
+	InType     string
+	OutType    string
+	NextAgent  string
 }
 
 const agentTemplate = `// Package {{.Pkg}} is a generated specialist agent skeleton.
@@ -134,7 +134,7 @@ func generate(root string, s Spec, dry bool) error {
 		return err
 	}
 	files := map[string]string{
-		filepath.Join(dir, s.Name+".go"):       agentTemplate,
+		filepath.Join(dir, s.Name+".go"):      agentTemplate,
 		filepath.Join(dir, s.Name+"_test.go"): testTemplate,
 	}
 	for path, tmpl := range files {

@@ -43,37 +43,37 @@ func NewMockLiquidityPoolManager() *MockLiquidityPoolManager {
 				Currency:          "USD",
 				AvailableBalance:  5_000_000.0, // $5M
 				Provider:          "correspondent",
-				SettlementCostBps: 25,           // 0.25%
+				SettlementCostBps: 25, // 0.25%
 			},
 			"EUR": {
 				Currency:          "EUR",
 				AvailableBalance:  2_000_000.0, // €2M
 				Provider:          "correspondent",
-				SettlementCostBps: 30,           // 0.30%
+				SettlementCostBps: 30, // 0.30%
 			},
 			"GBP": {
 				Currency:          "GBP",
 				AvailableBalance:  1_500_000.0, // £1.5M
 				Provider:          "correspondent",
-				SettlementCostBps: 35,           // 0.35%
+				SettlementCostBps: 35, // 0.35%
 			},
 			"INR": {
 				Currency:          "INR",
 				AvailableBalance:  250_000_000.0, // ₹250M
 				Provider:          "pool",
-				SettlementCostBps: 40,            // 0.40%
+				SettlementCostBps: 40, // 0.40%
 			},
 			"AED": {
 				Currency:          "AED",
 				AvailableBalance:  10_000_000.0, // AED 10M
 				Provider:          "correspondent",
-				SettlementCostBps: 30,           // 0.30%
+				SettlementCostBps: 30, // 0.30%
 			},
 			"SGD": {
 				Currency:          "SGD",
 				AvailableBalance:  3_000_000.0, // SGD 3M
 				Provider:          "correspondent",
-				SettlementCostBps: 25,           // 0.25%
+				SettlementCostBps: 25, // 0.25%
 			},
 		},
 		reserved:        make(map[string]float64),

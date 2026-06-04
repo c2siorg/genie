@@ -87,14 +87,64 @@
 
   function activateTab(name) {
     Object.entries(views).forEach(([k, el]) => { if (k !== 'auth') (k === name ? show(el) : hide(el)); });
-    $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    $$('.tab').forEach(t => {
+      const isActive = t.dataset.tab === name;
+      t.classList.toggle('active', isActive);
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      t.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
     if (name === 'documents') refreshDocs();
     if (name === 'governance') refreshGovernance();
   }
 
+  // Tab click handler
   $('#tabs').addEventListener('click', e => {
     const tab = e.target.closest('.tab');
     if (tab) activateTab(tab.dataset.tab);
+  });
+
+  // Tab keyboard navigation (Arrow keys)
+  $('#tabs').addEventListener('keydown', e => {
+    if (!e.target.classList.contains('tab')) return;
+    const tabs = $$('.tab');
+    const current = tabs.indexOf(e.target);
+    let next = -1;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      next = (current + 1) % tabs.length;
+      e.preventDefault();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      next = (current - 1 + tabs.length) % tabs.length;
+      e.preventDefault();
+    } else if (e.key === 'Home') {
+      next = 0;
+      e.preventDefault();
+    } else if (e.key === 'End') {
+      next = tabs.length - 1;
+      e.preventDefault();
+    }
+
+    if (next >= 0) {
+      activateTab(tabs[next].dataset.tab);
+      tabs[next].focus();
+    }
+  });
+
+  // Global Escape key handler
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      // Stop streaming if active
+      if (state.activeStream) {
+        state.activeStream.abort();
+        e.preventDefault();
+      }
+      // Close report card on Escape
+      const reportCard = $('#report-card');
+      if (reportCard && !reportCard.hidden) {
+        hide(reportCard);
+        e.preventDefault();
+      }
+    }
   });
 
   // -----------------------------------------------------------------
@@ -113,22 +163,107 @@
 
   $('#form-login').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const errorEl = $('#form-login-error');
+    const fd = new FormData(form);
+
+    // Clear previous errors
+    errorEl.textContent = '';
+    hide(errorEl);
+    clearFieldErrors(form);
+
+    // Validate fields
+    const email = fd.get('email').trim();
+    const password = fd.get('password');
+
+    if (!email) {
+      showFieldError('email-error', 'Email is required');
+      return;
+    }
+    if (!email.includes('@')) {
+      showFieldError('email-error', 'Please enter a valid email');
+      return;
+    }
+    if (!password) {
+      showFieldError('password-error', 'Password is required');
+      return;
+    }
+
+    // Show loading state
+    setButtonLoading(btn, true);
+    form.style.opacity = '0.6';
+    form.style.pointerEvents = 'none';
+
     try {
-      const out = await api('/users/login', { method: 'POST', json: { email: fd.get('email'), password: fd.get('password') } });
+      const out = await api('/users/login', { method: 'POST', json: { email, password } });
       state.token = out.token; state.user = out.user; persistSession();
       enterApp();
-    } catch (err) { alert('Login failed: ' + err.message); }
+    } catch (err) {
+      const message = getUserMessage(err);
+      errorEl.textContent = message;
+      show(errorEl);
+      setButtonLoading(btn, false);
+      form.style.opacity = '1';
+      form.style.pointerEvents = 'auto';
+    }
   });
 
   $('#form-signup').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const errorEl = $('#form-signup-error');
+    const fd = new FormData(form);
+
+    // Clear previous errors
+    errorEl.textContent = '';
+    hide(errorEl);
+    clearFieldErrors(form);
+
+    // Validate fields
+    const name = fd.get('name').trim();
+    const email = fd.get('email').trim();
+    const password = fd.get('password');
+
+    if (!name) {
+      showFieldError('name-error', 'Name is required');
+      return;
+    }
+    if (!email) {
+      showFieldError('signup-email-error', 'Email is required');
+      return;
+    }
+    if (!email.includes('@')) {
+      showFieldError('signup-email-error', 'Please enter a valid email');
+      return;
+    }
+    if (!password) {
+      showFieldError('signup-password-error', 'Password is required');
+      return;
+    }
+    if (password.length < 8) {
+      showFieldError('signup-password-error', 'Password must be at least 8 characters');
+      return;
+    }
+
+    // Show loading state
+    setButtonLoading(btn, true);
+    form.style.opacity = '0.6';
+    form.style.pointerEvents = 'none';
+
     try {
-      const out = await api('/users', { method: 'POST', json: { email: fd.get('email'), name: fd.get('name'), password: fd.get('password') } });
+      const out = await api('/users', { method: 'POST', json: { email, name, password } });
       state.token = out.token; state.user = out.user; persistSession();
       enterApp();
-    } catch (err) { alert('Sign-up failed: ' + err.message); }
+    } catch (err) {
+      const message = getUserMessage(err);
+      errorEl.textContent = message;
+      show(errorEl);
+      setButtonLoading(btn, false);
+      form.style.opacity = '1';
+      form.style.pointerEvents = 'auto';
+    }
   });
 
   $('#logout').addEventListener('click', () => {
@@ -159,18 +294,37 @@
 
   $('#form-upload').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
     const file = $('#upload-file').files[0];
     const desc = $('#upload-desc').value;
     const cls = $('#upload-class').value;
-    if (!file) return;
+    if (!file) {
+      alert('Please select a file');
+      return;
+    }
+
+    setButtonLoading(btn, true);
+    form.style.opacity = '0.6';
+    form.style.pointerEvents = 'none';
+
     const url = `/documents?description=${encodeURIComponent(desc)}&classification=${encodeURIComponent(cls)}`;
     try {
       const body = await file.arrayBuffer();
       const out = await api(url, { method: 'POST', body, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
       state.documents.push({ id: out.id, description: desc || '(no description)', classification: out.classification, kek_id: out.kek_id });
       renderDocs();
-      e.target.reset();
-    } catch (err) { alert('Upload failed: ' + err.message); }
+      form.reset();
+      setButtonLoading(btn, false);
+      form.style.opacity = '1';
+      form.style.pointerEvents = 'auto';
+    } catch (err) {
+      const message = getUserMessage(err);
+      alert(message);
+      setButtonLoading(btn, false);
+      form.style.opacity = '1';
+      form.style.pointerEvents = 'auto';
+    }
   });
 
   async function refreshDocs() {
@@ -180,9 +334,17 @@
 
   function renderDocs() {
     const tbody = $('#doc-list');
-    tbody.innerHTML = '';
+
+    // Hide skeletons
+    $$('.skeleton-row', tbody).forEach(el => hide(el));
+
+    // Remove old document rows
+    $$('tr:not(.skeleton-row)', tbody).forEach(el => el.remove());
+
     if (state.documents.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="muted">No uploads yet in this session.</td></tr>';
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="4" class="muted">No uploads yet in this session.</td>';
+      tbody.appendChild(tr);
     } else {
       for (const d of state.documents) {
         const tr = document.createElement('tr');
@@ -240,11 +402,20 @@
   $('#btn-ask').addEventListener('click', async () => {
     const docID = $('#ask-doc').value;
     const q = $('#ask-question').value.trim();
-    if (!docID || !q) return alert('Need a document and a question.');
+    if (!docID) {
+      alert('Please select a document first.');
+      return;
+    }
+    if (!q) {
+      alert('Please type a question.');
+      return;
+    }
     clearEvents();
     hide($('#report-card'));
     setBanner('');
     addEvent('request', 'POST /v1/ask');
+    const btn = $('#btn-ask');
+    setButtonLoading(btn, true);
     try {
       const out = await api('/ask', { method: 'POST', json: { question: q, document_id: docID } });
       if (out.ai_disclosure) setBanner(out.ai_disclosure);
@@ -253,13 +424,22 @@
       showReport(out.report || '');
     } catch (err) {
       addEvent('error', err.message, 'event-error');
+    } finally {
+      setButtonLoading(btn, false);
     }
   });
 
   $('#btn-ask-stream').addEventListener('click', () => {
     const docID = $('#ask-doc').value;
     const q = $('#ask-question').value.trim();
-    if (!docID || !q) return alert('Need a document and a question.');
+    if (!docID) {
+      alert('Please select a document first.');
+      return;
+    }
+    if (!q) {
+      alert('Please type a question.');
+      return;
+    }
     clearEvents();
     hide($('#report-card'));
     setBanner('');
@@ -393,6 +573,69 @@
   function escapeHTML(s) {
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+
+  // Error handling helpers
+  const ERROR_MESSAGES = {
+    'Failed to fetch': 'Network error. Check your connection and try again.',
+    '401': 'Your session expired. Please sign in again.',
+    '403': 'You do not have permission to perform this action.',
+    '404': 'Not found. Please check your input.',
+    '500': 'Server error. Our team has been notified. Please try again later.',
+    'AbortError': 'Request cancelled.',
+  };
+
+  function getUserMessage(error) {
+    const msg = error.message || String(error);
+    return ERROR_MESSAGES[msg] || ERROR_MESSAGES[msg.split(' ')[0]] || msg;
+  }
+
+  function showFieldError(fieldId, message) {
+    const errorEl = $(fieldId);
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+      const input = errorEl.previousElementSibling;
+      if (input && (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')) {
+        input.setAttribute('aria-invalid', 'true');
+      }
+    }
+  }
+
+  function clearFieldErrors(form) {
+    $$('.field-error', form).forEach(el => {
+      el.textContent = '';
+      el.style.display = 'none';
+    });
+    $$('input, textarea, select', form).forEach(el => {
+      el.setAttribute('aria-invalid', 'false');
+    });
+  }
+
+  function setButtonLoading(btn, loading) {
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.setAttribute('aria-busy', loading ? 'true' : 'false');
+    if (loading) {
+      btn.dataset.originalText = btn.textContent;
+      btn.textContent = btn.dataset.label || btn.textContent;
+    } else if (btn.dataset.originalText) {
+      btn.textContent = btn.dataset.originalText;
+    }
+  }
+
+  // Clear errors on field focus
+  document.addEventListener('focus', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      e.target.setAttribute('aria-invalid', 'false');
+      const errorId = e.target.getAttribute('aria-describedby')?.split(' ').find(id => id.includes('-error'));
+      if (errorId) {
+        const errorEl = $(errorId);
+        if (errorEl) {
+          errorEl.textContent = '';
+        }
+      }
+    }
+  }, true);
 
   // -----------------------------------------------------------------
   // boot

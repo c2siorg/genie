@@ -84,10 +84,10 @@ func (nc *SimpleNettingCalculator) CalculateNetPositionsWithPool(date time.Time,
 // computeMultilateralNetting applies multilateral netting algorithm.
 // It finds the minimal set of payments that settle all obligations.
 // The algorithm:
-//   1. Sort merchants by balance (obligation amount).
-//   2. Pair highest debtor with lowest debtor repeatedly.
-//   3. The net between them is the difference.
-//   4. Update balances and continue until all are zero.
+//  1. Sort merchants by balance (obligation amount).
+//  2. Pair highest debtor with lowest debtor repeatedly.
+//  3. The net between them is the difference.
+//  4. Update balances and continue until all are zero.
 func (nc *SimpleNettingCalculator) computeMultilateralNetting(merchantAmounts map[string]int64) map[string]int64 {
 	// Create a working copy.
 	balances := make(map[string]int64)

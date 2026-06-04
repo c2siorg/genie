@@ -29,9 +29,9 @@ type SettlementBatchManager interface {
 // InMemoryBatchManager is a thread-safe, in-memory implementation of SettlementBatchManager.
 // It stores batches keyed by batch ID and indexed by settlement date for queries.
 type InMemoryBatchManager struct {
-	mu       sync.RWMutex
-	batches  map[string]*SettlementBatch // keyed by batch ID
-	byDate   map[string][]*SettlementBatch // keyed by settlement date (YYYY-MM-DD)
+	mu      sync.RWMutex
+	batches map[string]*SettlementBatch   // keyed by batch ID
+	byDate  map[string][]*SettlementBatch // keyed by settlement date (YYYY-MM-DD)
 }
 
 // NewInMemoryBatchManager creates a new in-memory batch manager.

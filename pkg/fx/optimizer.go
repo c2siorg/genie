@@ -109,9 +109,9 @@ func (o *MockPathOptimizer) buildDirectPath(outCurr, inCurr string, outAmount, i
 		Route:              RouteDirect,
 		CurrenciesInvolved: []string{outCurr},
 		FXRates:            []FXRate{},
-		EstimatedCostBps:   10,                     // Minimal settlement cost
+		EstimatedCostBps:   10,                         // Minimal settlement cost
 		EstimatedCostUSD:   (outAmount * 10) / 10000.0, // Cost in bps
-		ExecutionTimeMs:    1000,                   // 1 second domestic
+		ExecutionTimeMs:    1000,                       // 1 second domestic
 	}
 }
 
@@ -238,7 +238,7 @@ func (o *MockPathOptimizer) buildNettingPoolPath(ctx context.Context, inflows, o
 		CurrenciesInvolved: currencies,
 		FXRates:            fxRates,
 		EstimatedCostBps:   totalCostBps,
-		EstimatedCostUSD:   1000.0, // Flat fee for netting services
+		EstimatedCostUSD:   1000.0,   // Flat fee for netting services
 		ExecutionTimeMs:    86400000, // 24 hours (daily netting cycle)
 		Liquidity:          pools,
 	}, nil

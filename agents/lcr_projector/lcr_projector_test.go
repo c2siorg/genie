@@ -45,8 +45,8 @@ func TestLevel2HaircutsApplied(t *testing.T) {
 func TestInflowCappedAt75PctOfOutflow(t *testing.T) {
 	res := New().Compute(Request{
 		HQLA:     HQLA{Level1INR: 10_00_000},
-		Outflows: Outflows{LessStableRetailINR: 100_00_000},                                    // run-off 10% = 10L
-		Inflows:  Inflows{ContractualRetailINR: 10_00_000_00},                                    // huge — should be capped
+		Outflows: Outflows{LessStableRetailINR: 100_00_000},   // run-off 10% = 10L
+		Inflows:  Inflows{ContractualRetailINR: 10_00_000_00}, // huge — should be capped
 	})
 	// Capped inflow should be ≤0.75 × outflow.
 	if res.TotalInflow > 0.751*res.TotalOutflow {

@@ -158,13 +158,13 @@ func TestNetAmountStructure(t *testing.T) {
 // TestTransactionStructure verifies transaction construction.
 func TestTransactionStructure(t *testing.T) {
 	txn := sett.Transaction{
-		ID:              "txn-123",
+		ID:               "txn-123",
 		FromCounterparty: "BANK_A",
 		ToCounterparty:   "BANK_B",
-		Amount:          100_000,
-		Currency:        "USD",
-		SettlementDate:  time.Now(),
-		CreatedAt:       time.Now(),
+		Amount:           100_000,
+		Currency:         "USD",
+		SettlementDate:   time.Now(),
+		CreatedAt:        time.Now(),
 	}
 
 	if txn.ID != "txn-123" {
@@ -208,10 +208,10 @@ func (m *mockApprover) RequestApproval(ctx context.Context, req hitl.ApprovalReq
 // TestSettlementStateTransitions verifies the state machine.
 func TestSettlementStateTransitions(t *testing.T) {
 	tests := []struct {
-		name     string
-		state    sett.SettlementState
-		next     sett.SettlementState
-		valid    bool
+		name  string
+		state sett.SettlementState
+		next  sett.SettlementState
+		valid bool
 	}{
 		{"pending → fetched", sett.StatePending, sett.StateFetched, true},
 		{"fetched → calculated", sett.StateFetched, sett.StateCalculated, true},

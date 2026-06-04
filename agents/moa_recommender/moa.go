@@ -40,17 +40,17 @@ type Agent struct {
 // New constructs the MoA agent with the supplied panel.
 func New(panel ...Panellist) *Agent { return &Agent{Panel: panel} }
 
-func (a *Agent) ID() string             { return ID }
-func (a *Agent) Name() string           { return "Mixture-of-Agents Recommender" }
-func (a *Agent) Capabilities() []string { return []string{Capability} }
+func (a *Agent) ID() string                 { return ID }
+func (a *Agent) Name() string               { return "Mixture-of-Agents Recommender" }
+func (a *Agent) Capabilities() []string     { return []string{Capability} }
 func (a *Agent) RiskLevel() agent.RiskClass { return agent.RiskMedium }
 
 // Outcome is the structured response.
 type Outcome struct {
-	Winner    string           `json:"winner"`     // panellist name
-	WinnerText string          `json:"winner_text"`
-	Votes     map[string]int   `json:"votes"`      // candidate -> vote count
-	Candidates []Candidate     `json:"candidates"`
+	Winner     string         `json:"winner"` // panellist name
+	WinnerText string         `json:"winner_text"`
+	Votes      map[string]int `json:"votes"` // candidate -> vote count
+	Candidates []Candidate    `json:"candidates"`
 }
 
 // Candidate is one panellist's answer.

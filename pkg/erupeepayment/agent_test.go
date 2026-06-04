@@ -16,8 +16,8 @@ func (testEnv) Now() time.Time                  { return time.Now() }
 func (testEnv) Logf(format string, args ...any) {}
 
 type mockCBDCBridge struct {
-	mu       sync.Mutex
-	commits  []map[string]interface{}
+	mu         sync.Mutex
+	commits    []map[string]interface{}
 	shouldFail bool
 }
 
@@ -25,10 +25,10 @@ func (m *mockCBDCBridge) CommitLedger(ctx context.Context, fromAccount, toAccoun
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.commits = append(m.commits, map[string]interface{}{
-		"from_account":  fromAccount,
-		"to_account":    toAccount,
-		"amount_paise":  amountPaise,
-		"payment_id":    paymentID,
+		"from_account": fromAccount,
+		"to_account":   toAccount,
+		"amount_paise": amountPaise,
+		"payment_id":   paymentID,
 	})
 	if m.shouldFail {
 		return "", nil
