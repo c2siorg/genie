@@ -1,0 +1,62 @@
+name: CI Gate
+
+# The honest baseline gate (see plan.md Phase 0 and COVERAGE.md).
+# Fails the build on: compile break, any test failure, or a total-coverage
+# drop below the ratchet floor (COVER_MIN in the Makefile, currently 60%).
+# This replaces the prior fiction of "95%/100% coverage" with an enforced,
+# truthful minimum that ratchets upward as vertical slices land.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  ci-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+          cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Build frontend (React) into the Go embed tree
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+          npm run build
+
+      - name: Build (must compile, embeds the built UI)
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test (must pass) + coverage profile
+        run: go test -count=1 -coverprofile=coverage.out ./...
+
+      - name: Enforce coverage floor (ratchet)
+        run: |
+          floor=$(grep -E '^COVER_MIN' Makefile | head -1 | sed -E 's/[^0-9]*([0-9]+).*/\1/')
+          pct=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
+          echo "total coverage: ${pct}%  (floor: ${floor}%)"
+          awk -v got="$pct" -v min="$floor" 'BEGIN{ if (got+0 < min+0){ print "FAIL: coverage " got "% is below floor " min "%"; exit 1 } print "OK: coverage floor held" }'
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out

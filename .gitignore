@@ -7,3 +7,10 @@ genie-traces.json
 !.env.example
 *.local.env
 secrets/
+.claude/worktrees/
+
+# Frontend (React) — node deps and generated build output.
+# The bundle is built into the Go embed tree by `make ui-build` (and in CI);
+# generated/hashed assets are not committed.
+frontend/node_modules/
+pkg/web/handlers/ui/app/

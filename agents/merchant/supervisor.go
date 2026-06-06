@@ -10,7 +10,10 @@ import (
 )
 
 const (
-	AgentID    = "merchant_supervisor"
+	// ID is the canonical agent identifier (matches the platform-wide `ID = "..."` convention).
+	ID = "merchant_supervisor"
+	// AgentID is retained for existing references; it is an alias of ID (single source of truth).
+	AgentID    = ID
 	AgentName  = "Merchant Onboarding Agent"
 	Capability = "manage_merchant_onboarding"
 )

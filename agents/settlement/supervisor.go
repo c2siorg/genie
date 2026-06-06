@@ -22,6 +22,12 @@ import (
 	sett "github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/settlement"
 )
 
+// ID is the canonical agent identifier for the settlement supervisor
+// (matches the platform-wide `ID = "..."` convention enforced by the agent registry).
+const (
+	ID = "settlement_supervisor"
+)
+
 // SettlementSupervisor routes tasks to specialized sub-agents.
 // It maintains the settlement state machine and enforces valid transitions.
 type SettlementSupervisor struct {
