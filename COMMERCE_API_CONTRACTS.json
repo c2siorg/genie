@@ -1,0 +1,1091 @@
+{
+  "metadata": {
+    "title": "Genie Commerce API Request/Response Contracts",
+    "version": "1.0",
+    "generated": "2026-06-07",
+    "module": "github.com/PratikDhanave/multi-agent-reference-architecture-go",
+    "description": "Complete specification of commerce endpoints for UI testing and integration",
+    "amounts_unit": "paise (₹0.01 units, 1 rupee = 100 paise)"
+  },
+  "endpoints": {
+    "POST /v1/commerce/order": {
+      "handler": "CommerceHandler.CreateOrder",
+      "file_location": "pkg/web/handlers/commerce.go:97",
+      "http_status": 201,
+      "description": "Creates a new order with items and returns the order ID",
+      "authentication": "required (Bearer JWT)",
+      "request": {
+        "struct": "createOrderRequest",
+        "fields": [
+          {
+            "name": "merchant_id",
+            "type": "string",
+            "required": true,
+            "validation": "non-empty after trimming",
+            "description": "Unique merchant identifier"
+          },
+          {
+            "name": "customer_id",
+            "type": "string",
+            "required": true,
+            "validation": "non-empty after trimming",
+            "description": "Unique customer identifier"
+          },
+          {
+            "name": "items",
+            "type": "[]commerce.OrderItem",
+            "required": true,
+            "validation": "at least one item required",
+            "description": "Array of order line items",
+            "item_structure": {
+              "sku": "string (required)",
+              "description": "string (optional)",
+              "quantity": "int (required, > 0)",
+              "unit_price_paise": "int64 (required, in paise)"
+            }
+          }
+        ],
+        "example": {
+          "merchant_id": "merchant-001",
+          "customer_id": "customer-123",
+          "items": [
+            {
+              "sku": "SKU-001",
+              "description": "Laptop",
+              "quantity": 1,
+              "unit_price_paise": 100000
+            }
+          ]
+        }
+      },
+      "response": {
+        "struct": "createOrderResponse",
+        "status_codes": {
+          "201": "Order created successfully",
+          "400": "Validation error (missing fields, empty items, invalid JSON)"
+        },
+        "fields": [
+          {
+            "name": "order_id",
+            "type": "string",
+            "description": "Unique order identifier (UUID-based)"
+          },
+          {
+            "name": "total_paise",
+            "type": "int64",
+            "description": "Total order amount in paise (calculated sum of all items)"
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "description": "Order status",
+            "enum": ["pending", "paid", "fulfilled", "cancelled", "payment_failed"]
+          },
+          {
+            "name": "created_at",
+            "type": "int64",
+            "description": "Unix timestamp when order was created"
+          }
+        ],
+        "example": {
+          "order_id": "test-order-123",
+          "total_paise": 100000,
+          "status": "pending",
+          "created_at": 1717766400
+        }
+      }
+    },
+    "GET /v1/commerce/order/{order_id}": {
+      "handler": "CommerceHandler.GetOrder",
+      "file_location": "pkg/web/handlers/commerce.go:135",
+      "http_status": 200,
+      "description": "Retrieves an order and its workflow status",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty after trimming",
+          "description": "Unique order identifier"
+        }
+      ],
+      "response": {
+        "struct": "getOrderResponse",
+        "status_codes": {
+          "200": "Order found",
+          "404": "Order not found"
+        },
+        "fields": [
+          {
+            "name": "order_id",
+            "type": "string",
+            "description": "Unique order identifier"
+          },
+          {
+            "name": "merchant_id",
+            "type": "string",
+            "description": "Merchant identifier"
+          },
+          {
+            "name": "customer_id",
+            "type": "string",
+            "description": "Customer identifier"
+          },
+          {
+            "name": "items",
+            "type": "[]commerce.OrderItem",
+            "description": "Array of order items with SKU, description, quantity, unit_price_paise"
+          },
+          {
+            "name": "total_paise",
+            "type": "int64",
+            "description": "Total order amount in paise"
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "description": "Current order status",
+            "enum": ["pending", "paid", "fulfilled", "cancelled", "payment_failed"]
+          },
+          {
+            "name": "workflow_status",
+            "type": "string",
+            "optional": true,
+            "description": "Workflow progress status (omitted if not available)",
+            "enum": ["order_created", "payment_initiated", "payment_confirmed", "settlement_initiated", "settlement_completed", "fulfilled"]
+          },
+          {
+            "name": "created_at",
+            "type": "int64",
+            "description": "Unix timestamp when order was created"
+          },
+          {
+            "name": "paid_at",
+            "type": "int64 (nullable)",
+            "optional": true,
+            "description": "Unix timestamp when payment was confirmed (omitted if not paid)"
+          }
+        ],
+        "example": {
+          "order_id": "test-order-123",
+          "merchant_id": "merchant-1",
+          "customer_id": "customer-1",
+          "items": [
+            {
+              "sku": "SKU-1",
+              "description": "Item 1",
+              "quantity": 1,
+              "unit_price_paise": 10000
+            }
+          ],
+          "total_paise": 10000,
+          "status": "pending",
+          "workflow_status": "order_created",
+          "created_at": 1717766400,
+          "paid_at": null
+        }
+      }
+    },
+    "POST /v1/commerce/order/{order_id}/execute": {
+      "handler": "CommerceHandler.ExecuteWorkflow",
+      "file_location": "pkg/web/handlers/commerce.go:174",
+      "http_status_success": 200,
+      "http_status_failure": 500,
+      "description": "Executes the complete workflow (payment + settlement) for an order",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty after trimming",
+          "description": "Unique order identifier"
+        }
+      ],
+      "notes": [
+        "Verifies order exists before execution",
+        "Executes with 30-second timeout context",
+        "Returns final status and step history"
+      ],
+      "response": {
+        "struct": "executeWorkflowResponse",
+        "status_codes": {
+          "200": "Workflow executed (check success field for actual outcome)",
+          "404": "Order not found",
+          "500": "Workflow execution failed"
+        },
+        "fields": [
+          {
+            "name": "order_id",
+            "type": "string",
+            "description": "Order identifier"
+          },
+          {
+            "name": "workflow_status",
+            "type": "string",
+            "description": "Current workflow status",
+            "enum": ["pending", "paid", "fulfilled", "cancelled", "payment_failed"]
+          },
+          {
+            "name": "steps",
+            "type": "[]stepStatus",
+            "description": "List of workflow steps executed",
+            "item_structure": {
+              "step_name": "string (e.g., 'order_created', 'payment_initiated')",
+              "status": "string ('completed' or error description)",
+              "timestamp": "int64 (Unix timestamp)",
+              "error": "string (optional, only if step failed)"
+            }
+          },
+          {
+            "name": "final_status",
+            "type": "string",
+            "description": "Final order status after workflow",
+            "enum": ["pending", "paid", "fulfilled", "cancelled", "payment_failed"]
+          },
+          {
+            "name": "error",
+            "type": "string",
+            "optional": true,
+            "description": "Error message if workflow failed (omitted on success)"
+          }
+        ],
+        "example": {
+          "order_id": "test-order-123",
+          "workflow_status": "paid",
+          "steps": [
+            {
+              "step_name": "order_created",
+              "status": "completed",
+              "timestamp": 1717766400
+            },
+            {
+              "step_name": "payment_confirmed",
+              "status": "completed",
+              "timestamp": 1717766401
+            }
+          ],
+          "final_status": "fulfilled"
+        }
+      }
+    },
+    "GET /v1/commerce/order/{order_id}/audit": {
+      "handler": "CommerceHandler.GetAuditLog",
+      "file_location": "pkg/web/handlers/commerce.go:234",
+      "http_status": 200,
+      "description": "Returns the complete audit trail for an order",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "order_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty after trimming",
+          "description": "Unique order identifier"
+        }
+      ],
+      "response": {
+        "struct": "auditTrailResponse",
+        "status_codes": {
+          "200": "Audit log retrieved",
+          "404": "Order not found"
+        },
+        "fields": [
+          {
+            "name": "order_id",
+            "type": "string",
+            "description": "Order identifier"
+          },
+          {
+            "name": "audit_trail",
+            "type": "[]auditItem",
+            "description": "Array of audit log entries",
+            "item_structure": {
+              "step": "string (workflow step name)",
+              "timestamp": "int64 (Unix timestamp)",
+              "input": "json.RawMessage (optional, serialized input)",
+              "output": "json.RawMessage (optional, serialized output)",
+              "error": "string (optional, error message if step failed)"
+            }
+          }
+        ],
+        "example": {
+          "order_id": "test-order-123",
+          "audit_trail": [
+            {
+              "step": "order_created",
+              "timestamp": 1717766400,
+              "input": null,
+              "output": null
+            }
+          ]
+        }
+      }
+    },
+    "POST /v1/payment/initiate": {
+      "handler": "Payment.InitiatePayment",
+      "file_location": "pkg/web/handlers/payment.go:91",
+      "http_status_success": 201,
+      "http_status_error": 400,
+      "description": "Initiates an e-Rupee payment transfer",
+      "authentication": "required (Bearer JWT)",
+      "request": {
+        "struct": "InitiatePaymentRequest",
+        "fields": [
+          {
+            "name": "from_account",
+            "type": "string",
+            "required": true,
+            "validation": "non-empty",
+            "description": "Sender's e-Rupee account ID"
+          },
+          {
+            "name": "to_account",
+            "type": "string",
+            "required": true,
+            "validation": "non-empty",
+            "description": "Recipient's e-Rupee account ID"
+          },
+          {
+            "name": "amount_paise",
+            "type": "int64",
+            "required": true,
+            "validation": "must be positive (> 0)",
+            "description": "Transfer amount in paise"
+          },
+          {
+            "name": "reference",
+            "type": "string",
+            "required": false,
+            "description": "Payment reference/memo (e.g., 'INV-2026-001')"
+          },
+          {
+            "name": "metadata",
+            "type": "map[string]string",
+            "required": false,
+            "description": "Optional key-value context (purpose, category, etc.)"
+          }
+        ],
+        "example": {
+          "from_account": "acct-1",
+          "to_account": "acct-2",
+          "amount_paise": 50000,
+          "reference": "INV-001",
+          "metadata": {
+            "purpose": "invoice_payment"
+          }
+        }
+      },
+      "response": {
+        "struct": "InitiatePaymentResponse",
+        "status_codes": {
+          "201": "Payment initiated successfully",
+          "400": "Validation error or payment failed"
+        },
+        "fields": [
+          {
+            "name": "payment_id",
+            "type": "string",
+            "description": "Unique payment identifier (UUIDv7-based)"
+          },
+          {
+            "name": "status",
+            "type": "erupeepayment.PaymentStatus (string)",
+            "description": "Payment lifecycle status",
+            "enum": ["pending", "confirming", "confirmed", "failed", "reversed"]
+          },
+          {
+            "name": "timestamp",
+            "type": "time.Time (ISO 8601)",
+            "description": "Payment initiation timestamp"
+          },
+          {
+            "name": "ledger_id",
+            "type": "string",
+            "optional": true,
+            "description": "CBDC Bridge ledger commit ID (for reconciliation)"
+          }
+        ],
+        "example": {
+          "payment_id": "pay-550e8400-e29b-41d4-a716-446655440000",
+          "status": "pending",
+          "timestamp": "2026-06-07T10:30:00Z",
+          "ledger_id": ""
+        }
+      }
+    },
+    "GET /v1/payment/{payment_id}": {
+      "handler": "Payment.GetPayment",
+      "file_location": "pkg/web/handlers/payment.go:136",
+      "http_status": 200,
+      "description": "Retrieves payment details and status",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "payment_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty",
+          "description": "Unique payment identifier"
+        }
+      ],
+      "response": {
+        "struct": "GetPaymentResponse",
+        "status_codes": {
+          "200": "Payment found",
+          "404": "Payment not found"
+        },
+        "fields": [
+          {
+            "name": "payment_id",
+            "type": "string",
+            "description": "Unique payment identifier"
+          },
+          {
+            "name": "from_account",
+            "type": "string",
+            "description": "Sender's account ID"
+          },
+          {
+            "name": "to_account",
+            "type": "string",
+            "description": "Recipient's account ID"
+          },
+          {
+            "name": "amount_paise",
+            "type": "int64",
+            "description": "Transfer amount in paise"
+          },
+          {
+            "name": "status",
+            "type": "erupeepayment.PaymentStatus (string)",
+            "description": "Current payment status",
+            "enum": ["pending", "confirming", "confirmed", "failed", "reversed"]
+          },
+          {
+            "name": "timestamp",
+            "type": "time.Time (ISO 8601)",
+            "description": "Payment timestamp"
+          },
+          {
+            "name": "ledger_id",
+            "type": "string",
+            "optional": true,
+            "description": "CBDC ledger ID for reconciliation"
+          }
+        ],
+        "example": {
+          "payment_id": "pay-550e8400-e29b-41d4-a716-446655440000",
+          "from_account": "acct-1",
+          "to_account": "acct-2",
+          "amount_paise": 50000,
+          "status": "pending",
+          "timestamp": "2026-06-07T10:30:00Z"
+        }
+      }
+    },
+    "POST /v1/account": {
+      "handler": "Payment.CreateAccount",
+      "file_location": "pkg/web/handlers/payment.go:167",
+      "http_status": 201,
+      "description": "Creates a new e-Rupee account (personal or merchant)",
+      "authentication": "required (Bearer JWT)",
+      "request": {
+        "struct": "CreateAccountRequest",
+        "fields": [
+          {
+            "name": "holder_id",
+            "type": "string",
+            "required": true,
+            "validation": "non-empty",
+            "description": "Account holder identifier (person or merchant)"
+          },
+          {
+            "name": "account_type",
+            "type": "erupeepayment.AccountType (string)",
+            "required": true,
+            "validation": "must be 'personal' or 'merchant'",
+            "enum": ["personal", "merchant"],
+            "description": "Account type classification"
+          },
+          {
+            "name": "initial_balance_paise",
+            "type": "int64",
+            "required": false,
+            "validation": "must be non-negative (>= 0)",
+            "description": "Initial account balance in paise"
+          }
+        ],
+        "example": {
+          "holder_id": "holder-123",
+          "account_type": "personal",
+          "initial_balance_paise": 1000000
+        }
+      },
+      "response": {
+        "struct": "CreateAccountResponse",
+        "status_codes": {
+          "201": "Account created successfully",
+          "400": "Validation error or account creation failed",
+          "500": "Failed to set initial balance"
+        },
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "string",
+            "description": "Unique account identifier (UUIDv7-based)"
+          },
+          {
+            "name": "holder_id",
+            "type": "string",
+            "description": "Account holder identifier"
+          },
+          {
+            "name": "balance_paise",
+            "type": "int64",
+            "description": "Current account balance in paise"
+          },
+          {
+            "name": "status",
+            "type": "erupeepayment.AccountStatus (string)",
+            "description": "Account operational status",
+            "enum": ["active", "frozen", "closed"]
+          }
+        ],
+        "example": {
+          "account_id": "acct-550e8400-e29b-41d4-a716-446655440000",
+          "holder_id": "holder-123",
+          "balance_paise": 1000000,
+          "status": "active"
+        }
+      }
+    },
+    "GET /v1/account/{account_id}": {
+      "handler": "Payment.GetAccount",
+      "file_location": "pkg/web/handlers/payment.go:216",
+      "http_status": 200,
+      "description": "Retrieves account details and balance",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "account_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty",
+          "description": "Unique account identifier"
+        }
+      ],
+      "response": {
+        "struct": "GetAccountResponse",
+        "status_codes": {
+          "200": "Account found",
+          "404": "Account not found"
+        },
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "string",
+            "description": "Unique account identifier"
+          },
+          {
+            "name": "holder_id",
+            "type": "string",
+            "description": "Account holder identifier"
+          },
+          {
+            "name": "balance_paise",
+            "type": "int64",
+            "description": "Current account balance in paise"
+          },
+          {
+            "name": "status",
+            "type": "erupeepayment.AccountStatus (string)",
+            "description": "Account operational status",
+            "enum": ["active", "frozen", "closed"]
+          },
+          {
+            "name": "created_at",
+            "type": "time.Time (ISO 8601)",
+            "description": "Account creation timestamp"
+          }
+        ],
+        "example": {
+          "account_id": "acct-550e8400-e29b-41d4-a716-446655440000",
+          "holder_id": "holder-123",
+          "balance_paise": 1000000,
+          "status": "active",
+          "created_at": "2026-06-07T10:30:00Z"
+        }
+      }
+    },
+    "GET /v1/transaction/{account_id}": {
+      "handler": "Payment.ListTransactions",
+      "file_location": "pkg/web/handlers/payment.go:241",
+      "http_status": 200,
+      "description": "Lists transactions for an account with optional filtering",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "account_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty",
+          "description": "Unique account identifier"
+        }
+      ],
+      "query_parameters": [
+        {
+          "name": "since",
+          "type": "string",
+          "required": false,
+          "description": "Start time (Unix timestamp in seconds or RFC3339 format)",
+          "default": "Unix epoch (beginning of time)"
+        },
+        {
+          "name": "until",
+          "type": "string",
+          "required": false,
+          "description": "End time (Unix timestamp in seconds or RFC3339 format)",
+          "default": "Current time"
+        },
+        {
+          "name": "limit",
+          "type": "string",
+          "required": false,
+          "description": "Maximum number of transactions to return (must be positive integer)",
+          "default": "100"
+        }
+      ],
+      "response": {
+        "struct": "ListTransactionsResponse",
+        "status_codes": {
+          "200": "Transactions retrieved",
+          "404": "Account not found",
+          "400": "Invalid query parameters"
+        },
+        "fields": [
+          {
+            "name": "transactions",
+            "type": "[]TransactionResponse",
+            "description": "Array of transaction records",
+            "item_structure": {
+              "id": "string (transaction record ID)",
+              "payment_id": "string (parent payment ID)",
+              "from_account": "string (sender account ID)",
+              "to_account": "string (recipient account ID)",
+              "amount": "int64 (amount in paise)",
+              "status": "erupeepayment.PaymentStatus (string)",
+              "timestamp": "time.Time (ISO 8601)",
+              "ledger_id": "string (optional, CBDC ledger ID)"
+            }
+          }
+        ],
+        "example": {
+          "transactions": [
+            {
+              "id": "txn-123",
+              "payment_id": "pay-456",
+              "from_account": "acct-1",
+              "to_account": "acct-2",
+              "amount": 50000,
+              "status": "confirmed",
+              "timestamp": "2026-06-07T10:30:00Z",
+              "ledger_id": "ledger-789"
+            }
+          ]
+        }
+      }
+    },
+    "POST /v1/settlement/request": {
+      "handler": "SettlementHandler.CreateRequest",
+      "file_location": "pkg/web/handlers/settlement.go:76",
+      "http_status": 201,
+      "description": "Creates a new settlement request with transactions",
+      "authentication": "required (Bearer JWT)",
+      "request": {
+        "struct": "createSettlementRequest",
+        "fields": [
+          {
+            "name": "transactions",
+            "type": "[]settlement.Transaction",
+            "required": true,
+            "validation": "at least one transaction required",
+            "description": "List of transactions to settle",
+            "item_structure": {
+              "id": "string (transaction ID)",
+              "from_counterparty": "string (sender identifier, e.g., 'bank-a')",
+              "to_counterparty": "string (recipient identifier, e.g., 'bank-b')",
+              "amount": "float64 (in base currency)",
+              "currency": "string (ISO 4217, e.g., 'USD', 'INR')",
+              "settlement_date": "time.Time (agreed settlement date)",
+              "created_at": "time.Time (optional)"
+            }
+          },
+          {
+            "name": "metadata",
+            "type": "map[string]string",
+            "required": false,
+            "description": "Context metadata (settlement_date, batch_id, etc.)"
+          }
+        ],
+        "example": {
+          "transactions": [
+            {
+              "id": "txn-1",
+              "from_counterparty": "bank-a",
+              "to_counterparty": "bank-b",
+              "amount": 1000000,
+              "currency": "USD",
+              "settlement_date": "2026-06-08T00:00:00Z"
+            }
+          ],
+          "metadata": {
+            "batch_id": "batch-123"
+          }
+        }
+      },
+      "response": {
+        "struct": "createSettlementResponse",
+        "status_codes": {
+          "201": "Settlement request created",
+          "400": "Invalid JSON or missing transactions",
+          "401": "Unauthenticated"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique settlement request ID (generated with 'sreq-' prefix)"
+          },
+          {
+            "name": "state",
+            "type": "settlement.SettlementState (string)",
+            "description": "Current settlement state",
+            "enum": ["pending", "fetched", "calculated", "routed", "approved", "executed"]
+          },
+          {
+            "name": "created_at",
+            "type": "string (RFC3339 format)",
+            "description": "Settlement request creation timestamp"
+          }
+        ],
+        "example": {
+          "id": "sreq-550e8400-e29b-41d4-a716-446655440000",
+          "state": "pending",
+          "created_at": "2026-06-07T10:30:00Z"
+        }
+      }
+    },
+    "GET /v1/settlement/request/{request_id}": {
+      "handler": "SettlementHandler.GetRequest",
+      "file_location": "pkg/web/handlers/settlement.go:141",
+      "http_status": 200,
+      "description": "Retrieves settlement request status and details",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "request_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty",
+          "description": "Unique settlement request ID"
+        }
+      ],
+      "response": {
+        "struct": "settlementStatusResponse",
+        "status_codes": {
+          "200": "Settlement request found",
+          "400": "Invalid request_id",
+          "401": "Unauthenticated"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Settlement request ID"
+          },
+          {
+            "name": "state",
+            "type": "settlement.SettlementState (string)",
+            "description": "Current settlement state",
+            "enum": ["pending", "fetched", "calculated", "routed", "approved", "executed"]
+          },
+          {
+            "name": "transactions",
+            "type": "[]settlement.Transaction",
+            "optional": true,
+            "description": "Collected transactions (omitted if not available)"
+          },
+          {
+            "name": "counterparties",
+            "type": "[]string",
+            "optional": true,
+            "description": "List of parties involved in settlement"
+          },
+          {
+            "name": "net_amounts",
+            "type": "[]settlement.NetAmount",
+            "optional": true,
+            "description": "Computed net settlement amounts",
+            "item_structure": {
+              "counterparty": "string (party identifier)",
+              "currency": "string (ISO 4217)",
+              "amount": "float64 (positive = owe, negative = owed)",
+              "settlement_date": "time.Time",
+              "path": "string (settlement routing: 'direct_bank', 'correspondent', 'netting_pool')",
+              "computed_at": "time.Time"
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "string (RFC3339 format)",
+            "description": "Request creation timestamp"
+          },
+          {
+            "name": "updated_at",
+            "type": "string (RFC3339 format)",
+            "description": "Most recent state transition timestamp"
+          },
+          {
+            "name": "metadata",
+            "type": "map[string]string",
+            "optional": true,
+            "description": "Context metadata"
+          }
+        ],
+        "example": {
+          "id": "sreq-550e8400-e29b-41d4-a716-446655440000",
+          "state": "fetched",
+          "transactions": [
+            {
+              "id": "txn-1",
+              "from_counterparty": "bank-a",
+              "to_counterparty": "bank-b",
+              "amount": 1000000,
+              "currency": "USD",
+              "settlement_date": "2026-06-08T00:00:00Z",
+              "created_at": "2026-06-07T10:30:00Z"
+            }
+          ],
+          "counterparties": ["bank-a", "bank-b"],
+          "net_amounts": [
+            {
+              "counterparty": "bank-b",
+              "currency": "USD",
+              "amount": 1000000,
+              "settlement_date": "2026-06-08T00:00:00Z",
+              "path": "direct_bank",
+              "computed_at": "2026-06-07T10:31:00Z"
+            }
+          ],
+          "created_at": "2026-06-07T10:30:00Z",
+          "updated_at": "2026-06-07T10:31:00Z"
+        }
+      }
+    },
+    "POST /v1/settlement/request/{request_id}/execute": {
+      "handler": "SettlementHandler.ExecuteSettlement",
+      "file_location": "pkg/web/handlers/settlement.go:188",
+      "http_status": 200,
+      "description": "Executes a settlement request after approval",
+      "authentication": "required (Bearer JWT)",
+      "notes": [
+        "Typically gated by router-level admin checks",
+        "Logs approval and executes settlement transfer",
+        "In production: verifies StateApproved before execution"
+      ],
+      "path_parameters": [
+        {
+          "name": "request_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty",
+          "description": "Unique settlement request ID"
+        }
+      ],
+      "request": {
+        "struct": "executeSettlementRequest",
+        "fields": [
+          {
+            "name": "approval_id",
+            "type": "string",
+            "required": false,
+            "description": "Link to HITL (Human-in-the-Loop) approval record"
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "required": false,
+            "description": "Approver's justification for execution"
+          }
+        ],
+        "example": {
+          "approval_id": "approval-456",
+          "reason": "Approved by admin for daily settlement"
+        }
+      },
+      "response": {
+        "struct": "settlementStatusResponse",
+        "status_codes": {
+          "200": "Settlement executed",
+          "400": "Invalid request_id",
+          "401": "Unauthenticated"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Settlement request ID"
+          },
+          {
+            "name": "state",
+            "type": "settlement.SettlementState (string)",
+            "description": "Should be 'executed'",
+            "enum": ["pending", "fetched", "calculated", "routed", "approved", "executed"]
+          }
+        ],
+        "example": {
+          "id": "sreq-550e8400-e29b-41d4-a716-446655440000",
+          "state": "executed"
+        }
+      }
+    },
+    "GET /v1/settlement/request/{request_id}/audit": {
+      "handler": "SettlementHandler.GetAuditLog",
+      "file_location": "pkg/web/handlers/settlement.go:240",
+      "http_status": 200,
+      "description": "Returns the complete audit trail for a settlement request",
+      "authentication": "required (Bearer JWT)",
+      "path_parameters": [
+        {
+          "name": "request_id",
+          "type": "string",
+          "required": true,
+          "validation": "non-empty",
+          "description": "Unique settlement request ID"
+        }
+      ],
+      "response": {
+        "struct": "auditLogResponse",
+        "status_codes": {
+          "200": "Audit log retrieved",
+          "400": "Invalid request_id",
+          "401": "Unauthenticated",
+          "500": "Failed to fetch audit log"
+        },
+        "fields": [
+          {
+            "name": "settlement_id",
+            "type": "string",
+            "description": "Settlement request ID"
+          },
+          {
+            "name": "entries",
+            "type": "[]settlement.AuditEntry",
+            "description": "Array of audit log entries",
+            "item_structure": {
+              "id": "string (audit entry ID)",
+              "settlement_id": "string (parent settlement ID)",
+              "agent": "string (agent name that executed action)",
+              "action": "string (action description, e.g., 'fetch_transactions', 'calculate_nets')",
+              "input": "json.RawMessage (serialized JSON input, optional)",
+              "output": "json.RawMessage (serialized JSON output, optional)",
+              "approver": "string (user ID if HITL action, empty if automatic)",
+              "timestamp": "time.Time (when action occurred)",
+              "error": "string (error message if action failed, empty on success)"
+            }
+          }
+        ],
+        "example": {
+          "settlement_id": "sreq-550e8400-e29b-41d4-a716-446655440000",
+          "entries": [
+            {
+              "id": "audit-1",
+              "settlement_id": "sreq-550e8400-e29b-41d4-a716-446655440000",
+              "agent": "settlement-handler",
+              "action": "create_request",
+              "input": null,
+              "output": null,
+              "approver": "",
+              "timestamp": "2026-06-07T10:30:00Z",
+              "error": ""
+            }
+          ]
+        }
+      }
+    }
+  },
+  "status_enums": {
+    "commerce.OrderStatus": {
+      "pending": "Order created, awaiting payment",
+      "paid": "Payment confirmed",
+      "fulfilled": "Order fulfilled to customer",
+      "cancelled": "Order cancelled or reverted",
+      "payment_failed": "Payment failed, awaiting retry/manual intervention"
+    },
+    "commerce.WorkflowStep": {
+      "order_created": "Order instantiated",
+      "payment_initiated": "Payment request sent to Payment Agent",
+      "payment_confirmed": "CBDC ledger committed payment",
+      "settlement_initiated": "Settlement coordinator engaged",
+      "settlement_completed": "Net amounts settled, CBDC transfer finalized",
+      "fulfilled": "Order fulfilled to customer"
+    },
+    "erupeepayment.PaymentStatus": {
+      "pending": "Payment initiated, awaiting ledger commitment",
+      "confirming": "Submitted to CBDC Bridge, awaiting confirmation",
+      "confirmed": "Ledger committed, payment final",
+      "failed": "Payment rejected (insufficient balance, invalid account, etc.)",
+      "reversed": "Payment reversed after confirmation (refund scenario)"
+    },
+    "erupeepayment.AccountType": {
+      "personal": "Individual citizen wallet",
+      "merchant": "Business/merchant wallet"
+    },
+    "erupeepayment.AccountStatus": {
+      "active": "Account in good standing",
+      "frozen": "Account temporarily suspended (AML/compliance hold)",
+      "closed": "Account permanently closed"
+    },
+    "settlement.SettlementState": {
+      "pending": "Settlement request created, awaiting transaction fetch",
+      "fetched": "Transactions retrieved from source system",
+      "calculated": "Net amounts computed, netting opportunities identified",
+      "routed": "Settlement paths assigned (direct, correspondent, netting pool)",
+      "approved": "Human approval obtained or auto-approved via policy",
+      "executed": "Settlement executed, funds transferred"
+    },
+    "settlement.SettlementPath": {
+      "direct_bank": "Direct bank-to-bank transfer (bilateral)",
+      "correspondent": "Routed through correspondent banking network",
+      "netting_pool": "Netting pool aggregates multiple parties for reduced settlement"
+    }
+  },
+  "critical_notes": {
+    "amounts_in_paise": "All amount fields (amount_paise, balance_paise, unit_price_paise) use paise as the unit: 1 Indian Rupee = 100 paise. This avoids floating-point precision issues in financial calculations.",
+    "timestamps": {
+      "created_at (order/account)": "Unix timestamp in seconds (int64)",
+      "timestamp (payment/transaction)": "ISO 8601 datetime string (RFC3339)",
+      "created_at/updated_at (settlement)": "RFC3339 formatted string"
+    },
+    "authentication": "All endpoints (except public routes /healthz, /readyz) require Bearer JWT token in Authorization header",
+    "error_responses": "Errors are returned as JSON: {\"error\": \"message\"}",
+    "status_codes": {
+      "201": "Resource created (CreateOrder, InitiatePayment, CreateAccount, CreateRequest)",
+      "200": "Success (Get operations, Execute/List operations)",
+      "400": "Validation error or invalid JSON",
+      "401": "Unauthenticated (missing or invalid token)",
+      "404": "Resource not found",
+      "500": "Server error (workflow failure, etc.)"
+    },
+    "optional_fields": "Fields marked 'optional' are omitted from response if not applicable (e.g., paid_at is null/omitted if order not paid yet; workflow_status is omitted if workflow not started)",
+    "id_generation": "Order IDs, payment IDs, and account IDs are UUID-based. Settlement request IDs are generated with 'sreq-' prefix. Use generateID() helper in handlers/helpers.go for consistency.",
+    "netting_calculation": "settlement.NetAmount.amount is positive if 'we owe' the counterparty, negative if 'we are owed'"
+  },
+  "router_mount_points": {
+    "commerce": "/v1/commerce/order/* (POST /, GET /{order_id}, POST /{order_id}/execute, GET /{order_id}/audit)",
+    "payment": "/v1/payment/initiate, /v1/payment/{payment_id}, /v1/account/*, /v1/transaction/{account_id}",
+    "settlement": "/v1/settlement/request/* (POST /, GET /{request_id}, POST /{request_id}/execute, GET /{request_id}/audit)"
+  }
+}
