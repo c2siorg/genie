@@ -24,6 +24,7 @@ import { useState, useEffect } from "react";
 import type { CreateOrderRequest } from "../types/commerce";
 import { useOrder, useCreateOrder, useOrderAudit } from "../hooks/useCommerce";
 import { useHITLApprovals, useComplianceCheck, useComplianceCheckResult } from "../hooks/useCompliance";
+import { useAgentFleet, useIncidents, useKillSwitch } from "../hooks/useGovernance";
 
 const SETTLEMENT_STEPS = [
   { key: "created", label: "Created", detail: "12:00" },
@@ -402,9 +403,253 @@ export function Compliance() {
     </section>
   );
 }
-export const Ops = () => (
-  <Stub title="Gov & Safety" blurb="Agent fleet, HITL approvals, incidents (Phase 4)." />
-);
+export function Ops() {
+  const { agents, loading: loadingAgents, error: agentsError, fetch: fetchAgents } =
+    useAgentFleet();
+  const { incidents, loading: loadingIncidents, error: incidentsError, fetch: fetchIncidents } =
+    useIncidents(10);
+  const { status: killSwitchStatus, loading: loadingKillSwitch, fetch: fetchKillSwitch } =
+    useKillSwitch();
+
+  useEffect(() => {
+    fetchAgents();
+    fetchIncidents();
+    fetchKillSwitch();
+  }, [fetchAgents, fetchIncidents, fetchKillSwitch]);
+
+  const getRingColor = (ring: string) => {
+    switch (ring) {
+      case "admin":
+        return "var(--color-danger)";
+      case "standard":
+        return "var(--color-success)";
+      case "restricted":
+        return "var(--color-warn)";
+      case "sandboxed":
+        return "var(--color-info)";
+      default:
+        return "var(--color-text-muted)";
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "low":
+        return "var(--color-success)";
+      case "moderate":
+        return "var(--color-warn)";
+      case "high":
+        return "var(--color-danger)";
+      default:
+        return "var(--color-text-muted)";
+    }
+  };
+
+  return (
+    <section>
+      <h1>Governance & Safety</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Agent fleet monitoring, incident response, policy enforcement, and emergency controls (Phase 4).
+      </p>
+
+      {/* Section 1: Agent Fleet Dashboard */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Agent Fleet Health</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Real-time monitoring of all agents with trust scores and ring assignments.
+        </p>
+
+        {agentsError && <p style={{ color: "var(--color-danger)" }}>Error: {agentsError}</p>}
+
+        {loadingAgents ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading agents...</p>
+        ) : agents.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No agents found.</p>
+        ) : (
+          <div>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+              {agents.length} agents total
+            </p>
+            {agents.map((agent, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <div>
+                    <strong>{agent.name}</strong>
+                    <p style={{ color: "var(--color-text-muted)", margin: "var(--space-1) 0 0 0" }}>
+                      {agent.agent_id}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: getRingColor(agent.ring), fontWeight: "bold" }}>
+                      {agent.ring.toUpperCase()}
+                    </div>
+                    <div style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginTop: "var(--space-1)" }}>
+                      {agent.status.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem" }}>
+                  <span>Trust Score: {agent.trust_score}/100</span>
+                  <span>{agent.capabilities.join(", ")}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Incident Tracking */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Incident Response</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Recent incidents with severity, failure modes, and resolution status.
+        </p>
+
+        {incidentsError && <p style={{ color: "var(--color-danger)" }}>Error: {incidentsError}</p>}
+
+        {loadingIncidents ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading incidents...</p>
+        ) : incidents.length === 0 ? (
+          <p style={{ color: "var(--color-success)" }}>No recent incidents. 🎉</p>
+        ) : (
+          <div>
+            {incidents.map((incident, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <div>
+                    <strong>{incident.use_case}</strong>
+                    <p style={{ color: "var(--color-text-muted)", margin: "var(--space-1) 0 0 0" }}>
+                      {incident.description}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: getSeverityColor(incident.severity), fontWeight: "bold" }}>
+                      {incident.severity.toUpperCase()}
+                    </div>
+                    <div
+                      style={{
+                        color: incident.status === "ongoing" ? "var(--color-warn)" : "var(--color-success)",
+                        fontSize: "0.85rem",
+                        marginTop: "var(--space-1)",
+                      }}
+                    >
+                      {incident.status.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                  <p style={{ margin: 0 }}>
+                    <strong>Failure Mode:</strong> {incident.failure_mode}
+                  </p>
+                  <p style={{ margin: "var(--space-1) 0 0 0" }}>
+                    <strong>Detected:</strong> {new Date(incident.detected_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section 3: Kill Switch Controls */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Emergency Controls</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Global kill-switch status. Use only in emergencies to halt all agents.
+        </p>
+
+        {loadingKillSwitch ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading kill-switch status...</p>
+        ) : killSwitchStatus ? (
+          <div>
+            <div
+              style={{
+                padding: "var(--space-3)",
+                background: killSwitchStatus.is_active
+                  ? "var(--color-danger)"
+                  : "var(--color-success)",
+                color: "white",
+                borderRadius: "var(--radius)",
+                marginBottom: "var(--space-4)",
+                textAlign: "center",
+              }}
+            >
+              <strong>
+                {killSwitchStatus.is_active ? "🛑 KILL SWITCH ACTIVE" : "✓ All systems operational"}
+              </strong>
+            </div>
+
+            {killSwitchStatus.activations.length > 0 && (
+              <div>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+                  {killSwitchStatus.activations.length} activation{killSwitchStatus.activations.length !== 1 ? "s" : ""}
+                </p>
+                {killSwitchStatus.activations.slice(0, 3).map((activation, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "var(--space-2)",
+                      borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    <p style={{ margin: 0 }}>
+                      <strong>{activation.scope.toUpperCase()}</strong> {activation.target && `(${activation.target})`}
+                    </p>
+                    <p style={{ color: "var(--color-text-muted)", margin: "var(--space-1) 0 0 0" }}>
+                      {activation.reason}
+                    </p>
+                    <p style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "var(--space-1) 0 0 0" }}>
+                      {new Date(activation.activated_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
 export const Evaluation = () => (
   <Stub title="Evaluation" blurb="Trace review, failure modes, judges (Phase 5)." />
 );
