@@ -23,6 +23,7 @@ export const Assistant = () => (
 import { useState, useEffect } from "react";
 import type { CreateOrderRequest } from "../types/commerce";
 import { useOrder, useCreateOrder, useOrderAudit } from "../hooks/useCommerce";
+import { useHITLApprovals, useComplianceCheck, useComplianceCheckResult } from "../hooks/useCompliance";
 
 const SETTLEMENT_STEPS = [
   { key: "created", label: "Created", detail: "12:00" },
@@ -222,9 +223,185 @@ export function Commerce() {
   );
 }
 
-export const Compliance = () => (
-  <Stub title="Compliance" blurb="KYC, AML, velocity & case triage (Phase 3)." />
-);
+export function Compliance() {
+  const { approvals, loading: loadingApprovals, error: approvalsError, fetch: fetchApprovals } =
+    useHITLApprovals();
+  const { check, checking: checkingPayment } = useComplianceCheck();
+  const [lastCheckId, setLastCheckId] = useState<string | null>(null);
+  const {
+    result: checkResult,
+    loading: loadingCheckResult,
+    error: checkResultError,
+    fetch: fetchCheckResult,
+  } = useComplianceCheckResult(lastCheckId);
+
+  const handleCheckPayment = async () => {
+    const result = await check("demo-payment", "account-from", "account-to", 100000); // ₹1000
+    if (result) {
+      setLastCheckId(result.check_id);
+    }
+  };
+
+  useEffect(() => {
+    fetchApprovals();
+  }, [fetchApprovals]);
+
+  useEffect(() => {
+    if (lastCheckId) {
+      fetchCheckResult();
+    }
+  }, [lastCheckId, fetchCheckResult]);
+
+  const getRiskColor = (score: number) => {
+    if (score < 30) return "var(--color-success)"; // Low risk
+    if (score < 60) return "var(--color-warn)"; // Medium risk
+    return "var(--color-danger)"; // High risk
+  };
+
+  return (
+    <section>
+      <h1>Compliance</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        KYC onboarding, payment monitoring, AML screening, HITL approvals (Phase 3 real integration).
+      </p>
+
+      {/* Section 1: Payment Compliance Check */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Real-Time Payment Compliance</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Initiate an async compliance check with AML screening, velocity limits, and fraud detection.
+        </p>
+
+        <button
+          onClick={handleCheckPayment}
+          disabled={checkingPayment}
+          style={{
+            padding: "var(--space-2) var(--space-4)",
+            background: "var(--color-info)",
+            color: "white",
+            border: "none",
+            borderRadius: "var(--radius)",
+            cursor: "pointer",
+          }}
+        >
+          {checkingPayment ? "Checking..." : "Check payment compliance"}
+        </button>
+
+        {checkResultError && (
+          <p style={{ color: "var(--color-danger)", marginTop: "var(--space-2)" }}>
+            Error: {checkResultError}
+          </p>
+        )}
+
+        {checkResult && (
+          <div style={{ marginTop: "var(--space-4)" }}>
+            <h3>Check Result</h3>
+            <div style={{ fontSize: "0.9rem" }}>
+              <p>
+                <strong>Decision:</strong>{" "}
+                <span style={{ color: getRiskColor(checkResult.fraud_score) }}>
+                  {checkResult.decision.toUpperCase()}
+                </span>
+              </p>
+              <p>
+                <strong>AML Result:</strong> {checkResult.aml_result} {checkResult.aml_reason && `(${checkResult.aml_reason})`}
+              </p>
+              <p>
+                <strong>Velocity:</strong> {checkResult.velocity_result}
+                {checkResult.velocity_reason && ` – ${checkResult.velocity_reason}`}
+              </p>
+              <p>
+                <strong>Fraud Score:</strong>{" "}
+                <span style={{ color: getRiskColor(checkResult.fraud_score) }}>
+                  {checkResult.fraud_score}/100
+                </span>
+              </p>
+              {checkResult.detected_patterns.length > 0 && (
+                <p>
+                  <strong>Detected Patterns:</strong> {checkResult.detected_patterns.join(", ")}
+                </p>
+              )}
+              <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                Checked at: {new Date(checkResult.checked_at).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {loadingCheckResult && (
+          <p style={{ color: "var(--color-text-muted)", marginTop: "var(--space-4)" }}>
+            Fetching check result...
+          </p>
+        )}
+      </div>
+
+      {/* Section 2: HITL Approval Queue */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Human-in-the-Loop (HITL) Approval Queue</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Flagged KYC applications and payments requiring manual compliance review.
+        </p>
+
+        {approvalsError && (
+          <p style={{ color: "var(--color-danger)" }}>Error: {approvalsError}</p>
+        )}
+
+        {loadingApprovals ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading approvals...</p>
+        ) : approvals.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No pending approvals.</p>
+        ) : (
+          <div>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+              {approvals.length} pending approval{approvals.length !== 1 ? "s" : ""}
+            </p>
+            {approvals.map((approval, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <strong>
+                    {approval.request_type.toUpperCase()}: {approval.entity_id}
+                  </strong>
+                  <span style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                    {new Date(approval.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p style={{ color: "var(--color-text-muted)", margin: 0 }}>{approval.reason}</p>
+                {approval.risk_factors && approval.risk_factors.length > 0 && (
+                  <p style={{ color: "var(--color-warn)", margin: "var(--space-1) 0 0 0", fontSize: "0.85rem" }}>
+                    Risk: {approval.risk_factors.join(", ")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 export const Ops = () => (
   <Stub title="Gov & Safety" blurb="Agent fleet, HITL approvals, incidents (Phase 4)." />
 );
