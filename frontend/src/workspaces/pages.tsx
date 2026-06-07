@@ -25,6 +25,7 @@ import type { CreateOrderRequest } from "../types/commerce";
 import { useOrder, useCreateOrder, useOrderAudit } from "../hooks/useCommerce";
 import { useHITLApprovals, useComplianceCheck, useComplianceCheckResult } from "../hooks/useCompliance";
 import { useAgentFleet, useIncidents, useKillSwitch } from "../hooks/useGovernance";
+import { useEvaluationMetrics, useJudgeCalibration, useCoverageStatus } from "../hooks/useEvaluation";
 
 const SETTLEMENT_STEPS = [
   { key: "created", label: "Created", detail: "12:00" },
@@ -650,9 +651,260 @@ export function Ops() {
     </section>
   );
 }
-export const Evaluation = () => (
-  <Stub title="Evaluation" blurb="Trace review, failure modes, judges (Phase 5)." />
-);
+export function Evaluation() {
+  const { metrics, loading: loadingMetrics, error: metricsError, fetch: fetchMetrics } =
+    useEvaluationMetrics();
+  const { calibration, loading: loadingCalibration, fetch: fetchCalibration } =
+    useJudgeCalibration();
+  const { coverage, loading: loadingCoverage, fetch: fetchCoverage } = useCoverageStatus();
+
+  useEffect(() => {
+    fetchMetrics();
+    fetchCalibration();
+    fetchCoverage();
+  }, [fetchMetrics, fetchCalibration, fetchCoverage]);
+
+  const getJudgeScore = (tpr: number, tnr: number) => {
+    return ((tpr + tnr) / 2) * 100;
+  };
+
+  const getCoverageColor = (status: string) => {
+    switch (status) {
+      case "ok":
+        return "var(--color-success)";
+      case "warning":
+        return "var(--color-warn)";
+      case "critical":
+        return "var(--color-danger)";
+      default:
+        return "var(--color-text-muted)";
+    }
+  };
+
+  return (
+    <section>
+      <h1>Evaluation</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Trace review, failure mode analysis, and judge calibration with drift detection (Phase 5).
+      </p>
+
+      {/* Section 1: Judge Accuracy Metrics */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Judge Calibration</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          LLM judge accuracy metrics with 95% confidence intervals.
+        </p>
+
+        {loadingCalibration ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading judge metrics...</p>
+        ) : calibration.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No calibration data available.</p>
+        ) : (
+          <div>
+            {calibration.map((judge, i) => {
+              const score = getJudgeScore(judge.tpr, judge.tnr);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    padding: "var(--space-3)",
+                    borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                    <strong>{judge.judge_type.toUpperCase()} Judge</strong>
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        color:
+                          score >= 90
+                            ? "var(--color-success)"
+                            : score >= 75
+                              ? "var(--color-warn)"
+                              : "var(--color-danger)",
+                      }}
+                    >
+                      {score.toFixed(1)}%
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", fontSize: "0.85rem" }}>
+                    <div>
+                      <p style={{ color: "var(--color-text-muted)", margin: 0 }}>TPR (Recall)</p>
+                      <p style={{ margin: "var(--space-1) 0 0 0" }}>
+                        {judge.tpr.toFixed(3)} [{judge.tpr_lower_bound.toFixed(3)}, {judge.tpr_upper_bound.toFixed(3)}]
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ color: "var(--color-text-muted)", margin: 0 }}>TNR (Specificity)</p>
+                      <p style={{ margin: "var(--space-1) 0 0 0" }}>
+                        {judge.tnr.toFixed(3)} [{judge.tnr_lower_bound.toFixed(3)}, {judge.tnr_upper_bound.toFixed(3)}]
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "var(--space-2) 0 0 0" }}>
+                    Tested on {judge.num_positives + judge.num_negatives} cases ({judge.num_positives} pass, {judge.num_negatives} fail)
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Evaluation Metrics & Drift */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Execution Metrics</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Pass rate, failure analysis, and drift detection across traced executions.
+        </p>
+
+        {metricsError && <p style={{ color: "var(--color-danger)" }}>Error: {metricsError}</p>}
+
+        {loadingMetrics ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading metrics...</p>
+        ) : metrics ? (
+          <div>
+            {metrics.drift_detected && (
+              <div
+                style={{
+                  padding: "var(--space-3)",
+                  background: "var(--color-warn)",
+                  color: "white",
+                  borderRadius: "var(--radius)",
+                  marginBottom: "var(--space-4)",
+                }}
+              >
+                <strong>⚠ Drift Detected: {metrics.drift_reason}</strong>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
+              <div style={{ background: "var(--color-bg)", padding: "var(--space-3)", borderRadius: "var(--radius)" }}>
+                <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: "0.85rem" }}>Pass Rate</p>
+                <p style={{ margin: "var(--space-1) 0 0 0", fontSize: "1.5rem", fontWeight: "bold", color: "var(--color-success)" }}>
+                  {metrics.pass_rate.toFixed(1)}%
+                </p>
+              </div>
+              <div style={{ background: "var(--color-bg)", padding: "var(--space-3)", borderRadius: "var(--radius)" }}>
+                <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: "0.85rem" }}>Total Traces</p>
+                <p style={{ margin: "var(--space-1) 0 0 0", fontSize: "1.5rem", fontWeight: "bold" }}>
+                  {metrics.total_traces}
+                </p>
+              </div>
+              <div style={{ background: "var(--color-bg)", padding: "var(--space-3)", borderRadius: "var(--radius)" }}>
+                <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: "0.85rem" }}>Failure Rate</p>
+                <p style={{ margin: "var(--space-1) 0 0 0", fontSize: "1.5rem", fontWeight: "bold", color: "var(--color-danger)" }}>
+                  {metrics.failure_rate.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
+            {metrics.most_common_failures.length > 0 && (
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: "var(--space-2)" }}>
+                  Top Failure Modes
+                </p>
+                {metrics.most_common_failures.slice(0, 5).map((failure, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "var(--space-2)",
+                      borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                      fontSize: "0.85rem",
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span>{failure.failure_mode}</span>
+                    <strong>{failure.count}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Section 3: Golden Dataset Coverage */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Coverage Status</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Golden dataset test case coverage per failure mode (minimum 5 required).
+        </p>
+
+        {loadingCoverage ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading coverage...</p>
+        ) : coverage.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No coverage data available.</p>
+        ) : (
+          <div>
+            {coverage.slice(0, 10).map((cov, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <strong>{cov.failure_mode}</strong>
+                  <span style={{ color: getCoverageColor(cov.status), fontWeight: "bold" }}>
+                    {cov.test_cases_count}/{cov.minimum_required}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    background: "var(--color-bg)",
+                    borderRadius: "var(--radius)",
+                    overflow: "hidden",
+                    height: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: getCoverageColor(cov.status),
+                      height: "100%",
+                      width: `${Math.min(cov.coverage_percent, 100)}%`,
+                    }}
+                  />
+                </div>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "var(--space-1) 0 0 0" }}>
+                  {cov.coverage_percent.toFixed(0)}% covered
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 export const Audit = () => (
   <Stub title="Audit" blurb="Read-only lineage & regulator lens (Phase 6)." />
 );
