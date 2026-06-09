@@ -1,8 +1,16 @@
-// Workspace pages. Phase 2+: Commerce is real; others are stubs awaiting their phases.
+// Workspace pages. Phase 2+: Commerce, Compliance, Governance, Evaluation, Assistant are real.
 
 import { Money } from "../components/Money";
 import { StateMachine } from "../components/StateMachine";
 import { useProvenance } from "../provenance/provenance";
+import { useState, useEffect } from "react";
+import {
+  useAskStream,
+  useLLMConfig,
+  useAIDisclosure,
+  useFinancialContext,
+} from "../hooks/useAssistant";
+import type { AskRequest, LLMProvider } from "../types/assistant";
 
 function Stub({ title, blurb }: { title: string; blurb: string }) {
   return (
@@ -16,11 +24,304 @@ function Stub({ title, blurb }: { title: string; blurb: string }) {
   );
 }
 
-export const Assistant = () => (
-  <Stub title="Assistant" blurb="Conversational financial assistant (Phase 6)." />
-);
+export function Assistant() {
+  const { disclosure, loading: loadingDisclosure, fetch: fetchDisclosure } = useAIDisclosure();
+  const { config, fetch: fetchConfig } = useLLMConfig();
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("anthropic");
+  const [selectedModel, setSelectedModel] = useState("claude-sonnet-4-6");
+  const [documentId] = useState("sample-csv-123");
+  const [question, setQuestion] = useState("");
+  const [acknowledged, setAcknowledged] = useState(false);
+  const { open } = useProvenance();
 
-import { useState, useEffect } from "react";
+  const { report, traceId, progressEvents, streaming, error: streamError, askStream, cancel } =
+    useAskStream();
+  const { context, loading: loadingContext } = useFinancialContext(documentId);
+
+  useEffect(() => {
+    fetchDisclosure();
+    fetchConfig();
+  }, [fetchDisclosure, fetchConfig]);
+
+  const handleAsk = async () => {
+    if (!question.trim() || !acknowledged) return;
+
+    const request: AskRequest = {
+      question,
+      document_id: documentId,
+      provider: selectedProvider,
+      model: selectedModel,
+    };
+
+    await askStream(request);
+    setQuestion("");
+  };
+
+  return (
+    <section>
+      <h1>Assistant</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Conversational financial assistant with real LLM integration (Phase 6).
+      </p>
+
+      {/* AI Disclosure Banner */}
+      {loadingDisclosure ? (
+        <p style={{ color: "var(--color-text-muted)" }}>Loading disclosure...</p>
+      ) : disclosure && !acknowledged ? (
+        <div
+          style={{
+            background: "var(--color-warn)",
+            color: "black",
+            padding: "var(--space-4)",
+            borderRadius: "var(--radius)",
+            marginTop: "var(--space-4)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          <strong>{disclosure.title}</strong>
+          <p style={{ margin: "var(--space-2) 0" }}>{disclosure.message}</p>
+          <p style={{ fontSize: "0.85rem", marginTop: "var(--space-2)" }}>
+            {disclosure.regulatory_basis}
+          </p>
+          <button
+            onClick={() => setAcknowledged(true)}
+            style={{
+              marginTop: "var(--space-3)",
+              padding: "var(--space-2) var(--space-3)",
+              background: "black",
+              color: "white",
+              border: "none",
+              borderRadius: "var(--radius)",
+              cursor: "pointer",
+            }}
+          >
+            I Acknowledge
+          </button>
+        </div>
+      ) : null}
+
+      {/* Chat Interface */}
+      {acknowledged && (
+        <div
+          style={{
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius)",
+            padding: "var(--space-6)",
+            marginTop: "var(--space-6)",
+          }}
+        >
+          <h2 style={{ marginTop: 0 }}>Ask Genie</h2>
+
+          {/* Configuration Section */}
+          <div style={{ marginBottom: "var(--space-6)" }}>
+            <h3 style={{ fontSize: "1rem", color: "var(--color-text-muted)" }}>Configuration</h3>
+
+            <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+                  LLM Provider
+                </label>
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value as LLMProvider)}
+                  disabled={streaming}
+                  style={{
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="ollama">Ollama (Local)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="gemini">Gemini</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+                  Model
+                </label>
+                <input
+                  type="text"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  disabled={streaming}
+                  style={{
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                    minWidth: "200px",
+                  }}
+                />
+              </div>
+
+              {config && (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+                    Tokens Remaining
+                  </label>
+                  <div
+                    style={{
+                      padding: "var(--space-2)",
+                      background: "var(--color-border)",
+                      borderRadius: "var(--radius)",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {config.token_budget_remaining.toLocaleString()} / {config.token_budget_daily.toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Financial Context */}
+          {loadingContext ? (
+            <p style={{ color: "var(--color-text-muted)" }}>Loading financial context...</p>
+          ) : context ? (
+            <div
+              style={{
+                background: "var(--color-border)",
+                padding: "var(--space-4)",
+                borderRadius: "var(--radius)",
+                marginBottom: "var(--space-4)",
+                fontSize: "0.9rem",
+              }}
+            >
+              <strong>Financial Context</strong>
+              <p style={{ margin: "var(--space-2) 0" }}>
+                Currency: {context.currency} | Income: <Money paise={context.total_income_paise} /> | Expense:{" "}
+                <Money paise={context.total_expense_paise} /> | Net: <Money paise={context.net_paise} intent={context.net_paise >= 0 ? "credit" : "debit"} />
+              </p>
+            </div>
+          ) : null}
+
+          {/* Question Input */}
+          <div style={{ marginBottom: "var(--space-4)" }}>
+            <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+              Your Question
+            </label>
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              disabled={streaming}
+              placeholder="E.g., 'What are my top spending categories this month?'"
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                padding: "var(--space-3)",
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--color-border)",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
+            <button
+              onClick={handleAsk}
+              disabled={streaming || !question.trim()}
+              style={{
+                padding: "var(--space-2) var(--space-4)",
+                background: "var(--color-info)",
+                color: "white",
+                border: "none",
+                borderRadius: "var(--radius)",
+                cursor: "pointer",
+                opacity: streaming || !question.trim() ? 0.5 : 1,
+              }}
+            >
+              {streaming ? "Asking..." : "Ask"}
+            </button>
+            {streaming && (
+              <button
+                onClick={cancel}
+                style={{
+                  padding: "var(--space-2) var(--space-4)",
+                  background: "var(--color-danger)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "var(--radius)",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {/* Error Display */}
+          {streamError && (
+            <div style={{ color: "var(--color-danger)", marginBottom: "var(--space-4)" }}>
+              Error: {streamError}
+            </div>
+          )}
+
+          {/* Progress Events */}
+          {progressEvents.length > 0 && (
+            <div style={{ marginBottom: "var(--space-4)" }}>
+              <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                Processing ({progressEvents.length} steps)
+              </p>
+              {progressEvents.map((event, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: "0.85rem",
+                    padding: "var(--space-2) 0",
+                    borderTop: `1px solid var(--color-border)`,
+                    color: "var(--color-text-muted)",
+                  }}
+                >
+                  {event.from} → {event.to}: <strong>{event.type}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Final Report */}
+          {report && (
+            <div
+              style={{
+                background: "var(--color-border)",
+                padding: "var(--space-4)",
+                borderRadius: "var(--radius)",
+                marginTop: "var(--space-4)",
+                fontFamily: "monospace",
+                fontSize: "0.9rem",
+                whiteSpace: "pre-wrap",
+                overflowX: "auto",
+              }}
+            >
+              <strong>Genie Report (Trace: {traceId})</strong>
+              <pre style={{ marginTop: "var(--space-2)", color: "var(--color-text)" }}>
+                {report}
+              </pre>
+              <button
+                onClick={() => open(traceId || "")}
+                style={{
+                  marginTop: "var(--space-3)",
+                  padding: "var(--space-2) var(--space-3)",
+                  background: "transparent",
+                  border: `1px solid var(--color-border)`,
+                  color: "var(--color-text)",
+                  borderRadius: "var(--radius)",
+                  cursor: "pointer",
+                }}
+              >
+                Why? · View provenance ↗
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 import type { CreateOrderRequest } from "../types/commerce";
 import { useOrder, useCreateOrder, useOrderAudit } from "../hooks/useCommerce";
 import { useHITLApprovals, useComplianceCheck, useComplianceCheckResult } from "../hooks/useCompliance";
