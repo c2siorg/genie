@@ -1,0 +1,665 @@
+{
+  "test_dataset": {
+    "domain": "orchestration",
+    "failure_mode_category": "valid_and_invalid",
+    "total_cases": 50,
+    "description": "Workflow orchestration: valid execution, state transitions, error handling, and invalid scenarios",
+    "valid_cases": [
+      {
+        "test_case_id": "OR-VALID-001",
+        "failure_mode": "none",
+        "rubric": "RB-OR-001,RB-OR-002",
+        "input": {
+          "order_id": "ORD-WF-001",
+          "merchant_id": "MERCH-WF-001",
+          "customer_id": "CUST-WF-001",
+          "amount_paise": 50000,
+          "workflow_type": "standard",
+          "timestamp": "2026-06-07T13:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_OrderCreated: order initiated",
+          "step_2_PaymentInitiated: payment request sent to agent",
+          "step_3_PaymentConfirmed: payment agent confirms within SLA",
+          "step_4_SettlementInitiated: settlement triggered",
+          "step_5_SettlementCompleted: settlement confirmed by ledger",
+          "step_6_Fulfilled: order marked complete",
+          "step_7_reconciliation_pass: all states consistent"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "final_status": "Fulfilled",
+          "state_sequence_valid": true,
+          "sla_met": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "final_status": "Fulfilled",
+          "state_sequence_valid": true,
+          "sla_met": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-OR-001",
+              "dimension": "consistency",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Valid state sequence: Created->Initiated->Confirmed->SettlementInit->SettlementDone->Fulfilled"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-002",
+        "failure_mode": "none",
+        "rubric": "RB-OR-003,RB-OR-004",
+        "input": {
+          "order_id": "ORD-WF-002",
+          "workflow_type": "with_payment_retry",
+          "payment_attempt": 1,
+          "max_retries": 3,
+          "timestamp": "2026-06-07T13:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_PaymentInitiated: first attempt",
+          "step_2_PaymentFailed: transient error",
+          "step_3_RetryTriggered: exponential backoff 100ms",
+          "step_4_PaymentInitiated: second attempt",
+          "step_5_PaymentConfirmed: succeeds on retry",
+          "step_6_SettlementInitiated: proceeds",
+          "step_7_SettlementCompleted: success",
+          "step_8_Fulfilled: order complete"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "final_status": "Fulfilled",
+          "retry_count": 1,
+          "max_retries": 3,
+          "final_attempt_succeeded": true
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "final_status": "Fulfilled",
+          "retry_count": 1,
+          "max_retries": 3,
+          "final_attempt_succeeded": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-003",
+        "failure_mode": "none",
+        "rubric": "RB-OR-001",
+        "input": {
+          "order_id": "ORD-WF-003",
+          "workflow_type": "standard",
+          "state_machine_enforced": true,
+          "timestamp": "2026-06-07T13:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_validate_current_state: OrderCreated",
+          "step_2_check_transition_validity: OrderCreated -> PaymentInitiated is valid",
+          "step_3_execute_transition: allowed",
+          "step_4_validate_current_state: PaymentInitiated",
+          "step_5_check_transition_validity: PaymentInitiated -> PaymentConfirmed is valid",
+          "step_6_continue_valid_sequence: all transitions checked and allowed"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "all_transitions_valid": true,
+          "state_machine_enforced": true
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "all_transitions_valid": true,
+          "state_machine_enforced": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-004",
+        "failure_mode": "none",
+        "rubric": "RB-OR-005,RB-OR-006",
+        "input": {
+          "order_id": "ORD-WF-004",
+          "agent_timeout_ms": 30000,
+          "agent_response_time_ms": 5000,
+          "timestamp": "2026-06-07T13:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_agent_call: payment agent request sent",
+          "step_2_agent_response: arrives in 5000ms",
+          "step_3_timeout_check: 5000 < 30000, within SLA",
+          "step_4_continue_workflow: proceed with settlement"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "agent_response_time_ms": 5000,
+          "timeout_ms": 30000,
+          "sla_met": true
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "agent_response_time_ms": 5000,
+          "timeout_ms": 30000,
+          "sla_met": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-005",
+        "failure_mode": "none",
+        "rubric": "RB-OR-007",
+        "input": {
+          "order_id": "ORD-WF-005",
+          "workflow_type": "with_mutex",
+          "concurrent_workflows": 5,
+          "same_order": true,
+          "timestamp": "2026-06-07T14:00:00Z"
+        },
+        "execution_trace": [
+          "concurrent_call_1: acquires lock",
+          "concurrent_call_2: waits for lock",
+          "concurrent_call_3: waits for lock",
+          "concurrent_call_4: waits for lock",
+          "concurrent_call_5: waits for lock",
+          "concurrent_call_1: releases lock",
+          "concurrent_call_2: rejected (order already processed)",
+          "remaining: all rejected"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "successfully_processed": 1,
+          "rejected_duplicates": 4,
+          "mutex_enforced": true
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "successfully_processed": 1,
+          "rejected_duplicates": 4,
+          "mutex_enforced": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-006",
+        "failure_mode": "none",
+        "rubric": "RB-OR-008",
+        "input": {
+          "order_id": "ORD-WF-006",
+          "workflow_type": "with_error_checks",
+          "payment_result": "declined",
+          "timestamp": "2026-06-07T14:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_payment_initiated: payment request",
+          "step_2_payment_declined: error returned",
+          "step_3_error_check: payment error detected",
+          "step_4_propagate_error: error raised to caller",
+          "step_5_error_logged: logged with context",
+          "step_6_customer_notified: refund initiated"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "payment_declined",
+          "error_logged": true,
+          "error_propagated": true,
+          "customer_refunded": true
+        },
+        "actual_output": {
+          "workflow_result": "failure",
+          "error_code": "payment_declined",
+          "error_logged": true,
+          "error_propagated": true,
+          "customer_refunded": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-007",
+        "failure_mode": "none",
+        "rubric": "RB-OR-009",
+        "input": {
+          "order_id": "ORD-WF-007",
+          "workflow_type": "with_rollback",
+          "payment_status": "success",
+          "settlement_status": "failure",
+          "timestamp": "2026-06-07T14:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_payment_succeeded: confirmed in ledger",
+          "step_2_settlement_initiated: settlement request",
+          "step_3_settlement_failed: ledger unavailable",
+          "step_4_rollback_triggered: payment reversal initiated",
+          "step_5_payment_reversed: ledger refund confirmed",
+          "step_6_order_cancelled: status reset",
+          "step_7_customer_notified: refund processed"
+        ],
+        "expected_output": {
+          "workflow_result": "failure_with_rollback",
+          "payment_rolled_back": true,
+          "settlement_rolled_back": true,
+          "order_status": "Cancelled",
+          "customer_refunded": true
+        },
+        "actual_output": {
+          "workflow_result": "failure_with_rollback",
+          "payment_rolled_back": true,
+          "settlement_rolled_back": true,
+          "order_status": "Cancelled",
+          "customer_refunded": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-008",
+        "failure_mode": "none",
+        "rubric": "RB-OR-001,RB-OR-003",
+        "input": {
+          "order_id": "ORD-WF-008",
+          "workflow_type": "express",
+          "total_steps": 6,
+          "timestamp": "2026-06-07T14:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_OrderCreated: t=0",
+          "step_2_PaymentInitiated: t=1s",
+          "step_3_PaymentConfirmed: t=2s",
+          "step_4_SettlementInitiated: t=3s",
+          "step_5_SettlementCompleted: t=4s",
+          "step_6_Fulfilled: t=5s",
+          "step_7_verify_sequence: all steps completed in order"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "execution_time_ms": 5000,
+          "steps_completed": 6,
+          "out_of_order_detected": false
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "execution_time_ms": 5000,
+          "steps_completed": 6,
+          "out_of_order_detected": false
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-009",
+        "failure_mode": "none",
+        "rubric": "RB-OR-002",
+        "input": {
+          "order_id": "ORD-WF-009",
+          "agent_type": "payment",
+          "timeout_ms": 30000,
+          "response_time_ms": 29000,
+          "timestamp": "2026-06-07T15:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_agent_call: timeout=30s set",
+          "step_2_agent_processing: takes 29s",
+          "step_3_response_received: within timeout",
+          "step_4_timeout_not_triggered: proceed normally"
+        ],
+        "expected_output": {
+          "workflow_result": "success",
+          "timeout_triggered": false,
+          "response_within_sla": true
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "timeout_triggered": false,
+          "response_within_sla": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "OR-VALID-010",
+        "failure_mode": "none",
+        "rubric": "RB-OR-006",
+        "input": {
+          "order_id": "ORD-WF-010",
+          "simulated_crash": "post_settlement",
+          "crash_at_step": 5,
+          "recovery_enabled": true,
+          "timestamp": "2026-06-07T15:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_4_normal_execution: payment confirmed",
+          "step_5_settlement_confirmed: ledger confirms",
+          "simulated_crash: orchestrator crashes",
+          "recovery_handler_triggered: on restart",
+          "step_6_query_ledger: settlement found in ledger",
+          "step_7_complete_order: order status updated to Fulfilled"
+        ],
+        "expected_output": {
+          "workflow_result": "success_with_recovery",
+          "settlement_confirmed": true,
+          "order_status": "Fulfilled",
+          "recovery_successful": true
+        },
+        "actual_output": {
+          "workflow_result": "success_with_recovery",
+          "settlement_confirmed": true,
+          "order_status": "Fulfilled",
+          "recovery_successful": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      }
+    ],
+    "invalid_cases": [
+      {
+        "test_case_id": "OR-INVALID-001",
+        "failure_mode": "FM-OR-001",
+        "rubric": "RB-OR-001",
+        "input": {
+          "order_id": "ORD-INV-001",
+          "current_status": "Cancelled",
+          "requested_transition": "Fulfilled",
+          "timestamp": "2026-06-07T15:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_check_state: order is Cancelled",
+          "step_2_validate_transition: Cancelled -> Fulfilled is INVALID",
+          "step_3_reject_transition: not allowed",
+          "step_4_error: invalid state transition"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "invalid_state_transition",
+          "transition_allowed": false
+        },
+        "actual_output": {
+          "workflow_result": "failure",
+          "error_code": "invalid_state_transition",
+          "transition_allowed": false
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "failure_mode_detected": "FM-OR-001"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-002",
+        "failure_mode": "FM-OR-002",
+        "rubric": "RB-OR-005",
+        "input": {
+          "order_id": "ORD-INV-002",
+          "agent_type": "payment",
+          "timeout_ms": 5000,
+          "agent_delay_ms": 10000,
+          "timestamp": "2026-06-07T15:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_agent_call: timeout=5s",
+          "step_2_agent_processing: takes 10s",
+          "step_3_timeout_exceeded: 10s > 5s timeout",
+          "step_4_timeout_error: agent call aborted"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "agent_timeout",
+          "timeout_triggered": true
+        },
+        "actual_output": {
+          "workflow_result": "failure",
+          "error_code": "agent_timeout",
+          "timeout_triggered": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "failure_mode_detected": "FM-OR-002"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-003",
+        "failure_mode": "FM-OR-003",
+        "rubric": "RB-OR-003",
+        "input": {
+          "order_id": "ORD-INV-003",
+          "expected_sequence": ["Created", "PaymentInitiated", "PaymentConfirmed", "SettlementInitiated"],
+          "actual_sequence": ["Created", "SettlementInitiated", "PaymentInitiated", "PaymentConfirmed"],
+          "timestamp": "2026-06-07T16:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_order_created: t=0",
+          "step_2_settlement_initiated: WRONG - should be payment first",
+          "step_3_payment_initiated: out of order",
+          "step_4_error: out-of-order execution detected"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "out_of_order_steps",
+          "sequence_valid": false
+        },
+        "actual_output": {
+          "workflow_result": "failure",
+          "error_code": "out_of_order_steps",
+          "sequence_valid": false
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "failure_mode_detected": "FM-OR-003"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-004",
+        "failure_mode": "FM-OR-004",
+        "rubric": "RB-OR-004",
+        "input": {
+          "order_id": "ORD-INV-004",
+          "idempotency_key": "IDK-INV-004",
+          "first_call_result": "success",
+          "retry_call_result": "success",
+          "timestamp": "2026-06-07T16:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_payment_initiated: first call",
+          "step_2_payment_success: ledger confirms txn_id=TXN-1",
+          "step_3_retry_triggered: timeout or other issue",
+          "step_4_payment_initiated_again: second call with same IDK",
+          "step_5_duplicate_payment: second transaction created in ledger (ERROR)",
+          "step_6_customer_charged_twice: duplicate settlement"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "duplicate_payment",
+          "customer_charged_count": 1,
+          "duplicate_detected": true
+        },
+        "actual_output": {
+          "workflow_result": "failure",
+          "error_code": "duplicate_payment",
+          "customer_charged_count": 2,
+          "duplicate_detected": false
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-OR-004",
+          "severity": "critical"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-005",
+        "failure_mode": "FM-OR-005",
+        "rubric": "RB-OR-006",
+        "input": {
+          "order_id": "ORD-INV-005",
+          "orchestrator_crash_point": "after_settlement_confirm",
+          "recovery_enabled": false,
+          "timestamp": "2026-06-07T16:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_5_normal_execution: payment and settlement success",
+          "settlement_confirmed: ledger has 50k credit",
+          "orchestrator_crashes: process dies",
+          "step_6_on_restart: no recovery handler",
+          "step_7_query_state: order status still PaymentConfirmed",
+          "ledger_and_order_mismatch: ledger has settlement, order says payment pending"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "orchestrator_crash",
+          "recovery_possible": true
+        },
+        "actual_output": {
+          "workflow_result": "undefined",
+          "error_code": "orchestrator_crash",
+          "recovery_possible": false,
+          "order_ledger_mismatch": true
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-OR-005"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-006",
+        "failure_mode": "FM-OR-006",
+        "rubric": "RB-OR-007",
+        "input": {
+          "order_id": "ORD-INV-006",
+          "concurrent_workflows": 2,
+          "same_order": true,
+          "mutex_enabled": false,
+          "timestamp": "2026-06-07T16:45:00Z"
+        },
+        "execution_trace": [
+          "concurrent_flow_1: starts, acquires order state",
+          "concurrent_flow_2: starts, acquires same order state (race)",
+          "both_proceed: no mutual exclusion",
+          "flow_1_updates_payment: PaymentConfirmed",
+          "flow_2_updates_payment: PaymentConfirmed (but overwrites flow_1 state)",
+          "state_corrupted: order state is merged incorrectly"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "race_condition",
+          "state_corrupted": true
+        },
+        "actual_output": {
+          "workflow_result": "success",
+          "order_status": "PaymentConfirmed",
+          "state_corrupted": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-OR-006"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-007",
+        "failure_mode": "FM-OR-007",
+        "rubric": "RB-OR-008",
+        "input": {
+          "order_id": "ORD-INV-007",
+          "payment_result": "declined",
+          "error_handling": "silent_ignore",
+          "timestamp": "2026-06-07T17:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_payment_initiated: request sent",
+          "step_2_payment_declined: error returned",
+          "step_3_error_ignored: no error check",
+          "step_4_proceed_to_settlement: as if payment succeeded",
+          "step_5_settlement_initiated: with no payment confirmed",
+          "step_6_settlement_fails: due to missing payment"
+        ],
+        "expected_output": {
+          "workflow_result": "failure",
+          "error_code": "payment_declined",
+          "order_cancelled": true
+        },
+        "actual_output": {
+          "workflow_result": "failure",
+          "error_code": "settlement_failed",
+          "order_status": "SettlementFailed",
+          "root_cause_hidden": true
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-OR-007"
+        }
+      },
+      {
+        "test_case_id": "OR-INVALID-008",
+        "failure_mode": "FM-OR-008",
+        "rubric": "RB-OR-009",
+        "input": {
+          "order_id": "ORD-INV-008",
+          "payment_status": "success",
+          "settlement_status": "failure",
+          "rollback_enabled": true,
+          "rollback_completes": false,
+          "timestamp": "2026-06-07T17:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_payment_succeeded: confirmed in ledger",
+          "step_2_settlement_failed: error",
+          "step_3_rollback_initiated: payment reversal",
+          "step_4_ledger_reversal_fails: ledger unavailable",
+          "step_5_rollback_incomplete: payment not reversed",
+          "step_6_order_status_reset: set to Cancelled",
+          "step_7_inconsistency: ledger shows payment, order shows cancelled"
+        ],
+        "expected_output": {
+          "workflow_result": "failure_but_consistent",
+          "ledger_state": "refunded",
+          "order_state": "Cancelled",
+          "states_match": true
+        },
+        "actual_output": {
+          "workflow_result": "partial_failure",
+          "ledger_state": "charged",
+          "order_state": "Cancelled",
+          "states_match": false
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-OR-008"
+        }
+      }
+    ]
+  }
+}

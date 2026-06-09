@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/c2siorg/genie/pkg/compliance"
-	"github.com/c2siorg/genie/pkg/kyc"
 )
 
 // IdentityVerifierAgent validates extracted identity fields against expected patterns.
@@ -22,7 +21,7 @@ func (a *IdentityVerifierAgent) VerifyIdentity(
 	extractedText string,
 	formData map[string]any,
 	docType string,
-) (*kyc.VerificationResult, error) {
+) (*VerificationResult, error) {
 	// TODO: implement
 	panic("not implemented")
 }

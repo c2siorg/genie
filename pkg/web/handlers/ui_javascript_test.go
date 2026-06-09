@@ -111,8 +111,14 @@ func TestJS_DocumentUploadValidation(t *testing.T) {
 	}
 }
 
-// TestJS_LocalStorageKeys verifies localStorage keys are stable
-func TestJS_LocalStorageKeys(t *testing.T) {
+// TestJS_SessionModelIsCookieBased verifies the served app.js uses the secure
+// HttpOnly cookie + in-memory CSRF token session model, not localStorage.
+//
+// The previous version persisted the auth token in localStorage (keys like
+// "genie.session.v1"), which is XSS-exfiltratable. This test now guards the
+// hardened model: the session is an HttpOnly cookie (sent via
+// credentials:'include') and the CSRF token lives only in memory.
+func TestJS_SessionModelIsCookieBased(t *testing.T) {
 	h, _ := NewUI()
 	req := httptest.NewRequest(http.MethodGet, "/app.js", nil)
 	w := httptest.NewRecorder()
@@ -120,12 +126,17 @@ func TestJS_LocalStorageKeys(t *testing.T) {
 
 	js := w.Body.String()
 
-	// Verify localStorage key constants are defined in app.js
-	if !strings.Contains(js, `genie.session.v1`) {
-		t.Error("missing session key constant in app.js")
+	// The served bundle must not reintroduce localStorage-based auth.
+	if strings.Contains(js, "localStorage") {
+		t.Error("served app.js must not use localStorage for sessions — auth token in localStorage is XSS-exfiltratable")
 	}
-	if !strings.Contains(js, `genie.apibase.v1`) {
-		t.Error("missing API base key constant in app.js")
+	// The HttpOnly session cookie is carried by including credentials.
+	if !strings.Contains(js, `credentials: 'include'`) {
+		t.Error("served app.js must send the HttpOnly session cookie via credentials:'include'")
+	}
+	// CSRF token tracked in memory.
+	if !strings.Contains(js, `state.csrfToken`) {
+		t.Error("served app.js must track the CSRF token in memory (state.csrfToken)")
 	}
 }
 

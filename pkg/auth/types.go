@@ -26,7 +26,11 @@
 // to branch on "how did the user prove themselves."
 package auth
 
-import "time"
+import (
+	"crypto/rand"
+	"encoding/hex"
+	"time"
+)
 
 // Role identifies a coarse-grained authorization tier.
 //
@@ -103,30 +107,46 @@ type User struct {
 // nil. The omitempty JSON tag keeps the field out of the wire format
 // when it's not in use, so the JWT stays small for the common case.
 //
+// ─── CSRF Secret ──────────────────────────────────────────────────────
+//
+// CSRFSecret is a per-token secret (32 bytes, hex-encoded) generated when
+// the JWT is minted. Used for CSRF validation: the client includes the
+// secret in a request header (or form field), and the HTTP middleware
+// verifies it matches the value in the JWT claims. This protects
+// state-changing operations (POST, PATCH, DELETE) from cross-site
+// forgery attacks.
+//
+// Why in the JWT: avoids server-side session storage for the secret
+// binding — the JWT itself is the binding record. Each token gets a
+// fresh secret, so a leaked token and a leaked header secret don't
+// simultaneously compromise all sessions.
+//
 // ─── Claim field reference ────────────────────────────────────────────────
 //
-//	Subject   — the authenticated user's stable id (UUID)
-//	Email     — convenience, used by audit logs and UI labels
-//	Roles     — authorisation tier list (one or more)
-//	IssuedAt  — Unix seconds, UTC
-//	ExpiresAt — Unix seconds, UTC; verifier rejects past this
-//	Issuer    — the minting service (e.g. "genie-api"); used for
-//	             cross-issuer routing in federated deployments
-//	Audience  — list of accepted audiences; verifier requires at least
-//	             one match if it has a non-empty audience list
-//	Actor     — RFC 8693 `act` claim (see above)
+//	Subject    — the authenticated user's stable id (UUID)
+//	Email      — convenience, used by audit logs and UI labels
+//	Roles      — authorisation tier list (one or more)
+//	IssuedAt   — Unix seconds, UTC
+//	ExpiresAt  — Unix seconds, UTC; verifier rejects past this
+//	Issuer     — the minting service (e.g. "genie-api"); used for
+//	              cross-issuer routing in federated deployments
+//	Audience   — list of accepted audiences; verifier requires at least
+//	              one match if it has a non-empty audience list
+//	Actor      — RFC 8693 `act` claim (see above)
+//	CSRFSecret — per-token secret for CSRF validation (hex-encoded)
 //
 // Wire format is JSON with the JWT-standard short field names (sub,
-// iat, exp, iss, aud, act). Genie does not invent new claim names —
-// stays interoperable with any RFC-compliant verifier.
+// iat, exp, iss, aud, act, csrf_secret). Genie does not invent new
+// claim names — stays interoperable with any RFC-compliant verifier.
 type Claims struct {
-	Subject   string   `json:"sub"`
-	Email     string   `json:"email"`
-	Roles     []Role   `json:"roles"`
-	IssuedAt  int64    `json:"iat"`
-	ExpiresAt int64    `json:"exp"`
-	Issuer    string   `json:"iss,omitempty"`
-	Audience  []string `json:"aud,omitempty"`
+	Subject    string   `json:"sub"`
+	Email      string   `json:"email"`
+	Roles      []Role   `json:"roles"`
+	IssuedAt   int64    `json:"iat"`
+	ExpiresAt  int64    `json:"exp"`
+	Issuer     string   `json:"iss,omitempty"`
+	Audience   []string `json:"aud,omitempty"`
+	CSRFSecret string   `json:"csrf_secret,omitempty"`
 	// Actor is the RFC 8693 `act` claim. Set when this token was issued
 	// via a token-exchange flow. Empty for first-party user tokens.
 	Actor *Actor `json:"act,omitempty"`
@@ -187,4 +207,20 @@ func (c Claims) HasRole(r Role) bool {
 		}
 	}
 	return false
+}
+
+// GenerateCSRFSecret produces a 32-byte cryptographically random secret,
+// hex-encoded for safe transport in JWT claims and HTTP headers.
+//
+// Returns the hex string (64 characters) and any error from the entropy
+// source. Callers should handle errors gracefully; in production, a
+// failed entropy source is a fatal condition (misconfig or kernel issue).
+//
+// Example output: "a7f3e9d2b1c8f4a9e5d7c2b8f1a3e5d7c2b8f1a3e5d7c2b8f1a3e5d7c2b8f1"
+func GenerateCSRFSecret() (string, error) {
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
 }

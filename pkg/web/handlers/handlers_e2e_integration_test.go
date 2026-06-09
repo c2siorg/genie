@@ -2,12 +2,25 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
+	"github.com/go-chi/chi/v5"
 )
+
+// withMerchantID injects the {merchant_id} chi URL param into a request so a
+// handler can be exercised directly (without mounting the full router) and
+// still resolve chi.URLParam(r, "merchant_id"). Mirrors the real request the
+// chi router would build for /v1/merchant/{merchant_id}.
+func withMerchantID(r *http.Request, id string) *http.Request {
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("merchant_id", id)
+	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+}
 
 // ============================================================================
 // PHASE 4: E2E Integration Tests — Complete workflow scenarios
@@ -51,7 +64,7 @@ func TestE2E_MerchantOnboarding_FullFlow(t *testing.T) {
 	t.Logf("✓ Step 1: Merchant onboarded - ID: %s", merchantID)
 
 	// Step 2: Retrieve merchant profile
-	req2 := httptest.NewRequest("GET", "/v1/merchant/"+merchantID, nil)
+	req2 := withMerchantID(httptest.NewRequest("GET", "/v1/merchant/"+merchantID, nil), merchantID)
 	w2 := httptest.NewRecorder()
 	h.GetMerchant(w2, req2)
 
@@ -69,7 +82,7 @@ func TestE2E_MerchantOnboarding_FullFlow(t *testing.T) {
 	t.Logf("✓ Step 2: Merchant retrieved - Name: %s, Status: %s", merchantResp.BusinessName, merchantResp.Status)
 
 	// Step 3: Approve merchant (admin action)
-	req3 := httptest.NewRequest("POST", "/v1/merchant/"+merchantID+"/approve", bytes.NewReader([]byte("{}")))
+	req3 := withMerchantID(httptest.NewRequest("POST", "/v1/merchant/"+merchantID+"/approve", bytes.NewReader([]byte("{}"))), merchantID)
 	w3 := httptest.NewRecorder()
 	h.ApproveMerchant(w3, req3)
 
@@ -88,12 +101,12 @@ func TestE2E_MerchantOnboarding_FullFlow(t *testing.T) {
 
 	// Step 4: Update merchant limits
 	limitsReq := UpdateLimitsRequest{
-		DailyLimitPaise:     10000000,  // 100,000 INR
-		SingleTxnLimitPaise: 5000000,   // 50,000 INR
+		DailyLimitPaise:     10000000, // 100,000 INR
+		SingleTxnLimitPaise: 5000000,  // 50,000 INR
 	}
 
 	limitsBody, _ := json.Marshal(limitsReq)
-	req4 := httptest.NewRequest("POST", "/v1/merchant/"+merchantID+"/limits", bytes.NewReader(limitsBody))
+	req4 := withMerchantID(httptest.NewRequest("POST", "/v1/merchant/"+merchantID+"/limits", bytes.NewReader(limitsBody)), merchantID)
 	w4 := httptest.NewRecorder()
 	h.UpdateLimits(w4, req4)
 

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
@@ -138,20 +137,27 @@ type UpdateLimitsResponse struct {
 // ===================== Validation functions =====================
 
 // isValidGST validates GST number format (15 alphanumeric).
+//
+// A GSTIN is a canonical identifier that is always uppercase. We reject
+// lowercase input rather than silently upper-casing it, so a malformed
+// (lowercase) number is never accepted and stored un-normalized.
 func isValidGST(gst string) bool {
 	if gst == "" {
 		return true // Optional field
 	}
-	matched, _ := regexp.MatchString(`^[0-9A-Z]{15}$`, strings.ToUpper(gst))
+	matched, _ := regexp.MatchString(`^[0-9A-Z]{15}$`, gst)
 	return matched
 }
 
 // isValidPAN validates PAN format (10 alphanumeric, pattern: AAAAP1234A).
+//
+// Like GSTIN, a PAN is always uppercase; lowercase input is rejected rather
+// than coerced.
 func isValidPAN(pan string) bool {
 	if pan == "" {
 		return true // Optional field
 	}
-	matched, _ := regexp.MatchString(`^[A-Z]{5}[0-9]{4}[A-Z]{1}$`, strings.ToUpper(pan))
+	matched, _ := regexp.MatchString(`^[A-Z]{5}[0-9]{4}[A-Z]{1}$`, pan)
 	return matched
 }
 
@@ -162,13 +168,6 @@ func isValidBusinessType(bt string) bool {
 		return true
 	}
 	return false
-}
-
-// ===================== Helper functions =====================
-
-// respondError writes a JSON error response.
-func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, map[string]string{"error": message})
 }
 
 // ===================== HTTP Handlers =====================

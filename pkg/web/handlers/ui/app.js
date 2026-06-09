@@ -1,8 +1,27 @@
 // Genie UI — vanilla JS, no framework. Pairs with index.html + styles.css.
 //
-// State lives in localStorage so refreshes survive. Streaming uses the
-// browser's EventSource against /v1/ask/stream — same SSE shape as the curl
-// example in the README.
+// Session management uses HttpOnly cookies (handled automatically by the browser)
+// and CSRF tokens (transmitted via X-CSRF-Token header or form field).
+//
+// State lives in memory; refresh loses it. Server session persists via HttpOnly
+// cookie (browser auto-sends it, JS cannot access). CSRF tokens are generated
+// on login/signup and refreshed on each API response.
+//
+// ─── Session & Auth Strategy ──────────────────────────────────────────────────
+//
+// 1. User logs in → server creates HttpOnly cookie + returns CSRF token
+// 2. Client stores CSRF token in memory (state.csrfToken)
+// 3. On subsequent requests:
+//    - Browser auto-sends HttpOnly cookie with request
+//    - Client includes CSRF token in X-CSRF-Token header
+//    - Server validates both
+// 4. On 401 Unauthorized (session expired):
+//    - Redirect to login
+//    - Clear client-side state
+// 5. On 403 Forbidden (CSRF token invalid):
+//    - Attempt refresh via a dedicated endpoint
+//    - If refresh succeeds, retry original request
+//    - If refresh fails, redirect to login
 
 (function () {
   'use strict';
@@ -11,24 +30,199 @@
   // state
   // -----------------------------------------------------------------
 
-  const LS_KEY = 'genie.session.v1';
-  const LS_BASE = 'genie.apibase.v1';
-
   const state = {
-    base: localStorage.getItem(LS_BASE) || '/v1',
-    token: null,
-    user: null,
-    documents: [],
-    activeStream: null,
+    base: '/v1',
+    csrfToken: null,      // Current CSRF token (updated after each request)
+    csrfTokenRefresh: null, // Pending refresh attempt (prevents double-refresh)
+    user: null,           // Current user object
+    documents: [],        // Uploaded documents (lost on refresh)
+    activeStream: null,   // Current SSE connection controller
   };
 
-  try {
-    const cached = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if (cached && cached.token && cached.user) {
-      state.token = cached.token;
-      state.user = cached.user;
+  // -----------------------------------------------------------------
+  // CSRF token management
+  // -----------------------------------------------------------------
+
+  /**
+   * extractCSRFTokenFromResponse extracts the CSRF token from the response.
+   * The server can return it via the X-CSRF-Token response header.
+   *
+   * If present, update state.csrfToken. The client must include this token
+   * in all subsequent POST/PUT/DELETE requests.
+   */
+  function extractCSRFTokenFromResponse(resp) {
+    const token = resp.headers.get('X-CSRF-Token');
+    if (token) {
+      state.csrfToken = token;
     }
-  } catch (_) { /* ignore */ }
+  }
+
+  /**
+   * refreshCSRFToken fetches a new CSRF token from the server.
+   *
+   * This is called when the current token is invalid (403 Forbidden).
+   * The endpoint should return a fresh token in the response header.
+   *
+   * Returns the new token if successful, or null if the refresh failed.
+   */
+  async function refreshCSRFToken() {
+    // Prevent multiple concurrent refresh attempts (race condition).
+    if (state.csrfTokenRefresh) {
+      return state.csrfTokenRefresh;
+    }
+
+    const refreshPromise = (async () => {
+      try {
+        const resp = await fetch(state.base.replace(/\/$/, '') + '/csrf-refresh', {
+          method: 'GET',
+          credentials: 'include',  // Include cookies in the request
+        });
+
+        // If CSRF refresh fails (401 = session expired), clear state and redirect.
+        if (resp.status === 401) {
+          clearSession();
+          leaveApp();
+          return null;
+        }
+
+        // If CSRF refresh succeeded, extract the new token.
+        if (resp.ok) {
+          extractCSRFTokenFromResponse(resp);
+          return state.csrfToken;
+        }
+
+        // Any other status is a hard failure.
+        return null;
+      } catch (err) {
+        console.error('CSRF token refresh failed:', err);
+        return null;
+      } finally {
+        state.csrfTokenRefresh = null;
+      }
+    })();
+
+    state.csrfTokenRefresh = refreshPromise;
+    return refreshPromise;
+  }
+
+  /**
+   * clearSession removes all client-side session state.
+   * Note: The HttpOnly cookie is cleared by the server (via logout endpoint).
+   */
+  function clearSession() {
+    state.csrfToken = null;
+    state.user = null;
+    state.documents = [];
+  }
+
+  // -----------------------------------------------------------------
+  // API request interceptor
+  // -----------------------------------------------------------------
+
+  /**
+   * api(path, opts) is the main HTTP client. It handles:
+   * - Adding CSRF token to POST/PUT/DELETE requests
+   * - Extracting new CSRF tokens from responses
+   * - Retrying on CSRF token expiry (403)
+   * - Redirecting on session expiry (401)
+   *
+   * Options:
+   *   method: GET, POST, PUT, DELETE (default: GET)
+   *   json: object to send as JSON body
+   *   headers: custom headers (merged with defaults)
+   *   body: raw body (if json not used)
+   *   credentials: 'include' to send cookies (always set by default)
+   *
+   * Example:
+   *   const result = await api('/users/login', {
+   *     method: 'POST',
+   *     json: { email: 'user@example.com', password: '...' }
+   *   });
+   */
+  async function api(path, opts = {}) {
+    const method = opts.method || 'GET';
+    const headers = Object.assign(
+      {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      opts.headers || {}
+    );
+
+    // Add CSRF token to unsafe methods (POST, PUT, DELETE, PATCH).
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && state.csrfToken) {
+      headers['X-CSRF-Token'] = state.csrfToken;
+    }
+
+    // Build request body.
+    let body = null;
+    if (opts.json !== undefined) {
+      body = JSON.stringify(opts.json);
+    } else if (opts.body !== undefined) {
+      body = opts.body;
+    }
+
+    // Always include credentials (cookies) in the request.
+    const fetchOpts = Object.assign({}, opts, {
+      method,
+      headers,
+      body,
+      credentials: 'include',  // Send HttpOnly cookie with every request
+    });
+
+    // Delete opts.json so fetch() doesn't see it.
+    delete fetchOpts.json;
+
+    const url = state.base.replace(/\/$/, '') + path;
+
+    try {
+      const resp = await fetch(url, fetchOpts);
+
+      // Extract new CSRF token from response header (if present).
+      extractCSRFTokenFromResponse(resp);
+
+      // Handle 401 Unauthorized (session expired).
+      if (resp.status === 401) {
+        clearSession();
+        leaveApp();
+        throw new Error('Your session expired. Please sign in again.');
+      }
+
+      // Handle 403 Forbidden (CSRF token invalid or missing).
+      if (resp.status === 403) {
+        // Attempt to refresh CSRF token once.
+        const newToken = await refreshCSRFToken();
+        if (newToken) {
+          // Retry the original request with the new token.
+          return api(path, opts);
+        }
+        // If refresh failed, treat as session expiry.
+        clearSession();
+        leaveApp();
+        throw new Error('CSRF verification failed. Please sign in again.');
+      }
+
+      // Parse response body.
+      const text = await resp.text();
+      let body = text;
+      try {
+        body = JSON.parse(text);
+      } catch (_) {
+        /* keep as text */
+      }
+
+      // Handle other error status codes.
+      if (!resp.ok) {
+        const message = (body && body.error) || (typeof body === 'string' ? body : resp.statusText);
+        throw new Error(message);
+      }
+
+      return body;
+    } catch (err) {
+      // Rethrow the error for the caller to handle.
+      throw err;
+    }
+  }
 
   // -----------------------------------------------------------------
   // tiny helpers
@@ -37,35 +231,14 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  function show(el) { el.hidden = false; el.style.display = ''; }
-  function hide(el) { el.hidden = true; el.style.display = 'none'; }
-
-  function persistSession() {
-    if (state.token && state.user) {
-      localStorage.setItem(LS_KEY, JSON.stringify({ token: state.token, user: state.user }));
-    } else {
-      localStorage.removeItem(LS_KEY);
-    }
+  function show(el) {
+    el.hidden = false;
+    el.style.display = '';
   }
 
-  async function api(path, opts = {}) {
-    const headers = Object.assign({ 'Accept': 'application/json' }, opts.headers || {});
-    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
-    if (opts.json !== undefined) {
-      headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(opts.json);
-      delete opts.json;
-    }
-    const url = state.base.replace(/\/$/, '') + path;
-    const resp = await fetch(url, Object.assign({}, opts, { headers }));
-    const text = await resp.text();
-    let body = text;
-    try { body = JSON.parse(text); } catch (_) { /* keep as text */ }
-    if (!resp.ok) {
-      const message = (body && body.error) || (typeof body === 'string' ? body : resp.statusText);
-      throw new Error(message);
-    }
-    return body;
+  function hide(el) {
+    el.hidden = true;
+    el.style.display = 'none';
   }
 
   function flash(node, type, message) {
@@ -86,7 +259,9 @@
   };
 
   function activateTab(name) {
-    Object.entries(views).forEach(([k, el]) => { if (k !== 'auth') (k === name ? show(el) : hide(el)); });
+    Object.entries(views).forEach(([k, el]) => {
+      if (k !== 'auth') (k === name ? show(el) : hide(el));
+    });
     $$('.tab').forEach(t => {
       const isActive = t.dataset.tab === name;
       t.classList.toggle('active', isActive);
@@ -196,8 +371,20 @@
     form.style.pointerEvents = 'none';
 
     try {
-      const out = await api('/users/login', { method: 'POST', json: { email, password } });
-      state.token = out.token; state.user = out.user; persistSession();
+      const out = await api('/users/login', {
+        method: 'POST',
+        json: { email, password },
+      });
+
+      // On successful login:
+      // - Server sets HttpOnly cookie (browser auto-sends it)
+      // - Response includes CSRF token
+      // - Store user and token in state
+      state.user = out.user;
+      if (out.csrf_token) {
+        state.csrfToken = out.csrf_token;
+      }
+
       enterApp();
     } catch (err) {
       const message = getUserMessage(err);
@@ -253,8 +440,20 @@
     form.style.pointerEvents = 'none';
 
     try {
-      const out = await api('/users', { method: 'POST', json: { email, name, password } });
-      state.token = out.token; state.user = out.user; persistSession();
+      const out = await api('/users', {
+        method: 'POST',
+        json: { email, name, password },
+      });
+
+      // On successful signup:
+      // - Server sets HttpOnly cookie (browser auto-sends it)
+      // - Response includes CSRF token
+      // - Store user and token in state
+      state.user = out.user;
+      if (out.csrf_token) {
+        state.csrfToken = out.csrf_token;
+      }
+
       enterApp();
     } catch (err) {
       const message = getUserMessage(err);
@@ -266,8 +465,18 @@
     }
   });
 
-  $('#logout').addEventListener('click', () => {
-    state.token = null; state.user = null; persistSession();
+  $('#logout').addEventListener('click', async () => {
+    try {
+      // Call logout API to clear server session.
+      // The server will delete the HttpOnly cookie and invalidate the session.
+      await api('/users/logout', { method: 'POST' });
+    } catch (err) {
+      // Even if logout fails, clear client state and redirect.
+      console.error('Logout error (continuing):', err);
+    }
+
+    // Clear client-side state.
+    clearSession();
     leaveApp();
   });
 
@@ -275,7 +484,9 @@
     hide(views.auth);
     show($('#tabs'));
     show($('#user-chip'));
-    $('#user-chip .user-email').textContent = state.user.email;
+    if (state.user) {
+      $('#user-chip .user-email').textContent = state.user.email;
+    }
     activateTab('ask');
     refreshDocs();
     refreshHealth();
@@ -285,7 +496,9 @@
     show(views.auth);
     hide($('#tabs'));
     hide($('#user-chip'));
-    Object.entries(views).forEach(([k, el]) => { if (k !== 'auth') hide(el); });
+    Object.entries(views).forEach(([k, el]) => {
+      if (k !== 'auth') hide(el);
+    });
   }
 
   // -----------------------------------------------------------------
@@ -311,8 +524,17 @@
     const url = `/documents?description=${encodeURIComponent(desc)}&classification=${encodeURIComponent(cls)}`;
     try {
       const body = await file.arrayBuffer();
-      const out = await api(url, { method: 'POST', body, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
-      state.documents.push({ id: out.id, description: desc || '(no description)', classification: out.classification, kek_id: out.kek_id });
+      const out = await api(url, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      });
+      state.documents.push({
+        id: out.id,
+        description: desc || '(no description)',
+        classification: out.classification,
+        kek_id: out.kek_id,
+      });
       renderDocs();
       form.reset();
       setButtonLoading(btn, false);
@@ -377,13 +599,16 @@
   // ask (sync + streaming)
   // -----------------------------------------------------------------
 
-  function clearEvents() { $('#events').innerHTML = ''; }
+  function clearEvents() {
+    $('#events').innerHTML = '';
+  }
 
   function addEvent(kind, data, klass) {
     const li = document.createElement('li');
     if (klass) li.classList.add(klass);
     li.innerHTML = `<span class="event-kind">${escapeHTML(kind)}</span><span class="event-data"></span>`;
-    li.querySelector('.event-data').textContent = typeof data === 'string' ? data : JSON.stringify(data);
+    li.querySelector('.event-data').textContent =
+      typeof data === 'string' ? data : JSON.stringify(data);
     const list = $('#events');
     list.appendChild(li);
     list.scrollTop = list.scrollHeight;
@@ -391,7 +616,12 @@
 
   function setBanner(text) {
     const el = $('#ai-disclosure');
-    if (text) { el.textContent = text; show(el); } else { hide(el); }
+    if (text) {
+      el.textContent = text;
+      show(el);
+    } else {
+      hide(el);
+    }
   }
 
   function showReport(text) {
@@ -417,7 +647,10 @@
     const btn = $('#btn-ask');
     setButtonLoading(btn, true);
     try {
-      const out = await api('/ask', { method: 'POST', json: { question: q, document_id: docID } });
+      const out = await api('/ask', {
+        method: 'POST',
+        json: { question: q, document_id: docID },
+      });
       if (out.ai_disclosure) setBanner(out.ai_disclosure);
       addEvent('trace', out.trace_id || '');
       addEvent('report', '(received)', 'event-report');
@@ -455,37 +688,57 @@
       method: 'POST',
       signal: ctrl.signal,
       headers: {
-        'Authorization': 'Bearer ' + state.token,
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
+        'X-CSRF-Token': state.csrfToken || '',
       },
       body: JSON.stringify({ question: q, document_id: docID }),
-    }).then(async (resp) => {
-      if (!resp.ok || !resp.body) {
-        addEvent('error', 'http ' + resp.status, 'event-error');
-        return;
-      }
-      const reader = resp.body.getReader();
-      const dec = new TextDecoder();
-      let buf = '';
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        let idx;
-        while ((idx = buf.indexOf('\n\n')) >= 0) {
-          const frame = buf.slice(0, idx);
-          buf = buf.slice(idx + 2);
-          parseSSE(frame);
+      credentials: 'include',  // Include HttpOnly cookie
+    })
+      .then(async (resp) => {
+        // Check for auth errors.
+        if (resp.status === 401) {
+          addEvent('error', 'Session expired. Please sign in again.', 'event-error');
+          clearSession();
+          leaveApp();
+          return;
         }
-      }
-    }).catch((err) => {
-      if (err.name === 'AbortError') return;
-      addEvent('error', err.message || String(err), 'event-error');
-    }).finally(() => {
-      hide($('#btn-stop'));
-      state.activeStream = null;
-    });
+
+        if (resp.status === 403) {
+          addEvent('error', 'CSRF verification failed. Please sign in again.', 'event-error');
+          clearSession();
+          leaveApp();
+          return;
+        }
+
+        if (!resp.ok || !resp.body) {
+          addEvent('error', 'http ' + resp.status, 'event-error');
+          return;
+        }
+
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf('\n\n')) >= 0) {
+            const frame = buf.slice(0, idx);
+            buf = buf.slice(idx + 2);
+            parseSSE(frame);
+          }
+        }
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        addEvent('error', err.message || String(err), 'event-error');
+      })
+      .finally(() => {
+        hide($('#btn-stop'));
+        state.activeStream = null;
+      });
   });
 
   $('#btn-stop').addEventListener('click', () => {
@@ -507,7 +760,11 @@
       return;
     }
     if (event === 'agent.handle') {
-      try { data = JSON.stringify(JSON.parse(data)); } catch (_) { /* leave as string */ }
+      try {
+        data = JSON.stringify(JSON.parse(data));
+      } catch (_) {
+        /* leave as string */
+      }
     }
     addEvent(event, data);
   }
@@ -520,22 +777,30 @@
     try {
       const d = await api('/disclosures');
       $('#disclosures').textContent = JSON.stringify(d, null, 2);
-    } catch (e) { $('#disclosures').textContent = 'error: ' + e.message; }
+    } catch (e) {
+      $('#disclosures').textContent = 'error: ' + e.message;
+    }
 
     const isAdmin = (state.user && state.user.roles || []).includes('admin');
     if (isAdmin) {
       try {
         const inv = await api('/ai-inventory');
         $('#inventory').textContent = JSON.stringify(inv, null, 2);
-      } catch (e) { $('#inventory').textContent = 'error: ' + e.message; }
+      } catch (e) {
+        $('#inventory').textContent = 'error: ' + e.message;
+      }
       try {
         const bom = await api('/aibom');
         $('#aibom').textContent = JSON.stringify(bom, null, 2);
-      } catch (e) { $('#aibom').textContent = 'error: ' + e.message; }
+      } catch (e) {
+        $('#aibom').textContent = 'error: ' + e.message;
+      }
       try {
         const inc = await api('/incidents?limit=20');
         $('#incidents').textContent = JSON.stringify(inc, null, 2);
-      } catch (e) { $('#incidents').textContent = 'error: ' + e.message; }
+      } catch (e) {
+        $('#incidents').textContent = 'error: ' + e.message;
+      }
     }
   }
 
@@ -550,7 +815,6 @@
     const v = $('#settings-base').value.trim();
     if (!v) return;
     state.base = v;
-    localStorage.setItem(LS_BASE, v);
     $('#api-base').textContent = v;
     refreshHealth();
   });
@@ -571,13 +835,17 @@
   // -----------------------------------------------------------------
 
   function escapeHTML(s) {
-    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+    );
   }
 
   // Error handling helpers
   const ERROR_MESSAGES = {
     'Failed to fetch': 'Network error. Check your connection and try again.',
-    '401': 'Your session expired. Please sign in again.',
+    'Your session expired. Please sign in again.': 'Your session expired. Please sign in again.',
+    'CSRF verification failed. Please sign in again.':
+      'CSRF verification failed. Please sign in again.',
     '403': 'You do not have permission to perform this action.',
     '404': 'Not found. Please check your input.',
     '500': 'Server error. Our team has been notified. Please try again later.',
@@ -586,7 +854,11 @@
 
   function getUserMessage(error) {
     const msg = error.message || String(error);
-    return ERROR_MESSAGES[msg] || ERROR_MESSAGES[msg.split(' ')[0]] || msg;
+    return (
+      ERROR_MESSAGES[msg] ||
+      ERROR_MESSAGES[msg.split(' ')[0]] ||
+      msg
+    );
   }
 
   function showFieldError(fieldId, message) {
@@ -624,22 +896,36 @@
   }
 
   // Clear errors on field focus
-  document.addEventListener('focus', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-      e.target.setAttribute('aria-invalid', 'false');
-      const errorId = e.target.getAttribute('aria-describedby')?.split(' ').find(id => id.includes('-error'));
-      if (errorId) {
-        const errorEl = $(errorId);
-        if (errorEl) {
-          errorEl.textContent = '';
+  document.addEventListener(
+    'focus',
+    (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        e.target.setAttribute('aria-invalid', 'false');
+        const errorId = e.target.getAttribute('aria-describedby')?.split(' ').find(id => id.includes('-error'));
+        if (errorId) {
+          const errorEl = $(errorId);
+          if (errorEl) {
+            errorEl.textContent = '';
+          }
         }
       }
-    }
-  }, true);
+    },
+    true
+  );
 
   // -----------------------------------------------------------------
   // boot
   // -----------------------------------------------------------------
 
-  if (state.token && state.user) enterApp();
+  // On initial load, check if we have an active session and user state.
+  // If the server still has a valid HttpOnly cookie, the next API call will
+  // succeed. If the cookie expired, the api() function will get a 401 and
+  // redirect to login automatically.
+  //
+  // Note: We cannot check the session directly from JavaScript (HttpOnly),
+  // so we start in "logged out" state and let the first request determine
+  // actual session status.
+  if (state.user) {
+    enterApp();
+  }
 })();

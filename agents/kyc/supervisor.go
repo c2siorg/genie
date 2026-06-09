@@ -8,6 +8,12 @@ import (
 	"github.com/c2siorg/genie/pkg/kyc"
 )
 
+// ID is the canonical agent identifier for the KYC onboarding supervisor
+// (matches the platform-wide `ID = "..."` convention enforced by the agent registry).
+const (
+	ID = "kyc_onboarding_supervisor"
+)
+
 // OnboardingAgentSupervisor orchestrates the KYC/Onboarding workflow
 // across DocumentProcessor, IdentityVerifier, SanctionsChecker, and OnboardingApprover sub-agents.
 type OnboardingAgentSupervisor struct {
@@ -21,8 +27,7 @@ type OnboardingAgentSupervisor struct {
 
 // ID returns the supervisor agent's unique identifier.
 func (s *OnboardingAgentSupervisor) ID() string {
-	// TODO: implement
-	panic("not implemented")
+	return ID
 }
 
 // Name returns the supervisor agent's display name.

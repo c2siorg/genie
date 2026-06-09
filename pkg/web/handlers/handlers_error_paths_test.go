@@ -42,9 +42,9 @@ func TestMerchantErrorPath_InvalidGSTVariants(t *testing.T) {
 // TestMerchantErrorPath_InvalidBusinessTypeVariants tests business type validation
 func TestMerchantErrorPath_InvalidBusinessTypeVariants(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		btype string
-		want bool
+		want  bool
 	}{
 		{"valid_sole", "sole", true},
 		{"valid_llp", "llp", true},
@@ -91,7 +91,7 @@ func TestPaymentErrorPath_AccountValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Simulate validation logic
 			hasError := (tt.from == "" || tt.to == "" ||
-						 tt.from == tt.to || tt.amount <= 0)
+				tt.from == tt.to || tt.amount <= 0)
 
 			if hasError != tt.wantError {
 				t.Errorf("want error: %v, got: %v", tt.wantError, hasError)
@@ -139,11 +139,11 @@ func TestPaymentErrorPath_AmountBoundaries(t *testing.T) {
 // TestMerchantErrorPath_LimitValidation tests limit field validation
 func TestMerchantErrorPath_LimitValidation(t *testing.T) {
 	tests := []struct {
-		name       string
-		daily      int64
-		singleTxn  int64
-		wantError  bool
-		errorType  string
+		name      string
+		daily     int64
+		singleTxn int64
+		wantError bool
+		errorType string
 	}{
 		{"valid_limits", 100000, 50000, false, ""},
 		{"zero_daily", 0, 50000, true, "zero_daily"},
@@ -157,7 +157,7 @@ func TestMerchantErrorPath_LimitValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hasError := (tt.daily <= 0 || tt.singleTxn <= 0 ||
-						 tt.singleTxn > tt.daily)
+				tt.singleTxn > tt.daily)
 
 			if hasError != tt.wantError {
 				t.Errorf("want error: %v, got: %v", tt.wantError, hasError)
@@ -271,10 +271,10 @@ func TestCommerceErrorPath_OrderValidation(t *testing.T) {
 // TestCommerceErrorPath_ItemPriceValidation tests item price bounds
 func TestCommerceErrorPath_ItemPriceValidation(t *testing.T) {
 	tests := []struct {
-		name       string
-		price      int64
-		quantity   int
-		wantError  bool
+		name      string
+		price     int64
+		quantity  int
+		wantError bool
 	}{
 		{"valid_item", 10000, 1, false},
 		{"zero_price", 0, 1, true},
@@ -462,9 +462,9 @@ func TestConsentErrorPath_ConsentTypeValidation(t *testing.T) {
 // TestConsentErrorPath_ExpiryValidation tests consent expiry validation
 func TestConsentErrorPath_ExpiryValidation(t *testing.T) {
 	tests := []struct {
-		name    string
-		expiry  int
-		valid   bool
+		name   string
+		expiry int
+		valid  bool
 	}{
 		{"one_day", 1, true},
 		{"thirty_days", 30, true},

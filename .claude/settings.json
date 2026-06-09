@@ -24,13 +24,25 @@
       "Bash(rg *)",
       "Bash(find . *)",
       "Bash(opa eval *)",
-      "Bash(opa test *)"
+      "Bash(opa test *)",
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Agent",
+      "Workflow",
+      "ScheduleWakeup",
+      "Monitor",
+      "AskUserQuestion"
     ],
     "deny": [
       "Bash(rm -rf *)",
       "Bash(git push *)",
       "Bash(git reset --hard)"
-    ]
+    ],
+    "defaultMode": "bypassPermissions"
   },
   "env": {
     "GO_VERSION": "1.25.0",

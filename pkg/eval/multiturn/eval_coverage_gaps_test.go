@@ -54,7 +54,7 @@ func TestExecConfigResolved(t *testing.T) {
 // TestBuildTools_AllTools tests buildTools with multiple tools
 func TestBuildTools_AllTools(t *testing.T) {
 	mockTools := map[string]MockToolConfig{
-		"add": {Description: "add two numbers", Result: "5"},
+		"add":      {Description: "add two numbers", Result: "5"},
 		"subtract": {Description: "subtract numbers", Result: "1"},
 	}
 
@@ -511,7 +511,7 @@ func TestLLMJudge_ValidScore(t *testing.T) {
 		ToolCallOrder: []string{"tool1"},
 	}
 	target := Target{
-		OriginalTask:   "find something",
+		OriginalTask:    "find something",
 		MockToolResults: map[string]string{"tool1": "result1"},
 	}
 	cfg := JudgeConfig{Provider: "ollama", BaseURL: server.URL, Model: "test"}

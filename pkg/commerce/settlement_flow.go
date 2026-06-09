@@ -36,6 +36,10 @@ func ConsolidateSettlementBatch(ctx context.Context, input SettlementBatchInput)
 	totalBefore := int64(0)
 
 	for _, order := range input.Orders {
+		if order == nil {
+			// Skip nil orders
+			continue
+		}
 		if order.Status != StatusFulfilled {
 			// Skip unfulfilled orders
 			continue
