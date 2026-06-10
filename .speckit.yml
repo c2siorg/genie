@@ -63,6 +63,16 @@ specifications:
     types: 10
     tests: 12
 
+  # Phase 7: Advisor — Personalized recommendations
+  - name: advisor
+    title: "Advisor Workspace"
+    phase: 7
+    status: planned
+    file: specs/phase7_advisor.md
+    endpoints: 6
+    types: 8
+    tests: 16
+
 compliance:
   frameworks:
     - RBI FREE-AI

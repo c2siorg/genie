@@ -39,7 +39,6 @@
     ],
     "deny": [
       "Bash(rm -rf *)",
-      "Bash(git push *)",
       "Bash(git reset --hard)"
     ],
     "defaultMode": "bypassPermissions"
