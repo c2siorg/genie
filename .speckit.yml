@@ -73,6 +73,16 @@ specifications:
     types: 8
     tests: 16
 
+  # Phase 8: Analytics — Financial dashboards & insights
+  - name: analytics
+    title: "Analytics Workspace"
+    phase: 8
+    status: planned
+    file: specs/phase8_analytics.md
+    endpoints: 8
+    types: 10
+    tests: 18
+
 compliance:
   frameworks:
     - RBI FREE-AI

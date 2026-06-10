@@ -565,6 +565,44 @@ prometheus: ## Open Prometheus UI in browser
 	  echo "open http://localhost:9090 in your browser"
 
 # ─────────────────────────────────────────────────────────────────────────────
+## Spec Validation (Spec-Kit Integration)
+# ─────────────────────────────────────────────────────────────────────────────
+
+.PHONY: spec-validate-all
+spec-validate-all: ## Validate all specs against implementation
+	@echo "Validating all phase specifications..."
+	@./scripts/validate-specs.sh all
+	@echo "spec-validate-all: PASS"
+
+.PHONY: spec-validate-phase2
+spec-validate-phase2: ## Validate Phase 2 (Commerce) spec
+	@./scripts/validate-specs.sh 2
+
+.PHONY: spec-validate-phase3
+spec-validate-phase3: ## Validate Phase 3 (Compliance) spec
+	@./scripts/validate-specs.sh 3
+
+.PHONY: spec-validate-phase4
+spec-validate-phase4: ## Validate Phase 4 (Governance) spec
+	@./scripts/validate-specs.sh 4
+
+.PHONY: spec-validate-phase5
+spec-validate-phase5: ## Validate Phase 5 (Evaluation) spec
+	@./scripts/validate-specs.sh 5
+
+.PHONY: spec-validate-phase6
+spec-validate-phase6: ## Validate Phase 6 (Assistant) spec
+	@./scripts/validate-specs.sh 6
+
+.PHONY: spec-validate-phase7
+spec-validate-phase7: ## Validate Phase 7 (Advisor) spec
+	@./scripts/validate-specs.sh 7
+
+.PHONY: spec-strict
+spec-strict: ## Validate all specs in strict mode (fail on warnings)
+	@STRICT=true ./scripts/validate-specs.sh all
+
+# ─────────────────────────────────────────────────────────────────────────────
 ## Tooling
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -598,7 +636,7 @@ check: vet build test-fast ## Quick local sanity check: vet + build + tests (no 
 	@echo "check: PASS"
 
 .PHONY: ci
-ci: tidy-check vet lint build test cover-check agenttools-test singleturn-test opa-test hitl-test memory-test supervisor-test mcp-tools-test rag-test reflexion-test runner-test eval ci-eval ## Full CI pipeline (run before push)
+ci: tidy-check vet lint build test cover-check agenttools-test singleturn-test opa-test hitl-test memory-test supervisor-test mcp-tools-test rag-test reflexion-test runner-test eval ci-eval spec-strict ## Full CI pipeline (run before push)
 	@echo ""
 	@echo "╔══════════════════════════════════╗"
 	@echo "║         CI: ALL PASSED           ║"
