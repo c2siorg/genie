@@ -1,0 +1,235 @@
+---
+# Genie Platform - Staging Deployment
+# Phases 0-6: Foundation, Commerce, Compliance, Governance, Evaluation, Assistant
+# Status: Ready for deployment to staging cluster
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: genie-staging
+  labels:
+    environment: staging
+    platform: genie
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: genie-config
+  namespace: genie-staging
+data:
+  GENIE_LLM: "ollama"
+  GENIE_OLLAMA_URL: "http://ollama.genie-staging.svc.cluster.local:11434"
+  GENIE_OLLAMA_CHAT: "qwen3.5:latest"
+  GENIE_OLLAMA_EMBED: "nomic-embed-text"
+  DATABASE_HOST: "postgres.genie-staging.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "genie_staging"
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "staging"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: genie-api
+  namespace: genie-staging
+  labels:
+    app: genie-api
+    phase: complete
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: genie-api
+  template:
+    metadata:
+      labels:
+        app: genie-api
+        phase: complete
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: genie-api
+        image: YOUR_REGISTRY/genie:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: metrics
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: GENIE_LLM
+          valueFrom:
+            configMapKeyRef:
+              name: genie-config
+              key: GENIE_LLM
+        - name: GENIE_OLLAMA_URL
+          valueFrom:
+            configMapKeyRef:
+              name: genie-config
+              key: GENIE_OLLAMA_URL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: genie-secrets
+              key: database-url
+        - name: GENIE_KEK_BASE64
+          valueFrom:
+            secretKeyRef:
+              name: genie-secrets
+              key: kek
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: genie-config
+              key: LOG_LEVEL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/genie
+      volumes:
+      - name: logs
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: genie-api
+  namespace: genie-staging
+  labels:
+    app: genie-api
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 8081
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: genie-api
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: genie-api
+  namespace: genie-staging
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: genie-api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: genie-api
+  namespace: genie-staging
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: genie-api
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: genie-api
+  namespace: genie-staging
+spec:
+  podSelector:
+    matchLabels:
+      app: genie-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: genie-staging
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: genie-staging
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 11434 # Ollama
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53    # DNS
+    - protocol: UDP
+      port: 53
+
+---
+# Rollout status can be checked with:
+# kubectl rollout status deployment/genie-api -n genie-staging
+#
+# Logs can be viewed with:
+# kubectl logs -f deployment/genie-api -n genie-staging
+#
+# To scale manually:
+# kubectl scale deployment genie-api --replicas=3 -n genie-staging
