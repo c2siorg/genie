@@ -1,0 +1,53 @@
+{
+  "domain": "lineage",
+  "category": "extended",
+  "description": "Additional lineage failure-mode coverage (FM-LA-004..007) plus a clean case. LineageJudgeInput scoring (threshold 0.6): hash_chain_valid +0.4, all_required_fields_present +0.35, timestamps_monotonic +0.25.",
+  "total_cases": 5,
+  "cases": [
+    {
+      "id": "LA-OK-003",
+      "domain": "lineage",
+      "failure_mode": "none",
+      "scenario": "Intact trail with full field set and ordered timestamps.",
+      "input": {"order_id": "ORD-LA-203", "hash_chain_valid": true, "all_required_fields_present": true, "timestamps_monotonic": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "lineage", "severity": "low", "category": "complete"}
+    },
+    {
+      "id": "LA-FAIL-004",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-004",
+      "scenario": "Broken hash chain with reordered timestamps — tamper plus clock anomaly.",
+      "input": {"order_id": "ORD-LA-204", "hash_chain_valid": false, "all_required_fields_present": true, "timestamps_monotonic": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "critical", "category": "tamper"}
+    },
+    {
+      "id": "LA-FAIL-005",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-005",
+      "scenario": "Broken hash chain and missing required fields.",
+      "input": {"order_id": "ORD-LA-205", "hash_chain_valid": false, "all_required_fields_present": false, "timestamps_monotonic": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "critical", "category": "tamper"}
+    },
+    {
+      "id": "LA-FAIL-006",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-006",
+      "scenario": "Intact hash but missing fields and non-monotonic timestamps.",
+      "input": {"order_id": "ORD-LA-206", "hash_chain_valid": true, "all_required_fields_present": false, "timestamps_monotonic": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "high", "category": "completeness"}
+    },
+    {
+      "id": "LA-FAIL-007",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-007",
+      "scenario": "Complete corruption: broken chain, missing fields, reordered timestamps.",
+      "input": {"order_id": "ORD-LA-207", "hash_chain_valid": false, "all_required_fields_present": false, "timestamps_monotonic": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "critical", "category": "integrity"}
+    }
+  ]
+}

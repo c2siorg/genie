@@ -1,0 +1,53 @@
+{
+  "domain": "lineage",
+  "category": "core",
+  "description": "Audit-trail integrity cases keyed to LineageJudgeInput. Deterministic judge (threshold 0.6): hash_chain_valid +0.4, all_required_fields_present +0.35, timestamps_monotonic +0.25.",
+  "total_cases": 5,
+  "cases": [
+    {
+      "id": "LA-OK-001",
+      "domain": "lineage",
+      "failure_mode": "none",
+      "scenario": "Intact audit trail: hash chain valid, all required fields present, timestamps monotonic.",
+      "input": {"order_id": "ORD-LA-001", "hash_chain_valid": true, "all_required_fields_present": true, "timestamps_monotonic": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "lineage", "severity": "low", "category": "complete"}
+    },
+    {
+      "id": "LA-OK-002",
+      "domain": "lineage",
+      "failure_mode": "none",
+      "scenario": "Second intact trail variant — full integrity.",
+      "input": {"order_id": "ORD-LA-002", "hash_chain_valid": true, "all_required_fields_present": true, "timestamps_monotonic": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "lineage", "severity": "low", "category": "complete"}
+    },
+    {
+      "id": "LA-FAIL-001",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-001",
+      "scenario": "Tampered chain: a hash link is broken — must be detected even though fields and timestamps look fine.",
+      "input": {"order_id": "ORD-LA-101", "hash_chain_valid": false, "all_required_fields_present": true, "timestamps_monotonic": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "critical", "category": "tamper"}
+    },
+    {
+      "id": "LA-FAIL-002",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-002",
+      "scenario": "Incomplete audit entries: required fields missing — must be detected.",
+      "input": {"order_id": "ORD-LA-102", "hash_chain_valid": true, "all_required_fields_present": false, "timestamps_monotonic": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "high", "category": "completeness"}
+    },
+    {
+      "id": "LA-FAIL-003",
+      "domain": "lineage",
+      "failure_mode": "FM-LA-003",
+      "scenario": "Non-monotonic timestamps (clock rollback / reordering) plus missing fields — must be detected.",
+      "input": {"order_id": "ORD-LA-103", "hash_chain_valid": true, "all_required_fields_present": false, "timestamps_monotonic": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "lineage", "severity": "high", "category": "timestamp"}
+    }
+  ]
+}

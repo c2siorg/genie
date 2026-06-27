@@ -534,3 +534,86 @@ func (mlj *MockLineageJudge) Calibrate(ctx context.Context, samples []LineageJud
 	result.Samples = calibrationSamples
 	return result, nil
 }
+
+// MockMerchantJudge scores merchant onboarding/settlement readiness using
+// deterministic rules (no LLM). It combines multiple independent facts (KYB,
+// bank verification, risk, settlement config, dispute SLA) into a verdict, so a
+// failing case requires a genuine rule combination — not a single pre-encoded
+// "approved" flag.
+type MockMerchantJudge struct {
+	rubricID   string
+	rubricName string
+}
+
+// NewMockMerchantJudge creates a new deterministic merchant judge.
+func NewMockMerchantJudge() *MockMerchantJudge {
+	return &MockMerchantJudge{
+		rubricID:   "RB-MC-001",
+		rubricName: "Merchant Onboarding & Settlement Readiness",
+	}
+}
+
+// Name returns the judge's name.
+func (mmj *MockMerchantJudge) Name() string { return "MockMerchantJudge" }
+
+// Evaluate assesses merchant readiness deterministically (threshold 0.6):
+// KYB verified +0.3, bank verified +0.3, risk acceptable (<50) +0.2, settlement
+// configured +0.2; a breached dispute SLA is a hard -0.4 penalty on top.
+func (mmj *MockMerchantJudge) Evaluate(ctx context.Context, input MerchantJudgeInput) (Verdict, error) {
+	var score float64
+	var reason, evidence string
+
+	if input.KYBVerified {
+		score += 0.3
+		evidence = "KYB verified"
+	} else {
+		score -= 0.3
+		reason = "KYB not verified"
+	}
+
+	if input.BankAccountVerified {
+		score += 0.3
+		evidence += "; bank account verified"
+	} else {
+		score -= 0.3
+		reason += "; bank account not verified"
+	}
+
+	if input.RiskScore < 50 {
+		score += 0.2
+		evidence += "; risk acceptable"
+	} else {
+		score -= 0.2
+		reason += "; risk too high"
+	}
+
+	if input.SettlementConfigured {
+		score += 0.2
+		evidence += "; settlement configured"
+	} else {
+		score -= 0.2
+		reason += "; settlement not configured"
+	}
+
+	if input.DisputeSLABreached {
+		score -= 0.4
+		reason += "; dispute SLA breached"
+	}
+
+	if score < 0 {
+		score = 0
+	}
+	if score > 1 {
+		score = 1
+	}
+
+	return Verdict{
+		Pass:        score >= 0.6,
+		Score:       score,
+		RubricID:    mmj.rubricID,
+		RubricName:  mmj.rubricName,
+		Reason:      reason,
+		Evidence:    evidence,
+		EvaluatedAt: time.Now(),
+	}, nil
+}

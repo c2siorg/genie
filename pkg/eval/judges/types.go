@@ -198,6 +198,24 @@ type LineageEntry struct {
 	Data string
 }
 
+// MerchantJudgeInput is the input to merchant onboarding/settlement evaluation.
+type MerchantJudgeInput struct {
+	// MerchantID uniquely identifies the merchant
+	MerchantID string
+	// KYBVerified true if Know-Your-Business verification passed
+	KYBVerified bool
+	// BankAccountVerified true if settlement bank account was penny-drop verified
+	BankAccountVerified bool
+	// RiskScore merchant risk score (0.0-100.0); lower is safer
+	RiskScore float64
+	// SettlementConfigured true if a valid settlement schedule/account is set
+	SettlementConfigured bool
+	// DisputeSLABreached true if an open dispute exceeded its resolution SLA
+	DisputeSLABreached bool
+	// Metadata additional context
+	Metadata map[string]string
+}
+
 // Judge is the common interface for all judge types.
 type Judge interface {
 	// Evaluate runs judgment on the input and returns a verdict.

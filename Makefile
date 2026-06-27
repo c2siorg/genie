@@ -265,15 +265,20 @@ eval-cover: ## Run eval package tests with coverage
 .PHONY: ci-eval
 ci-eval: ci-eval-golden ci-judge-validation ## Master target: run all regression + judge accuracy tests
 
+.PHONY: eval-golden
+eval-golden: ## Run the deterministic golden gate (Track A, offline) with a report
+	$(GO) run ./cmd/eval-golden
+
 .PHONY: ci-eval-golden
-ci-eval-golden: ## Run golden dataset regression tests (300+ cases, 90% pass gate)
-	@echo "running regression tests on golden dataset..."
-	$(GO) test -race -v -run TestGoldenDataset_AllCases ./pkg/eval
+ci-eval-golden: ## Golden dataset gate — real deterministic scoring, offline, CI-safe (Track A)
+	@echo "running golden gate (deterministic judges, offline)..."
+	$(GO) test -race -count=1 -run "TestGoldenGate|TestEvaluateCase|TestLoadGoldenDir|TestExpectedVerdict" ./pkg/eval/golden
+	$(GO) run ./cmd/eval-golden
 
 .PHONY: ci-judge-validation
-ci-judge-validation: ## Validate judge accuracy on test set (TPR/TNR ≥85%)
-	@echo "validating judge accuracy and failure mode coverage..."
-	$(GO) test -race -v -run "TestJudgeAccuracy_OnTestSet|TestFailureModeCoverage" ./pkg/eval
+ci-judge-validation: ## Validate the LLM judges (needs Ollama/OPENAI_API_KEY — nightly, not PR)
+	@echo "validating LLM judges (requires an LLM backend)..."
+	$(GO) test -race -count=1 ./pkg/eval/judges/...
 
 # ─────────────────────────────────────────────────────────────────────────────
 ## Governance & safety

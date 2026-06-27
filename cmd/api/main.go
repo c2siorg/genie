@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -304,6 +305,30 @@ func run() error {
 	// Constitution + LLM-as-judge — only enable if the constitution YAML loads.
 	if cst, err := constitution.Load("config/constitution.yaml"); err == nil {
 		register(auditor.New(evalStore).WithJudge(llmStack.Provider, cst, llmStack.Model))
+	}
+
+	// ── Agent decoupling toggle (Week 3) ───────────────────────────────────
+	// Every agent above runs IN-PROCESS by default. Setting
+	// GENIE_AGENT_<ID>_MODE=http (plus GENIE_AGENT_<ID>_URL) REPLACES that one
+	// agent with an HTTPRegistryAgent that proxies to a remote agent service —
+	// the registry replaces by ID. This is additive and strictly opt-in: with no
+	// env vars set, the backend behaves exactly as before. Once every agent is
+	// validated in http mode, the in-process imports/registrations above can be
+	// removed to satisfy the "zero agent code in backend" mandate.
+	agentToken := os.Getenv("GENIE_AGENT_TOKEN")
+	for _, def := range registry.AllLegacyAgents {
+		key := "GENIE_AGENT_" + strings.ToUpper(def.ID) + "_MODE"
+		if os.Getenv(key) != "http" {
+			continue // default: keep the in-process agent
+		}
+		url := os.Getenv("GENIE_AGENT_" + strings.ToUpper(def.ID) + "_URL")
+		if url == "" {
+			logger.Error("agent set to http mode but URL missing; keeping in-process",
+				"agent", def.ID, "expected_env", "GENIE_AGENT_"+strings.ToUpper(def.ID)+"_URL")
+			continue
+		}
+		register(registry.NewHTTPRegistryAgent(def, url, agentToken))
+		logger.Info("agent switched to remote HTTP proxy", "agent", def.ID, "url", url)
 	}
 
 	incidentStore := postgres.NewIncidentStore(db)

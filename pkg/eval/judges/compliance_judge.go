@@ -12,9 +12,9 @@ import (
 //   - VelocityEnforcement: transaction velocity limits enforced
 //   - AuditTrails: compliance decisions fully logged with evidence
 type ComplianceJudge struct {
-	cfg        JudgeConfig
-	rubricID   string
-	rubricName string
+	cfg         JudgeConfig
+	rubricID    string
+	rubricName  string
 	calibration *CalibrationResult
 }
 

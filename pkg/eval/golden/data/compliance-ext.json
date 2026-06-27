@@ -1,0 +1,62 @@
+{
+  "domain": "compliance",
+  "category": "extended",
+  "description": "Additional compliance failure-mode coverage (FM-CO-005..009) plus a clean case. ComplianceJudgeInput scoring (threshold 0.6): KYC verified +0.3, AML<30 +0.3, !velocity +0.2, consent +0.2.",
+  "total_cases": 6,
+  "cases": [
+    {
+      "id": "CO-OK-004",
+      "domain": "compliance",
+      "failure_mode": "none",
+      "scenario": "Verified low-risk customer, within velocity, consent on file.",
+      "input": {"customer_id": "CUST-204", "order_id": "ORD-CO-204", "kyc_status": "verified", "aml_risk_score": 15, "velocity_exceeded": false, "consent_provided": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "compliance", "severity": "low", "category": "approved"}
+    },
+    {
+      "id": "CO-FAIL-005",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-005",
+      "scenario": "High AML risk and velocity exceeded — layering pattern must block.",
+      "input": {"customer_id": "CUST-205", "order_id": "ORD-CO-205", "kyc_status": "verified", "aml_risk_score": 60, "velocity_exceeded": true, "consent_provided": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "critical", "category": "aml"}
+    },
+    {
+      "id": "CO-FAIL-006",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-006",
+      "scenario": "Pending KYC combined with elevated AML risk — must block.",
+      "input": {"customer_id": "CUST-206", "order_id": "ORD-CO-206", "kyc_status": "pending", "aml_risk_score": 40, "velocity_exceeded": false, "consent_provided": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "high", "category": "kyc"}
+    },
+    {
+      "id": "CO-FAIL-007",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-007",
+      "scenario": "Velocity exceeded with consent withdrawn — data-access violation plus limit breach.",
+      "input": {"customer_id": "CUST-207", "order_id": "ORD-CO-207", "kyc_status": "verified", "aml_risk_score": 10, "velocity_exceeded": true, "consent_provided": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "high", "category": "consent"}
+    },
+    {
+      "id": "CO-FAIL-008",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-008",
+      "scenario": "Sanctioned profile: failed KYC, very high AML, velocity exceeded, no consent.",
+      "input": {"customer_id": "CUST-208", "order_id": "ORD-CO-208", "kyc_status": "failed", "aml_risk_score": 90, "velocity_exceeded": true, "consent_provided": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "critical", "category": "sanctions"}
+    },
+    {
+      "id": "CO-FAIL-009",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-009",
+      "scenario": "Pending KYC with consent missing — onboarding incomplete, must block.",
+      "input": {"customer_id": "CUST-209", "order_id": "ORD-CO-209", "kyc_status": "pending", "aml_risk_score": 10, "velocity_exceeded": false, "consent_provided": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "high", "category": "kyc"}
+    }
+  ]
+}

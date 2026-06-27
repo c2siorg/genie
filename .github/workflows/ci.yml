@@ -47,6 +47,20 @@ jobs:
       - name: Test (must pass) + coverage profile
         run: go test -count=1 -coverprofile=coverage.out ./...
 
+      # Track A of the eval framework: the deterministic golden gate. Runs
+      # offline (no LLM/Ollama) on every PR and fails the build if any case's
+      # judge verdict diverges from its asserted verdict. The LLM-judge
+      # calibration (Track B, `make ci-judge-validation`) runs nightly, not here.
+      - name: Golden eval gate (deterministic, offline)
+        run: go run ./cmd/eval-golden | tee golden-eval-report.txt
+
+      - name: Upload golden eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-eval-report
+          path: golden-eval-report.txt
+
       - name: Enforce coverage floor (ratchet)
         run: |
           floor=$(grep -E '^COVER_MIN' Makefile | head -1 | sed -E 's/[^0-9]*([0-9]+).*/\1/')

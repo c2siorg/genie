@@ -13,9 +13,9 @@ import (
 //   - TimestampMonotonicity: timestamps strictly increasing within order
 //   - CompleteLogs: all required audit fields present
 type LineageJudge struct {
-	cfg        JudgeConfig
-	rubricID   string
-	rubricName string
+	cfg         JudgeConfig
+	rubricID    string
+	rubricName  string
 	calibration *CalibrationResult
 }
 

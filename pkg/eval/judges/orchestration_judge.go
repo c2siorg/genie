@@ -12,9 +12,9 @@ import (
 //   - MultiAgentConsistency: payment/settlement agents called with proper sequencing
 //   - IdempotencyEnforcement: retry requests use idempotency keys
 type OrchestrationJudge struct {
-	cfg        JudgeConfig
-	rubricID   string
-	rubricName string
+	cfg         JudgeConfig
+	rubricID    string
+	rubricName  string
 	calibration *CalibrationResult
 }
 

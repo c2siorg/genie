@@ -1,0 +1,62 @@
+{
+  "domain": "orchestration",
+  "category": "extended",
+  "description": "Additional orchestration failure-mode coverage (FM-OR-004..008) plus a clean case. OrchestrationJudgeInput scoring (threshold 0.6): transition_valid +0.35; (settlement_initiated && !payment_confirmed) -0.35 / (steps non-empty && payment_confirmed) +0.35 / else -0.35; idempotency_key present +0.3.",
+  "total_cases": 6,
+  "cases": [
+    {
+      "id": "OR-OK-003",
+      "domain": "orchestration",
+      "failure_mode": "none",
+      "scenario": "Valid mid-workflow transition with payment confirmed and idempotency key.",
+      "input": {"order_id": "ORD-OR-203", "step_sequence": ["OrderCreated", "PaymentInitiated", "PaymentConfirmed"], "current_step": "PaymentConfirmed", "previous_step": "PaymentInitiated", "transition_valid": true, "payment_confirmed": true, "settlement_initiated": false, "idempotency_key": "idem-or-203"},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "orchestration", "severity": "low", "category": "valid"}
+    },
+    {
+      "id": "OR-FAIL-004",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-004",
+      "scenario": "Settlement initiated before payment confirmation on an invalid transition.",
+      "input": {"order_id": "ORD-OR-204", "step_sequence": ["OrderCreated", "SettlementInitiated"], "current_step": "SettlementInitiated", "previous_step": "OrderCreated", "transition_valid": false, "payment_confirmed": false, "settlement_initiated": true, "idempotency_key": "idem-or-204"},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "critical", "category": "ordering"}
+    },
+    {
+      "id": "OR-FAIL-005",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-005",
+      "scenario": "Valid transition with confirmed payment but no idempotency key — replay risk.",
+      "input": {"order_id": "ORD-OR-205", "step_sequence": ["OrderCreated", "PaymentInitiated", "PaymentConfirmed"], "current_step": "PaymentConfirmed", "previous_step": "PaymentInitiated", "transition_valid": true, "payment_confirmed": true, "settlement_initiated": false, "idempotency_key": ""},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "high", "category": "idempotency"}
+    },
+    {
+      "id": "OR-FAIL-006",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-006",
+      "scenario": "Invalid transition AND settlement-before-payment, idempotency present but insufficient.",
+      "input": {"order_id": "ORD-OR-206", "step_sequence": ["OrderCreated", "SettlementInitiated"], "current_step": "SettlementInitiated", "previous_step": "OrderCreated", "transition_valid": false, "payment_confirmed": false, "settlement_initiated": true, "idempotency_key": "idem-or-206"},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "critical", "category": "transition"}
+    },
+    {
+      "id": "OR-FAIL-007",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-007",
+      "scenario": "Empty step sequence with no payment confirmation — workflow context lost.",
+      "input": {"order_id": "ORD-OR-207", "step_sequence": [], "current_step": "Unknown", "previous_step": "", "transition_valid": true, "payment_confirmed": false, "settlement_initiated": false, "idempotency_key": "idem-or-207"},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "high", "category": "state_loss"}
+    },
+    {
+      "id": "OR-FAIL-008",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-008",
+      "scenario": "Invalid transition, no usable steps, and missing idempotency key.",
+      "input": {"order_id": "ORD-OR-208", "step_sequence": [], "current_step": "Unknown", "previous_step": "", "transition_valid": false, "payment_confirmed": false, "settlement_initiated": false, "idempotency_key": ""},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "critical", "category": "integrity"}
+    }
+  ]
+}

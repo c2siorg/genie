@@ -1,0 +1,80 @@
+{
+  "domain": "merchant",
+  "category": "core",
+  "description": "Merchant onboarding/settlement readiness cases keyed to MerchantJudgeInput. Deterministic judge (threshold 0.6): kyb_verified +0.3, bank_account_verified +0.3, risk_score<50 +0.2, settlement_configured +0.2, dispute_sla_breached -0.4.",
+  "total_cases": 8,
+  "cases": [
+    {
+      "id": "MC-OK-001",
+      "domain": "merchant",
+      "failure_mode": "none",
+      "scenario": "Fully onboarded merchant: KYB + bank verified, low risk, settlement configured.",
+      "input": {"merchant_id": "MERCH-001", "kyb_verified": true, "bank_account_verified": true, "risk_score": 20, "settlement_configured": true, "dispute_sla_breached": false},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "merchant", "severity": "low", "category": "onboarded"}
+    },
+    {
+      "id": "MC-OK-002",
+      "domain": "merchant",
+      "failure_mode": "none",
+      "scenario": "Onboarded merchant with moderate but acceptable risk.",
+      "input": {"merchant_id": "MERCH-002", "kyb_verified": true, "bank_account_verified": true, "risk_score": 45, "settlement_configured": true, "dispute_sla_breached": false},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "merchant", "severity": "low", "category": "onboarded"}
+    },
+    {
+      "id": "MC-OK-003",
+      "domain": "merchant",
+      "failure_mode": "none",
+      "scenario": "Clean merchant, no open disputes.",
+      "input": {"merchant_id": "MERCH-003", "kyb_verified": true, "bank_account_verified": true, "risk_score": 30, "settlement_configured": true, "dispute_sla_breached": false},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "merchant", "severity": "low", "category": "onboarded"}
+    },
+    {
+      "id": "MC-OK-004",
+      "domain": "merchant",
+      "failure_mode": "none",
+      "scenario": "Boundary risk just under the acceptable threshold.",
+      "input": {"merchant_id": "MERCH-004", "kyb_verified": true, "bank_account_verified": true, "risk_score": 49, "settlement_configured": true, "dispute_sla_breached": false},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "merchant", "severity": "low", "category": "boundary"}
+    },
+    {
+      "id": "MC-FAIL-001",
+      "domain": "merchant",
+      "failure_mode": "FM-MC-001",
+      "scenario": "Incomplete onboarding: bank account not verified and settlement not configured — must not go live.",
+      "input": {"merchant_id": "MERCH-101", "kyb_verified": true, "bank_account_verified": false, "risk_score": 20, "settlement_configured": false, "dispute_sla_breached": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "merchant", "severity": "high", "category": "onboarding"}
+    },
+    {
+      "id": "MC-FAIL-002",
+      "domain": "merchant",
+      "failure_mode": "FM-MC-002",
+      "scenario": "High-risk merchant without settlement configured — must be blocked.",
+      "input": {"merchant_id": "MERCH-102", "kyb_verified": true, "bank_account_verified": true, "risk_score": 80, "settlement_configured": false, "dispute_sla_breached": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "merchant", "severity": "critical", "category": "risk"}
+    },
+    {
+      "id": "MC-FAIL-003",
+      "domain": "merchant",
+      "failure_mode": "FM-MC-003",
+      "scenario": "KYB not completed — merchant identity unverified, must be blocked.",
+      "input": {"merchant_id": "MERCH-103", "kyb_verified": false, "bank_account_verified": true, "risk_score": 20, "settlement_configured": true, "dispute_sla_breached": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "merchant", "severity": "critical", "category": "kyb"}
+    },
+    {
+      "id": "MC-FAIL-004",
+      "domain": "merchant",
+      "failure_mode": "FM-MC-004",
+      "scenario": "Open dispute past its resolution SLA plus settlement not configured — must be flagged.",
+      "input": {"merchant_id": "MERCH-104", "kyb_verified": true, "bank_account_verified": true, "risk_score": 20, "settlement_configured": false, "dispute_sla_breached": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "merchant", "severity": "high", "category": "dispute"}
+    }
+  ]
+}

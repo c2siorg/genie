@@ -22,43 +22,43 @@ func TestLineageJudge_EvaluateValidChain(t *testing.T) {
 	// Build a valid hash chain
 	now := time.Now()
 	entry1 := LineageEntry{
-		EntryID:       "entry-001",
-		OrderID:       "order-001",
-		Step:          "order_created",
-		Timestamp:     now,
-		PreviousHash:  "", // First entry has no previous
-		Data:          `{"amount": 100000}`,
+		EntryID:      "entry-001",
+		OrderID:      "order-001",
+		Step:         "order_created",
+		Timestamp:    now,
+		PreviousHash: "", // First entry has no previous
+		Data:         `{"amount": 100000}`,
 	}
 	entry1.Hash = computeHash(entry1.OrderID, entry1.Step, entry1.Timestamp.String(), entry1.Data)
 
 	entry2 := LineageEntry{
-		EntryID:       "entry-002",
-		OrderID:       "order-001",
-		Step:          "payment_initiated",
-		Timestamp:     now.Add(1 * time.Second),
-		PreviousHash:  entry1.Hash,
-		Data:          `{"transaction_id": "tx-001"}`,
+		EntryID:      "entry-002",
+		OrderID:      "order-001",
+		Step:         "payment_initiated",
+		Timestamp:    now.Add(1 * time.Second),
+		PreviousHash: entry1.Hash,
+		Data:         `{"transaction_id": "tx-001"}`,
 	}
 	entry2.Hash = computeHash(entry2.OrderID, entry2.Step, entry2.Timestamp.String(), entry2.Data)
 
 	entry3 := LineageEntry{
-		EntryID:       "entry-003",
-		OrderID:       "order-001",
-		Step:          "payment_confirmed",
-		Timestamp:     now.Add(2 * time.Second),
-		PreviousHash:  entry2.Hash,
-		Data:          `{"confirmed": true}`,
+		EntryID:      "entry-003",
+		OrderID:      "order-001",
+		Step:         "payment_confirmed",
+		Timestamp:    now.Add(2 * time.Second),
+		PreviousHash: entry2.Hash,
+		Data:         `{"confirmed": true}`,
 	}
 	entry3.Hash = computeHash(entry3.OrderID, entry3.Step, entry3.Timestamp.String(), entry3.Data)
 
 	input := LineageJudgeInput{
-		OrderID:                      "order-001",
-		LineageEntries:               []LineageEntry{entry1, entry2, entry3},
-		HashChainValid:               true,
-		TimestampsMonotonic:          true,
-		AllRequiredFieldsPresent:     true,
-		DecisionTraceability:         `{"decision": "payment approved", "basis": "kyc verified"}`,
-		Metadata:                     map[string]string{},
+		OrderID:                  "order-001",
+		LineageEntries:           []LineageEntry{entry1, entry2, entry3},
+		HashChainValid:           true,
+		TimestampsMonotonic:      true,
+		AllRequiredFieldsPresent: true,
+		DecisionTraceability:     `{"decision": "payment approved", "basis": "kyc verified"}`,
+		Metadata:                 map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -84,33 +84,33 @@ func TestLineageJudge_EvaluateBrokenChain(t *testing.T) {
 	// Build a broken hash chain
 	now := time.Now()
 	entry1 := LineageEntry{
-		EntryID:       "entry-001",
-		OrderID:       "order-002",
-		Step:          "order_created",
-		Timestamp:     now,
-		PreviousHash:  "",
-		Data:          `{"amount": 100000}`,
+		EntryID:      "entry-001",
+		OrderID:      "order-002",
+		Step:         "order_created",
+		Timestamp:    now,
+		PreviousHash: "",
+		Data:         `{"amount": 100000}`,
 	}
 	entry1.Hash = computeHash(entry1.OrderID, entry1.Step, entry1.Timestamp.String(), entry1.Data)
 
 	entry2 := LineageEntry{
-		EntryID:       "entry-002",
-		OrderID:       "order-002",
-		Step:          "payment_initiated",
-		Timestamp:     now.Add(1 * time.Second),
-		PreviousHash:  "wrong_hash_here", // Wrong previous hash!
-		Data:          `{"transaction_id": "tx-002"}`,
+		EntryID:      "entry-002",
+		OrderID:      "order-002",
+		Step:         "payment_initiated",
+		Timestamp:    now.Add(1 * time.Second),
+		PreviousHash: "wrong_hash_here", // Wrong previous hash!
+		Data:         `{"transaction_id": "tx-002"}`,
 	}
 	entry2.Hash = computeHash(entry2.OrderID, entry2.Step, entry2.Timestamp.String(), entry2.Data)
 
 	input := LineageJudgeInput{
-		OrderID:                      "order-002",
-		LineageEntries:               []LineageEntry{entry1, entry2},
-		HashChainValid:               false, // Broken chain
-		TimestampsMonotonic:          true,
-		AllRequiredFieldsPresent:     true,
-		DecisionTraceability:         `{"decision": "payment failed"}`,
-		Metadata:                     map[string]string{},
+		OrderID:                  "order-002",
+		LineageEntries:           []LineageEntry{entry1, entry2},
+		HashChainValid:           false, // Broken chain
+		TimestampsMonotonic:      true,
+		AllRequiredFieldsPresent: true,
+		DecisionTraceability:     `{"decision": "payment failed"}`,
+		Metadata:                 map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -136,33 +136,33 @@ func TestLineageJudge_EvaluateNonMonotonicTimestamps(t *testing.T) {
 	// Build entries with non-monotonic timestamps
 	now := time.Now()
 	entry1 := LineageEntry{
-		EntryID:       "entry-001",
-		OrderID:       "order-003",
-		Step:          "order_created",
-		Timestamp:     now.Add(2 * time.Second), // Later timestamp
-		PreviousHash:  "",
-		Data:          `{"amount": 100000}`,
+		EntryID:      "entry-001",
+		OrderID:      "order-003",
+		Step:         "order_created",
+		Timestamp:    now.Add(2 * time.Second), // Later timestamp
+		PreviousHash: "",
+		Data:         `{"amount": 100000}`,
 	}
 	entry1.Hash = computeHash(entry1.OrderID, entry1.Step, entry1.Timestamp.String(), entry1.Data)
 
 	entry2 := LineageEntry{
-		EntryID:       "entry-002",
-		OrderID:       "order-003",
-		Step:          "payment_initiated",
-		Timestamp:     now, // Earlier timestamp! (violates monotonicity)
-		PreviousHash:  entry1.Hash,
-		Data:          `{"transaction_id": "tx-003"}`,
+		EntryID:      "entry-002",
+		OrderID:      "order-003",
+		Step:         "payment_initiated",
+		Timestamp:    now, // Earlier timestamp! (violates monotonicity)
+		PreviousHash: entry1.Hash,
+		Data:         `{"transaction_id": "tx-003"}`,
 	}
 	entry2.Hash = computeHash(entry2.OrderID, entry2.Step, entry2.Timestamp.String(), entry2.Data)
 
 	input := LineageJudgeInput{
-		OrderID:                      "order-003",
-		LineageEntries:               []LineageEntry{entry1, entry2},
-		HashChainValid:               true,
-		TimestampsMonotonic:          false, // Not monotonic
-		AllRequiredFieldsPresent:     true,
-		DecisionTraceability:         `{}`,
-		Metadata:                     map[string]string{},
+		OrderID:                  "order-003",
+		LineageEntries:           []LineageEntry{entry1, entry2},
+		HashChainValid:           true,
+		TimestampsMonotonic:      false, // Not monotonic
+		AllRequiredFieldsPresent: true,
+		DecisionTraceability:     `{}`,
+		Metadata:                 map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -187,23 +187,23 @@ func TestLineageJudge_EvaluateMissingFields(t *testing.T) {
 
 	// Build entries with missing fields
 	entry1 := LineageEntry{
-		EntryID:       "entry-001",
-		OrderID:       "order-004",
-		Step:          "order_created",
-		Timestamp:     time.Now(),
-		PreviousHash:  "",
-		Data:          ``, // Empty data!
-		Hash:          "abcd1234",
+		EntryID:      "entry-001",
+		OrderID:      "order-004",
+		Step:         "order_created",
+		Timestamp:    time.Now(),
+		PreviousHash: "",
+		Data:         ``, // Empty data!
+		Hash:         "abcd1234",
 	}
 
 	input := LineageJudgeInput{
-		OrderID:                      "order-004",
-		LineageEntries:               []LineageEntry{entry1},
-		HashChainValid:               true,
-		TimestampsMonotonic:          true,
-		AllRequiredFieldsPresent:     false, // Missing required field
-		DecisionTraceability:         `{}`,
-		Metadata:                     map[string]string{},
+		OrderID:                  "order-004",
+		LineageEntries:           []LineageEntry{entry1},
+		HashChainValid:           true,
+		TimestampsMonotonic:      true,
+		AllRequiredFieldsPresent: false, // Missing required field
+		DecisionTraceability:     `{}`,
+		Metadata:                 map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -303,11 +303,11 @@ func TestVerifyRequiredFields(t *testing.T) {
 	// All fields present
 	entries := []LineageEntry{
 		{
-			EntryID:  "entry-001",
-			OrderID:  "order-001",
-			Step:     "step1",
-			Data:     `{"test": 1}`,
-			Hash:     "abcd1234",
+			EntryID: "entry-001",
+			OrderID: "order-001",
+			Step:    "step1",
+			Data:    `{"test": 1}`,
+			Hash:    "abcd1234",
 		},
 	}
 

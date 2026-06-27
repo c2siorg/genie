@@ -50,7 +50,7 @@ func TestComplianceJudge_EvaluateNonCompliant(t *testing.T) {
 	input := ComplianceJudgeInput{
 		CustomerID:             "customer-002",
 		OrderID:                "order-002",
-		KYCStatus:              "pending", // KYC not verified!
+		KYCStatus:              "pending",                    // KYC not verified!
 		KYCExpiryDate:          time.Now().AddDate(-1, 0, 0), // Expired 1 year ago
 		VelocityWindowSeconds:  3600,
 		VelocityThresholdPaise: 5000000,

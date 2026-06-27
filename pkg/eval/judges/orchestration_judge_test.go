@@ -11,16 +11,16 @@ func TestOrchestrationJudge_EvaluateValidSequence(t *testing.T) {
 	judge := NewMockOrchestrationJudge()
 
 	input := OrchestrationJudgeInput{
-		OrderID:                "order-001",
-		StepSequence:           []string{"order_created", "payment_initiated", "payment_confirmed", "settlement_initiated", "settlement_completed", "fulfilled"},
-		CurrentStep:            "settlement_completed",
-		PreviousStep:           "settlement_initiated",
-		TransitionValid:        true,
-		IdempotencyKey:         "idempotency-001",
-		PaymentConfirmed:       true,
-		SettlementInitiated:    true,
-		WorkflowAuditTrail:     `[{"step": "payment_confirmed"}, {"step": "settlement_initiated"}, {"step": "settlement_completed"}]`,
-		Metadata:               map[string]string{},
+		OrderID:             "order-001",
+		StepSequence:        []string{"order_created", "payment_initiated", "payment_confirmed", "settlement_initiated", "settlement_completed", "fulfilled"},
+		CurrentStep:         "settlement_completed",
+		PreviousStep:        "settlement_initiated",
+		TransitionValid:     true,
+		IdempotencyKey:      "idempotency-001",
+		PaymentConfirmed:    true,
+		SettlementInitiated: true,
+		WorkflowAuditTrail:  `[{"step": "payment_confirmed"}, {"step": "settlement_initiated"}, {"step": "settlement_completed"}]`,
+		Metadata:            map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -44,16 +44,16 @@ func TestOrchestrationJudge_EvaluateInvalidSequence(t *testing.T) {
 	judge := NewMockOrchestrationJudge()
 
 	input := OrchestrationJudgeInput{
-		OrderID:                "order-002",
-		StepSequence:           []string{"order_created", "settlement_initiated"}, // Settlement before payment!
-		CurrentStep:            "settlement_initiated",
-		PreviousStep:           "order_created",
-		TransitionValid:        false, // Invalid transition
-		IdempotencyKey:         "",
-		PaymentConfirmed:       false, // Payment not confirmed
-		SettlementInitiated:    true,
-		WorkflowAuditTrail:     `[{"step": "order_created"}, {"step": "settlement_initiated"}]`,
-		Metadata:               map[string]string{},
+		OrderID:             "order-002",
+		StepSequence:        []string{"order_created", "settlement_initiated"}, // Settlement before payment!
+		CurrentStep:         "settlement_initiated",
+		PreviousStep:        "order_created",
+		TransitionValid:     false, // Invalid transition
+		IdempotencyKey:      "",
+		PaymentConfirmed:    false, // Payment not confirmed
+		SettlementInitiated: true,
+		WorkflowAuditTrail:  `[{"step": "order_created"}, {"step": "settlement_initiated"}]`,
+		Metadata:            map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -77,16 +77,16 @@ func TestOrchestrationJudge_EvaluateNoIdempotencyKey(t *testing.T) {
 	judge := NewMockOrchestrationJudge()
 
 	input := OrchestrationJudgeInput{
-		OrderID:                "order-003",
-		StepSequence:           []string{"order_created", "payment_initiated", "payment_confirmed"},
-		CurrentStep:            "payment_confirmed",
-		PreviousStep:           "payment_initiated",
-		TransitionValid:        true,
-		IdempotencyKey:         "", // Missing idempotency key!
-		PaymentConfirmed:       true,
-		SettlementInitiated:    false,
-		WorkflowAuditTrail:     `[{"step": "payment_initiated"}, {"step": "payment_confirmed"}]`,
-		Metadata:               map[string]string{},
+		OrderID:             "order-003",
+		StepSequence:        []string{"order_created", "payment_initiated", "payment_confirmed"},
+		CurrentStep:         "payment_confirmed",
+		PreviousStep:        "payment_initiated",
+		TransitionValid:     true,
+		IdempotencyKey:      "", // Missing idempotency key!
+		PaymentConfirmed:    true,
+		SettlementInitiated: false,
+		WorkflowAuditTrail:  `[{"step": "payment_initiated"}, {"step": "payment_confirmed"}]`,
+		Metadata:            map[string]string{},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
