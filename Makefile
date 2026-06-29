@@ -140,8 +140,11 @@ cover: ## Generate HTML coverage report (opens in browser)
 cover-check: ## Fail if total line coverage is below COVER_MIN (default 60%)
 	@mkdir -p $(COVER_DIR)
 	@$(GO) test -coverprofile=$(COVER_DIR)/coverage.out -covermode=atomic $(PKG) >/dev/null
-	@pct=$$($(GO) tool cover -func=$(COVER_DIR)/coverage.out | tail -1 | awk '{print $$3}' | tr -d '%'); \
-	 echo "coverage: $${pct}% (min: $(COVER_MIN)%)"; \
+	@# Exclude thin entry-point wrapper packages (agents/cmd/*, cmd/eval-golden) —
+	@# no unit-testable logic; covered by live smoke tests + the golden gate.
+	@grep -vE '/agents/cmd/|/cmd/eval-golden/' $(COVER_DIR)/coverage.out > $(COVER_DIR)/coverage.floor.out
+	@pct=$$($(GO) tool cover -func=$(COVER_DIR)/coverage.floor.out | tail -1 | awk '{print $$3}' | tr -d '%'); \
+	 echo "coverage (excl. entry-point wrappers): $${pct}% (min: $(COVER_MIN)%)"; \
 	 awk -v got="$$pct" -v min="$(COVER_MIN)" 'BEGIN{if(got+0 < min+0){print "FAIL: coverage below threshold"; exit 1}}'
 
 .PHONY: ci-gate

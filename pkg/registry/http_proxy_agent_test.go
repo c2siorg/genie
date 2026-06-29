@@ -126,3 +126,25 @@ func TestAllLegacyAgents_Integrity(t *testing.T) {
 		}
 	}
 }
+
+func TestHTTPRegistryAgent_Non200IsError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	defer ts.Close()
+	proxy := NewHTTPRegistryAgent(AgentDef{ID: "a", Name: "a"}, ts.URL, "")
+	if _, err := proxy.HandleMessage(context.Background(), protocol.Message{Content: "x"}, nil); err == nil {
+		t.Fatal("expected error on 502")
+	}
+}
+
+func TestHTTPRegistryAgent_BadJSONIsError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{not an array`))
+	}))
+	defer ts.Close()
+	proxy := NewHTTPRegistryAgent(AgentDef{ID: "a", Name: "a"}, ts.URL, "")
+	if _, err := proxy.HandleMessage(context.Background(), protocol.Message{Content: "x"}, nil); err == nil {
+		t.Fatal("expected decode error on malformed body")
+	}
+}

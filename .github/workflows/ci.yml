@@ -64,8 +64,14 @@ jobs:
       - name: Enforce coverage floor (ratchet)
         run: |
           floor=$(grep -E '^COVER_MIN' Makefile | head -1 | sed -E 's/[^0-9]*([0-9]+).*/\1/')
-          pct=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
-          echo "total coverage: ${pct}%  (floor: ${floor}%)"
+          # Exclude thin entry-point wrapper packages from the coverage
+          # denominator: each agents/cmd/<id>/main.go is `func main(){ Run(...) }`
+          # and cmd/eval-golden is CLI glue over tested pkg/eval/golden logic.
+          # They have no unit-testable logic and are exercised by live smoke tests
+          # + the golden gate. cmd/api keeps counting (it holds real wiring).
+          grep -vE '/agents/cmd/|/cmd/eval-golden/' coverage.out > coverage.floor.out
+          pct=$(go tool cover -func=coverage.floor.out | tail -1 | awk '{print $3}' | tr -d '%')
+          echo "total coverage (excl. entry-point wrappers): ${pct}%  (floor: ${floor}%)"
           awk -v got="$pct" -v min="$floor" 'BEGIN{ if (got+0 < min+0){ print "FAIL: coverage " got "% is below floor " min "%"; exit 1 } print "OK: coverage floor held" }'
 
       - name: Upload coverage artifact

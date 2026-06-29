@@ -128,3 +128,38 @@ func TestClient_CircuitOpensAfterFailures(t *testing.T) {
 		t.Fatalf("server was called while breaker open (calls %d -> %d); should fail fast", callsAtTrip, calls)
 	}
 }
+
+// TestClient_Health covers the Health path (200 and non-200).
+func TestClient_Health(t *testing.T) {
+	healthy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer healthy.Close()
+	if err := NewHTTPClient(healthy.URL, "t").Health(context.Background()); err != nil {
+		t.Fatalf("healthy: %v", err)
+	}
+
+	down := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer down.Close()
+	if err := NewHTTPClient(down.URL, "t").Health(context.Background()); err == nil {
+		t.Fatal("expected health error on 503")
+	}
+}
+
+// TestClient_Version covers Version/getInfo (success + fallback to "unknown").
+func TestClient_Version(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"name":"t","version":"9.9.9"}`)
+	}))
+	defer srv.Close()
+	if v := NewHTTPClient(srv.URL, "t").Version(); v != "9.9.9" {
+		t.Fatalf("version = %q, want 9.9.9", v)
+	}
+	// Unreachable host → "unknown".
+	if v := NewHTTPClient("http://127.0.0.1:0", "t").Version(); v != "unknown" {
+		t.Fatalf("version = %q, want unknown", v)
+	}
+}
