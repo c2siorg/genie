@@ -454,9 +454,12 @@ func run() error {
 		// CSRF stays report-only until the SPA sends X-CSRF-Token; flip with
 		// GENIE_CSRF_ENFORCE=true. No effect on Bearer-token API traffic.
 		CSRFEnforce: os.Getenv("GENIE_CSRF_ENFORCE") == "true",
-		Users:       &handlers.Users{Repo: userRepo, Issuer: issuer},
-		Accounts:    &handlers.Accounts{Repo: acctRepo},
-		Documents:   &handlers.Documents{Repo: docRepo, Encryptor: enc},
+		// Eval observability endpoints (/v1/eval/*), admin-only. Shares the
+		// in-memory eval store with the auditor; annotations are in-memory.
+		EvalReview: handlers.NewEvalReviewHandler(evalStore, eval.NewInMemoryAnnotationStore()),
+		Users:      &handlers.Users{Repo: userRepo, Issuer: issuer},
+		Accounts:   &handlers.Accounts{Repo: acctRepo},
+		Documents:  &handlers.Documents{Repo: docRepo, Encryptor: enc},
 		Ask: &handlers.Ask{
 			Bus:                bus,
 			Correlator:         corr,

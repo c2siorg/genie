@@ -31,6 +31,7 @@ type Deps struct {
 	AgentGov    *handlers.AgentGov          // optional: AGT governance endpoints
 	OPAHandler  *handlers.OPAHandler        // optional: OPA policy introspection endpoints
 	HITL        *handlers.HITLHandler       // optional: Human-in-the-Loop approval queue
+	EvalReview  *handlers.EvalReviewHandler // optional: eval trace review/observability
 	Settlement  *handlers.SettlementHandler // optional: Settlement Coordinator
 	AML         *handlers.AMLHandler        // optional: AML Risk Scoring
 	Consent     *handlers.ConsentHandler    // optional: Consent Registry
@@ -189,6 +190,13 @@ func NewRouter(d Deps) http.Handler {
 						r.Post("/verify", d.Lineage.VerifyIntegrity)
 						r.Get("/export/{entity_id}", d.Lineage.ExportAuditTrail)
 					})
+				}
+
+				// Eval observability — GET /v1/eval/traces, /clusters, /search,
+				// POST /v1/eval/traces/{id}/feedback. Admin-only: interaction
+				// traces can contain sensitive content. The handler self-mounts.
+				if d.EvalReview != nil {
+					r.With(mid.RequireRole(auth.RoleAdmin)).Route("/eval", d.EvalReview.Mount)
 				}
 
 				// E-Rupee Commerce APIs

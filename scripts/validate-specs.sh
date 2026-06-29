@@ -111,8 +111,12 @@ validate_phase5() {
   echo ""
   echo "=== Phase 5: Evaluation ==="
 
-  check_test "GET /eval/metrics endpoint exists" \
-    "grep -r 'eval.*metrics' pkg/web/handlers || grep -r '/eval/metrics' pkg/"
+  # Eval observability surface: the EvalReviewHandler exposes /v1/eval/traces,
+  # /clusters, /search (defined in eval_review_handler.go, wired in router.go).
+  # The prior 'eval.*metrics' grep only matched the embedded UI build, so it
+  # passed locally but failed in CI's clean Go tree.
+  check_test "Eval observability endpoints exist (/v1/eval/traces, /clusters)" \
+    "grep -rq 'func (h \\*EvalReviewHandler) ListTraces' pkg/web/handlers && grep -rq 'd.EvalReview.Mount' pkg/web"
 
   check_test "Judge types defined" \
     "grep -r 'judge' pkg/eval -i && grep -r 'Judge' frontend/src/types"
