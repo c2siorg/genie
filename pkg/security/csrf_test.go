@@ -206,9 +206,15 @@ func TestCSRFService_TimingAttackResistance(t *testing.T) {
 
 	tokenStr, _, _ := svc.GenerateToken("user123")
 
-	// Corrupt the signature slightly.
+	// Corrupt the signature by flipping its first byte to a GUARANTEED-different
+	// value. (The old code hard-coded "0", which was a no-op — and thus a flaky
+	// false pass — whenever the signature already began with '0'.)
 	parts := strings.Split(tokenStr, ".")
-	corruptedToken := parts[0] + "." + "0" + parts[1][1:] + "." + parts[2]
+	repl := byte('0')
+	if parts[1][0] == repl {
+		repl = '1'
+	}
+	corruptedToken := parts[0] + "." + string(repl) + parts[1][1:] + "." + parts[2]
 
 	// Should fail with signature mismatch.
 	_, err := svc.ValidateToken(corruptedToken, "user123")
