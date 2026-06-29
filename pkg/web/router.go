@@ -43,6 +43,11 @@ type Deps struct {
 	CBDC       *handlers.CBDCHandler       // optional: CBDC Ledger & Settlement
 	RateLimit  *mid.RateLimit              // optional global limiter
 	Logger     mid.Logger
+	// CSRFEnforce turns the cookie-scoped CSRF middleware from report-only into
+	// hard enforcement (403 on a missing/invalid token for cookie-authed,
+	// state-changing requests). Default false — flip once the SPA sends the
+	// X-CSRF-Token header. Has no effect on Bearer-token API traffic.
+	CSRFEnforce bool
 }
 
 // NewRouter builds the chi router with all middleware and routes wired up.
@@ -57,6 +62,13 @@ func NewRouter(d Deps) http.Handler {
 	// The default CSP is same-origin ('self'); verify the embedded SPA loads
 	// clean in staging before promoting (a CSP tweak is one line).
 	r.Use(mid.SecurityHeaders())
+	// Cookie-scoped CSRF protection. Self-scopes to cookie-authenticated,
+	// state-changing requests — a no-op for Bearer-token API traffic and
+	// uncredentialed requests — so it is safe to install globally. Report-only
+	// until d.CSRFEnforce is set (see GENIE_CSRF_ENFORCE).
+	if d.Issuer != nil {
+		r.Use(mid.CookieScopedCSRF(d.Issuer, d.CSRFEnforce, d.Logger))
+	}
 
 	// Public routes — no rate limit (k8s probes and disclosure surface
 	// must not be throttled).

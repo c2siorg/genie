@@ -449,11 +449,14 @@ func run() error {
 	complianceEngine := erupeecompliance.NewComplianceEngine()
 
 	deps := web.Deps{
-		Issuer:    issuer,
-		Logger:    logger,
-		Users:     &handlers.Users{Repo: userRepo, Issuer: issuer},
-		Accounts:  &handlers.Accounts{Repo: acctRepo},
-		Documents: &handlers.Documents{Repo: docRepo, Encryptor: enc},
+		Issuer: issuer,
+		Logger: logger,
+		// CSRF stays report-only until the SPA sends X-CSRF-Token; flip with
+		// GENIE_CSRF_ENFORCE=true. No effect on Bearer-token API traffic.
+		CSRFEnforce: os.Getenv("GENIE_CSRF_ENFORCE") == "true",
+		Users:       &handlers.Users{Repo: userRepo, Issuer: issuer},
+		Accounts:    &handlers.Accounts{Repo: acctRepo},
+		Documents:   &handlers.Documents{Repo: docRepo, Encryptor: enc},
 		Ask: &handlers.Ask{
 			Bus:                bus,
 			Correlator:         corr,
