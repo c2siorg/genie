@@ -52,6 +52,11 @@ func NewRouter(d Deps) http.Handler {
 	r.Use(mid.Recovery(d.Logger))
 	r.Use(mid.AccessLog(d.Logger))
 	r.Use(mid.Trace("github.com/c2siorg/genie/pkg/web"))
+	// Defensive response headers (CSP, X-Frame-Options: DENY, nosniff,
+	// Referrer-Policy, Permissions-Policy) on every response, including errors.
+	// The default CSP is same-origin ('self'); verify the embedded SPA loads
+	// clean in staging before promoting (a CSP tweak is one line).
+	r.Use(mid.SecurityHeaders())
 
 	// Public routes — no rate limit (k8s probes and disclosure surface
 	// must not be throttled).
