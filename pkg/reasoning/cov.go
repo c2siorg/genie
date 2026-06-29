@@ -16,10 +16,10 @@ import (
 //
 // Useful for the recommender and educator when factual accuracy matters.
 type CoVResult struct {
-	Initial      string
-	Questions    []string
+	Initial       string
+	Questions     []string
 	Verifications []string
-	Final        string
+	Final         string
 }
 
 // CoV runs the four-step verification loop using a single Provider.

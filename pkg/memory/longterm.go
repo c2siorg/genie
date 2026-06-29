@@ -35,18 +35,18 @@ import (
 
 // Fact is one consolidated, durable statement about a user.
 type Fact struct {
-	Key        string    // canonical key (e.g. "primary_bank", "risk_appetite")
-	Value      string    // human-readable value (e.g. "HDFC", "moderate")
-	Confidence float64   // 0..1 — the consolidator's confidence in this fact
-	Source     string    // free-text provenance, e.g. "consolidated from 7 statements"
-	RecordedAt time.Time // when this version was written
+	Key          string     // canonical key (e.g. "primary_bank", "risk_appetite")
+	Value        string     // human-readable value (e.g. "HDFC", "moderate")
+	Confidence   float64    // 0..1 — the consolidator's confidence in this fact
+	Source       string     // free-text provenance, e.g. "consolidated from 7 statements"
+	RecordedAt   time.Time  // when this version was written
 	SupersededAt *time.Time // nil if current; set when a later fact for the same key takes over
 }
 
 // LongTermMemory is the append-only fact store, partitioned per user.
 type LongTermMemory struct {
-	mu     sync.RWMutex
-	facts  map[string][]Fact // userID -> ordered Facts (oldest first)
+	mu    sync.RWMutex
+	facts map[string][]Fact // userID -> ordered Facts (oldest first)
 }
 
 // NewLongTermMemory constructs an empty store.

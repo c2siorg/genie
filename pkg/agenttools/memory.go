@@ -2,10 +2,10 @@
 //
 // Four tools that give an agent durable memory across turns and sessions:
 //
-//   remember_fact  — write a named fact to long-term memory
-//   recall_fact    — read one fact by key
-//   list_facts     — read all current facts
-//   forget_fact    — supersede (remove) a fact
+//	remember_fact  — write a named fact to long-term memory
+//	recall_fact    — read one fact by key
+//	list_facts     — read all current facts
+//	forget_fact    — supersede (remove) a fact
 //
 // Usage:
 //
@@ -31,7 +31,7 @@ import (
 // append-only and keeps full history for audit.
 func RememberFact(store *memory.LongTermMemory, userID string) Tool {
 	return &ToolDef{
-		ToolName: "remember_fact",
+		ToolName:        "remember_fact",
 		ToolDescription: "Store a persistent fact about the user or task. Use for information that should survive across sessions: preferences, key decisions, account details, risk appetite, etc.",
 		ToolSchema: map[string]any{
 			"type": "object",
@@ -76,7 +76,7 @@ func RememberFact(store *memory.LongTermMemory, userID string) Tool {
 // RecallFact returns a tool that retrieves one fact by its key.
 func RecallFact(store *memory.LongTermMemory, userID string) Tool {
 	return &ToolDef{
-		ToolName: "recall_fact",
+		ToolName:        "recall_fact",
 		ToolDescription: "Retrieve a specific remembered fact by its key. Returns the current value and when it was recorded.",
 		ToolSchema: map[string]any{
 			"type": "object",
@@ -110,7 +110,7 @@ func RecallFact(store *memory.LongTermMemory, userID string) Tool {
 // ListFacts returns a tool that lists all current (non-superseded) facts.
 func ListFacts(store *memory.LongTermMemory, userID string) Tool {
 	return &ToolDef{
-		ToolName: "list_facts",
+		ToolName:        "list_facts",
 		ToolDescription: "List all currently remembered facts about the user. Returns a structured summary of everything stored in long-term memory.",
 		ToolSchema: map[string]any{
 			"type":       "object",
@@ -135,7 +135,7 @@ func ListFacts(store *memory.LongTermMemory, userID string) Tool {
 // The old value is retained in history for audit — only its current flag is cleared.
 func ForgetFact(store *memory.LongTermMemory, userID string) Tool {
 	return &ToolDef{
-		ToolName: "forget_fact",
+		ToolName:        "forget_fact",
 		ToolDescription: "Remove (supersede) a remembered fact. The value is cleared from active memory but retained in audit history. Use when information is no longer accurate.",
 		ToolSchema: map[string]any{
 			"type": "object",
@@ -173,7 +173,7 @@ func ForgetFact(store *memory.LongTermMemory, userID string) Tool {
 // SearchFacts returns a tool that does a substring search across active facts.
 func SearchFacts(store *memory.LongTermMemory, userID string) Tool {
 	return &ToolDef{
-		ToolName: "search_facts",
+		ToolName:        "search_facts",
 		ToolDescription: "Search remembered facts by keyword. Useful when you know something was stored but don't remember the exact key.",
 		ToolSchema: map[string]any{
 			"type": "object",

@@ -1,6 +1,6 @@
 // Package memory provides simple state storage abstractions for agents.
 //
-// Memory in multi-agent systems
+// # Memory in multi-agent systems
 //
 // "Memory" can mean several different things in agentic architectures:
 //
@@ -21,4 +21,3 @@
 // - "task:<id>:plan"
 // - "agent:<id>:profile"
 package memory
-

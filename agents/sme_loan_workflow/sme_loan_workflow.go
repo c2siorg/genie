@@ -45,27 +45,27 @@ const (
 type Application struct {
 	BorrowerID         string  `json:"borrower_id"`
 	UDYAMRegistered    bool    `json:"udyam_registered"`
-	Sector             string  `json:"sector"`               // manufacturing | services | trading
+	Sector             string  `json:"sector"` // manufacturing | services | trading
 	AnnualTurnover     float64 `json:"annual_turnover_rupees"`
-	GSTFilingRegular   bool    `json:"gst_filing_regular"`   // last 12 returns on time
+	GSTFilingRegular   bool    `json:"gst_filing_regular"` // last 12 returns on time
 	RequestedAmount    float64 `json:"requested_amount_rupees"`
 	RequestedTenorMths int     `json:"requested_tenor_months"`
-	CashflowScore0to1  float64 `json:"cashflow_score_0_1"`   // from cashflow_underwriter
-	CollateralRupees   float64 `json:"collateral_rupees"`    // 0 if collateral-free
+	CashflowScore0to1  float64 `json:"cashflow_score_0_1"` // from cashflow_underwriter
+	CollateralRupees   float64 `json:"collateral_rupees"`  // 0 if collateral-free
 }
 
 // Offer is the structured output.
 type Offer struct {
-	BorrowerID         string   `json:"borrower_id"`
-	Decision           string   `json:"decision"` // "approved" | "in_principle" | "rejected"
-	OfferedAmount      float64  `json:"offered_amount_rupees"`
-	OfferedTenorMths   int      `json:"offered_tenor_months"`
-	IndicativeRatePct  float64  `json:"indicative_rate_pct"`
-	MonthlyEMIRupees   float64  `json:"monthly_emi_rupees"`
-	CGTMSEEligible     bool     `json:"cgtmse_eligible"`
-	Rationale          []string `json:"rationale"`
-	WorkflowEvents     int      `json:"workflow_event_count"`
-	Disclaimer         string   `json:"disclaimer"`
+	BorrowerID        string   `json:"borrower_id"`
+	Decision          string   `json:"decision"` // "approved" | "in_principle" | "rejected"
+	OfferedAmount     float64  `json:"offered_amount_rupees"`
+	OfferedTenorMths  int      `json:"offered_tenor_months"`
+	IndicativeRatePct float64  `json:"indicative_rate_pct"`
+	MonthlyEMIRupees  float64  `json:"monthly_emi_rupees"`
+	CGTMSEEligible    bool     `json:"cgtmse_eligible"`
+	Rationale         []string `json:"rationale"`
+	WorkflowEvents    int      `json:"workflow_event_count"`
+	Disclaimer        string   `json:"disclaimer"`
 }
 
 type Agent struct{}

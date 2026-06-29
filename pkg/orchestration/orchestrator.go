@@ -42,8 +42,8 @@ type Orchestrator struct {
 // Hooks lets cmd-level code observe orchestration events without taking a
 // dependency on incident / audit packages from inside pkg/orchestration.
 type Hooks struct {
-	OnPolicyDeny  func(ctx context.Context, msg agent.Message, reason string)
-	OnAgentError  func(ctx context.Context, agentID string, msg agent.Message, err error)
+	OnPolicyDeny func(ctx context.Context, msg agent.Message, reason string)
+	OnAgentError func(ctx context.Context, agentID string, msg agent.Message, err error)
 }
 
 // WithHooks installs the orchestrator hooks. Idempotent.
@@ -84,13 +84,13 @@ func NewOrchestrator(reg registry.Registry, bus comm.Bus, policy governance.Poli
 //
 // What Start does (step-by-step):
 //
-//  1) Snapshot the current agent list from the registry.
-//  2) For each agent:
-//      - Subscribe the bus on the agent's ID.
-//      - When a message arrives:
-//          a) Evaluate governance policy (allow/deny).
-//          b) Invoke Agent.HandleMessage(...) with the message.
-//          c) Publish each returned message back onto the bus.
+//  1. Snapshot the current agent list from the registry.
+//  2. For each agent:
+//     - Subscribe the bus on the agent's ID.
+//     - When a message arrives:
+//     a) Evaluate governance policy (allow/deny).
+//     b) Invoke Agent.HandleMessage(...) with the message.
+//     c) Publish each returned message back onto the bus.
 //
 // Why this design:
 //
@@ -246,4 +246,3 @@ func (e *SimpleEnvironment) Logf(format string, args ...any) {
 }
 
 var _ agent.Environment = (*SimpleEnvironment)(nil)
-

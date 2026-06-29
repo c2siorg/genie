@@ -7,3 +7,16 @@ genie-traces.json
 !.env.example
 *.local.env
 secrets/
+.claude/worktrees/
+
+# Architecture planning docs — local AI review only, not for repo
+planandthinking.md
+
+# Frontend (React) — node deps and generated build output.
+# The bundle is built into the Go embed tree by `make ui-build` (and in CI);
+# generated/hashed assets are not committed.
+frontend/node_modules/
+pkg/web/handlers/ui/app/
+
+# Stray compiled CLI binaries (build with -o into bin/ instead)
+/eval-golden

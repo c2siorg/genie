@@ -17,9 +17,9 @@ func TestWrapUnwrap_Roundtrip(t *testing.T) {
 		Content:   `{"hello":"world"}`,
 		CreatedAt: time.Now().UTC().Truncate(time.Second),
 		Metadata: map[string]any{
-			"trace_id":                       "tr-1",
-			"region":                         "in",
-			protocol.MetaKeyClassification:   "pii",
+			"trace_id":                     "tr-1",
+			"region":                       "in",
+			protocol.MetaKeyClassification: "pii",
 		},
 	}
 	ev := Wrap(msg, "genie://bus")

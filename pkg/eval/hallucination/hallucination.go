@@ -14,9 +14,9 @@ import (
 type Verdict string
 
 const (
-	Supported     Verdict = "supported"
-	Unsupported   Verdict = "unsupported"
-	Contradicted  Verdict = "contradicted"
+	Supported    Verdict = "supported"
+	Unsupported  Verdict = "unsupported"
+	Contradicted Verdict = "contradicted"
 )
 
 // SentenceGrade pairs a sentence with its label.

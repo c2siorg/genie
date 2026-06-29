@@ -22,38 +22,38 @@ const (
 	TypeOut    = "invoice_decision"
 	NextAgent  = "financial_supervisor"
 
-	maxLineVarianceRupees = 100.0  // ±₹100 tolerance per line for 3-way match
-	maxQtyVariancePct     = 0.02   // ±2 % GRN vs invoice qty
+	maxLineVarianceRupees = 100.0 // ±₹100 tolerance per line for 3-way match
+	maxQtyVariancePct     = 0.02  // ±2 % GRN vs invoice qty
 )
 
 // LineItem is one row on the invoice.
 type LineItem struct {
-	HSN        string  `json:"hsn"`
-	Desc       string  `json:"description"`
-	Quantity   float64 `json:"quantity"`
-	UnitPrice  float64 `json:"unit_price_rupees"`
-	GSTPct     float64 `json:"gst_pct"`
-	LineTotal  float64 `json:"line_total_rupees"` // qty × unit × (1 + gst/100)
+	HSN       string  `json:"hsn"`
+	Desc      string  `json:"description"`
+	Quantity  float64 `json:"quantity"`
+	UnitPrice float64 `json:"unit_price_rupees"`
+	GSTPct    float64 `json:"gst_pct"`
+	LineTotal float64 `json:"line_total_rupees"` // qty × unit × (1 + gst/100)
 }
 
 // Invoice is the inbound packet.
 type Invoice struct {
-	IRN         string     `json:"irn"`            // 64-char IRP-issued hash
-	SupplierGSTIN string   `json:"supplier_gstin"`
-	BuyerGSTIN    string   `json:"buyer_gstin"`
-	InvoiceNo   string     `json:"invoice_no"`
-	InvoiceDate string     `json:"invoice_date"`   // YYYY-MM-DD
-	Items       []LineItem `json:"items"`
-	TotalRupees float64    `json:"total_rupees"`
-	POReference string     `json:"po_reference"`
-	GRNReference string    `json:"grn_reference"`
+	IRN           string     `json:"irn"` // 64-char IRP-issued hash
+	SupplierGSTIN string     `json:"supplier_gstin"`
+	BuyerGSTIN    string     `json:"buyer_gstin"`
+	InvoiceNo     string     `json:"invoice_no"`
+	InvoiceDate   string     `json:"invoice_date"` // YYYY-MM-DD
+	Items         []LineItem `json:"items"`
+	TotalRupees   float64    `json:"total_rupees"`
+	POReference   string     `json:"po_reference"`
+	GRNReference  string     `json:"grn_reference"`
 }
 
 // Reference is what we matched against from the buyer's system of record.
 type Reference struct {
-	POTotalRupees  float64            `json:"po_total_rupees"`
-	GRNQtyByHSN    map[string]float64 `json:"grn_qty_by_hsn"`
-	VendorActive   bool               `json:"vendor_active"` // vendor master flag
+	POTotalRupees float64            `json:"po_total_rupees"`
+	GRNQtyByHSN   map[string]float64 `json:"grn_qty_by_hsn"`
+	VendorActive  bool               `json:"vendor_active"` // vendor master flag
 }
 
 // Request bundles both.

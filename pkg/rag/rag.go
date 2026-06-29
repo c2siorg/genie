@@ -5,7 +5,7 @@
 //  1. Embedder    — turns text into a fixed-size []float32.
 //  2. VectorStore — stores chunks and their embeddings; runs nearest-neighbour search.
 //  3. Index       — convenience over Embedder + VectorStore that handles
-//                   chunking and ingestion.
+//     chunking and ingestion.
 //
 // Genie ships a deterministic HashEmbedder for tests and an OllamaEmbedder
 // for on-prem inference. Both satisfy the Embedder interface so callers
@@ -27,8 +27,8 @@ import (
 // Chunk is one unit of retrievable text.
 type Chunk struct {
 	ID       string         `json:"id"`
-	Source   string         `json:"source"`            // URI, file path, citation key
-	Title    string         `json:"title,omitempty"`   // section heading
+	Source   string         `json:"source"`          // URI, file path, citation key
+	Title    string         `json:"title,omitempty"` // section heading
 	Text     string         `json:"text"`
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
@@ -174,8 +174,8 @@ func itoa(n int) string {
 // MemoryStore is a list-backed VectorStore. Search is O(N) — fine for the
 // demo and up to a few thousand chunks; swap for pgvector when needed.
 type MemoryStore struct {
-	mu     sync.RWMutex
-	items  []memoryItem
+	mu    sync.RWMutex
+	items []memoryItem
 }
 
 type memoryItem struct {

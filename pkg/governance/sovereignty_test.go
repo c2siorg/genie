@@ -11,7 +11,7 @@ import (
 func TestDataResidency_DenyPIICrossBorder(t *testing.T) {
 	p := NewResidencyPolicy(sovereignty.RegionIN)
 	msg := protocol.Message{Metadata: map[string]any{
-		sovereignty.MetaKeyRegion:    string(sovereignty.RegionUS),
+		sovereignty.MetaKeyRegion:      string(sovereignty.RegionUS),
 		protocol.MetaKeyClassification: string(protocol.ClassPII),
 	}}
 	res, _ := p.Evaluate(context.Background(), msg)
@@ -23,7 +23,7 @@ func TestDataResidency_DenyPIICrossBorder(t *testing.T) {
 func TestDataResidency_AllowOnPrem(t *testing.T) {
 	p := NewResidencyPolicy(sovereignty.RegionIN)
 	msg := protocol.Message{Metadata: map[string]any{
-		sovereignty.MetaKeyRegion:    string(sovereignty.RegionOnPrem),
+		sovereignty.MetaKeyRegion:      string(sovereignty.RegionOnPrem),
 		protocol.MetaKeyClassification: string(protocol.ClassSecret),
 	}}
 	res, _ := p.Evaluate(context.Background(), msg)
@@ -35,7 +35,7 @@ func TestDataResidency_AllowOnPrem(t *testing.T) {
 func TestDataResidency_PublicMayCross(t *testing.T) {
 	p := NewResidencyPolicy(sovereignty.RegionIN)
 	msg := protocol.Message{Metadata: map[string]any{
-		sovereignty.MetaKeyRegion:    string(sovereignty.RegionUS),
+		sovereignty.MetaKeyRegion:      string(sovereignty.RegionUS),
 		protocol.MetaKeyClassification: string(protocol.ClassPublic),
 	}}
 	res, _ := p.Evaluate(context.Background(), msg)

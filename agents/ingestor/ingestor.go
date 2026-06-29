@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	ID            = "ingestor"
-	CapIngestCSV  = "ingest_csv"
-	NextAgent     = "normalizer"
-	TypeRawCSV    = "ingest_csv"
-	TypeOutBatch  = "raw_transactions"
+	ID           = "ingestor"
+	CapIngestCSV = "ingest_csv"
+	NextAgent    = "normalizer"
+	TypeRawCSV   = "ingest_csv"
+	TypeOutBatch = "raw_transactions"
 )
 
 // Agent parses CSV content from Message.Content and emits a single batch

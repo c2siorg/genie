@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	ID      = "llm_auditor"
+	ID       = "llm_auditor"
 	CapAudit = "audit_messages"
 	TypeIn   = "audit_request"
 	TypeOut  = "audit_result"

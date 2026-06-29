@@ -58,7 +58,7 @@ func TestCashflowFloorRejection(t *testing.T) {
 
 func TestTurnoverCap(t *testing.T) {
 	app := cleanApp()
-	app.AnnualTurnover = 5_000_000 // ₹50L
+	app.AnnualTurnover = 5_000_000  // ₹50L
 	app.RequestedAmount = 4_000_000 // ₹40L exceeds 30% of turnover (₹15L)
 	o, _ := New().Process(context.Background(), app, true)
 	if o.OfferedAmount > 1_500_000+1 {

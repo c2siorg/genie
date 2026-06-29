@@ -127,4 +127,3 @@ func (r *InMemoryRegistry) FindByCapability(ctx context.Context, capability stri
 }
 
 var _ Registry = (*InMemoryRegistry)(nil)
-

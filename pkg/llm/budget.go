@@ -63,9 +63,9 @@ func (b *InMemoryBudget) Add(_ context.Context, p string, tokens int) error {
 // The principal id comes from CompletionRequest.Residency.Region as a stand-in
 // for now; production should add a User-scoped field to CompletionRequest.
 type BudgetedProvider struct {
-	Inner   Provider
-	Ledger  BudgetLedger
-	MaxDay  int // hard cap; 0 means no limit
+	Inner  Provider
+	Ledger BudgetLedger
+	MaxDay int // hard cap; 0 means no limit
 }
 
 // NewBudgeted wraps p with a daily cap. Use 0 for "no limit".

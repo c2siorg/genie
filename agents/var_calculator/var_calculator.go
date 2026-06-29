@@ -1,8 +1,8 @@
 // Package var_calculator computes Value-at-Risk for a portfolio of
 // returns. Two methods supported:
 //
-//   * Historical — VaR is the p-th percentile of the historical returns
-//   * Parametric — assumes normal returns; VaR = -(μ + zα × σ) × value
+//   - Historical — VaR is the p-th percentile of the historical returns
+//   - Parametric — assumes normal returns; VaR = -(μ + zα × σ) × value
 //
 // Expected Shortfall (ES / CVaR) is included for both methods. Outputs
 // rupee VaR and percent VaR at the requested confidence level.
@@ -35,10 +35,10 @@ type Request struct {
 
 // Method captures one VaR computation method's output.
 type Method struct {
-	VaRPct  float64 `json:"var_pct"`
-	VaRINR  float64 `json:"var_rupees"`
-	ESPct   float64 `json:"es_pct"`
-	ESINR   float64 `json:"es_rupees"`
+	VaRPct float64 `json:"var_pct"`
+	VaRINR float64 `json:"var_rupees"`
+	ESPct  float64 `json:"es_pct"`
+	ESINR  float64 `json:"es_rupees"`
 }
 
 // Result is the wire output.

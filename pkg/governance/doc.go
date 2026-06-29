@@ -9,17 +9,17 @@
 // - Auditable (explains why something was allowed/denied)
 // - Evolvable (policies can change without rewriting agents)
 //
-// Where governance sits in the flow
+// # Where governance sits in the flow
 //
 // In this repository, governance is evaluated by the orchestrator:
 //
-//   protocol.Message -> Orchestrator -> Policy.Evaluate -> (allow/deny) -> Agent.HandleMessage
+//	protocol.Message -> Orchestrator -> Policy.Evaluate -> (allow/deny) -> Agent.HandleMessage
 //
 // That placement is intentional:
 // - It centralizes enforcement at a clear boundary.
 // - It avoids duplicating policy checks inside each agent.
 //
-// Extending this package
+// # Extending this package
 //
 // You can add policies such as:
 // - Allowlist/denylist by sender/recipient/capability
@@ -28,4 +28,3 @@
 // - Rate limiting / quotas / cost controls
 // - Data residency and privacy constraints
 package governance
-

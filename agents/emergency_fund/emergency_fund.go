@@ -28,10 +28,10 @@ const (
 
 // Request is the wire payload.
 type Request struct {
-	Transactions       []finance.Transaction `json:"transactions"`
-	LiquidReservesINR  float64               `json:"liquid_reserves_rupees"`
-	IncomeProfile      string                `json:"income_profile"` // "stable" | "variable"
-	HasDependents      bool                  `json:"has_dependents"`
+	Transactions      []finance.Transaction `json:"transactions"`
+	LiquidReservesINR float64               `json:"liquid_reserves_rupees"`
+	IncomeProfile     string                `json:"income_profile"` // "stable" | "variable"
+	HasDependents     bool                  `json:"has_dependents"`
 }
 
 // Plan is the wire output.

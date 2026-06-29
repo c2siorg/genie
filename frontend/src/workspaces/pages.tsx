@@ -1,0 +1,1211 @@
+// Workspace pages. Phase 2+: Commerce, Compliance, Governance, Evaluation, Assistant are real.
+
+import { Money } from "../components/Money";
+import { StateMachine } from "../components/StateMachine";
+import { useProvenance } from "../provenance/provenance";
+import { useState, useEffect } from "react";
+import {
+  useAskStream,
+  useLLMConfig,
+  useAIDisclosure,
+  useFinancialContext,
+} from "../hooks/useAssistant";
+import type { AskRequest, LLMProvider } from "../types/assistant";
+
+function Stub({ title, blurb }: { title: string; blurb: string }) {
+  return (
+    <section>
+      <h1>{title}</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>{blurb}</p>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        This workspace is scaffolded in Phase 1; its features land in a later phase.
+      </p>
+    </section>
+  );
+}
+
+export function Assistant() {
+  const { disclosure, loading: loadingDisclosure, fetch: fetchDisclosure } = useAIDisclosure();
+  const { config, fetch: fetchConfig } = useLLMConfig();
+  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("anthropic");
+  const [selectedModel, setSelectedModel] = useState("claude-sonnet-4-6");
+  const [documentId] = useState("sample-csv-123");
+  const [question, setQuestion] = useState("");
+  const [acknowledged, setAcknowledged] = useState(false);
+  const { open } = useProvenance();
+
+  const { report, traceId, progressEvents, streaming, error: streamError, askStream, cancel } =
+    useAskStream();
+  const { context, loading: loadingContext } = useFinancialContext(documentId);
+
+  useEffect(() => {
+    fetchDisclosure();
+    fetchConfig();
+  }, [fetchDisclosure, fetchConfig]);
+
+  const handleAsk = async () => {
+    if (!question.trim() || !acknowledged) return;
+
+    const request: AskRequest = {
+      question,
+      document_id: documentId,
+      provider: selectedProvider,
+      model: selectedModel,
+    };
+
+    await askStream(request);
+    setQuestion("");
+  };
+
+  return (
+    <section>
+      <h1>Assistant</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Conversational financial assistant with real LLM integration (Phase 6).
+      </p>
+
+      {/* AI Disclosure Banner */}
+      {loadingDisclosure ? (
+        <p style={{ color: "var(--color-text-muted)" }}>Loading disclosure...</p>
+      ) : disclosure && !acknowledged ? (
+        <div
+          style={{
+            background: "var(--color-warn)",
+            color: "black",
+            padding: "var(--space-4)",
+            borderRadius: "var(--radius)",
+            marginTop: "var(--space-4)",
+            marginBottom: "var(--space-4)",
+          }}
+        >
+          <strong>{disclosure.title}</strong>
+          <p style={{ margin: "var(--space-2) 0" }}>{disclosure.message}</p>
+          <p style={{ fontSize: "0.85rem", marginTop: "var(--space-2)" }}>
+            {disclosure.regulatory_basis}
+          </p>
+          <button
+            onClick={() => setAcknowledged(true)}
+            style={{
+              marginTop: "var(--space-3)",
+              padding: "var(--space-2) var(--space-3)",
+              background: "black",
+              color: "white",
+              border: "none",
+              borderRadius: "var(--radius)",
+              cursor: "pointer",
+            }}
+          >
+            I Acknowledge
+          </button>
+        </div>
+      ) : null}
+
+      {/* Chat Interface */}
+      {acknowledged && (
+        <div
+          style={{
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius)",
+            padding: "var(--space-6)",
+            marginTop: "var(--space-6)",
+          }}
+        >
+          <h2 style={{ marginTop: 0 }}>Ask Genie</h2>
+
+          {/* Configuration Section */}
+          <div style={{ marginBottom: "var(--space-6)" }}>
+            <h3 style={{ fontSize: "1rem", color: "var(--color-text-muted)" }}>Configuration</h3>
+
+            <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+                  LLM Provider
+                </label>
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value as LLMProvider)}
+                  disabled={streaming}
+                  style={{
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="ollama">Ollama (Local)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="gemini">Gemini</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+                  Model
+                </label>
+                <input
+                  type="text"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  disabled={streaming}
+                  style={{
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                    minWidth: "200px",
+                  }}
+                />
+              </div>
+
+              {config && (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+                    Tokens Remaining
+                  </label>
+                  <div
+                    style={{
+                      padding: "var(--space-2)",
+                      background: "var(--color-border)",
+                      borderRadius: "var(--radius)",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {config.token_budget_remaining.toLocaleString()} / {config.token_budget_daily.toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Financial Context */}
+          {loadingContext ? (
+            <p style={{ color: "var(--color-text-muted)" }}>Loading financial context...</p>
+          ) : context ? (
+            <div
+              style={{
+                background: "var(--color-border)",
+                padding: "var(--space-4)",
+                borderRadius: "var(--radius)",
+                marginBottom: "var(--space-4)",
+                fontSize: "0.9rem",
+              }}
+            >
+              <strong>Financial Context</strong>
+              <p style={{ margin: "var(--space-2) 0" }}>
+                Currency: {context.currency} | Income: <Money paise={context.total_income_paise} /> | Expense:{" "}
+                <Money paise={context.total_expense_paise} /> | Net: <Money paise={context.net_paise} intent={context.net_paise >= 0 ? "credit" : "debit"} />
+              </p>
+            </div>
+          ) : null}
+
+          {/* Question Input */}
+          <div style={{ marginBottom: "var(--space-4)" }}>
+            <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "var(--space-1)" }}>
+              Your Question
+            </label>
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              disabled={streaming}
+              placeholder="E.g., 'What are my top spending categories this month?'"
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                padding: "var(--space-3)",
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--color-border)",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
+            <button
+              onClick={handleAsk}
+              disabled={streaming || !question.trim()}
+              style={{
+                padding: "var(--space-2) var(--space-4)",
+                background: "var(--color-info)",
+                color: "white",
+                border: "none",
+                borderRadius: "var(--radius)",
+                cursor: "pointer",
+                opacity: streaming || !question.trim() ? 0.5 : 1,
+              }}
+            >
+              {streaming ? "Asking..." : "Ask"}
+            </button>
+            {streaming && (
+              <button
+                onClick={cancel}
+                style={{
+                  padding: "var(--space-2) var(--space-4)",
+                  background: "var(--color-danger)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "var(--radius)",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {/* Error Display */}
+          {streamError && (
+            <div style={{ color: "var(--color-danger)", marginBottom: "var(--space-4)" }}>
+              Error: {streamError}
+            </div>
+          )}
+
+          {/* Progress Events */}
+          {progressEvents.length > 0 && (
+            <div style={{ marginBottom: "var(--space-4)" }}>
+              <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                Processing ({progressEvents.length} steps)
+              </p>
+              {progressEvents.map((event, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: "0.85rem",
+                    padding: "var(--space-2) 0",
+                    borderTop: `1px solid var(--color-border)`,
+                    color: "var(--color-text-muted)",
+                  }}
+                >
+                  {event.from} → {event.to}: <strong>{event.type}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Final Report */}
+          {report && (
+            <div
+              style={{
+                background: "var(--color-border)",
+                padding: "var(--space-4)",
+                borderRadius: "var(--radius)",
+                marginTop: "var(--space-4)",
+                fontFamily: "monospace",
+                fontSize: "0.9rem",
+                whiteSpace: "pre-wrap",
+                overflowX: "auto",
+              }}
+            >
+              <strong>Genie Report (Trace: {traceId})</strong>
+              <pre style={{ marginTop: "var(--space-2)", color: "var(--color-text)" }}>
+                {report}
+              </pre>
+              <button
+                onClick={() => open(traceId || "")}
+                style={{
+                  marginTop: "var(--space-3)",
+                  padding: "var(--space-2) var(--space-3)",
+                  background: "transparent",
+                  border: `1px solid var(--color-border)`,
+                  color: "var(--color-text)",
+                  borderRadius: "var(--radius)",
+                  cursor: "pointer",
+                }}
+              >
+                Why? · View provenance ↗
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+import type { CreateOrderRequest } from "../types/commerce";
+import { useOrder, useCreateOrder, useOrderAudit } from "../hooks/useCommerce";
+import { useHITLApprovals, useComplianceCheck, useComplianceCheckResult } from "../hooks/useCompliance";
+import { useAgentFleet, useIncidents, useKillSwitch } from "../hooks/useGovernance";
+import { useEvaluationMetrics, useJudgeCalibration, useCoverageStatus } from "../hooks/useEvaluation";
+
+const SETTLEMENT_STEPS = [
+  { key: "created", label: "Created", detail: "12:00" },
+  { key: "payment_initiated", label: "Payment", detail: "12:01" },
+  { key: "payment_confirmed", label: "Confirmed", detail: "12:01" },
+  { key: "settlement", label: "Settlement", detail: "12:02" },
+  { key: "fulfilled", label: "Fulfilled" },
+];
+
+export function Commerce() {
+  const { open } = useProvenance();
+  const [demoOrderId, setDemoOrderId] = useState<string | null>(null);
+  const { order, loading: loadingOrder, error: orderError, fetch: fetchOrder } =
+    useOrder(demoOrderId);
+  const { create, loading: creatingOrder } = useCreateOrder();
+  const { entries: auditEntries } = useOrderAudit(demoOrderId);
+
+  const handleCreateDemoOrder = async () => {
+    const req: CreateOrderRequest = {
+      merchant_id: "merchant-demo",
+      customer_id: "customer-demo",
+      items: [
+        {
+          sku: "SKU-DEMO-001",
+          description: "Genie Demo Item",
+          quantity: 1,
+          unit_price_paise: 10000000, // ₹1,00,000.00
+        },
+      ],
+    };
+    const created = await create(req);
+    if (created) {
+      setDemoOrderId(created.order_id);
+    }
+  };
+
+  useEffect(() => {
+    if (demoOrderId) {
+      fetchOrder();
+    }
+  }, [demoOrderId, fetchOrder]);
+
+  return (
+    <section>
+      <h1>Commerce</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Orders, payments, settlement &amp; payouts — Phase 2 real API integration.
+      </p>
+
+      {!order && (
+        <button
+          onClick={handleCreateDemoOrder}
+          disabled={creatingOrder}
+          style={{
+            marginTop: "var(--space-4)",
+            padding: "var(--space-2) var(--space-4)",
+            background: "var(--color-info)",
+            color: "white",
+            border: "none",
+            borderRadius: "var(--radius)",
+            cursor: "pointer",
+          }}
+        >
+          {creatingOrder ? "Creating order..." : "Create demo order"}
+        </button>
+      )}
+
+      {orderError && (
+        <div style={{ color: "var(--color-danger)", marginTop: "var(--space-4)" }}>
+          Error: {orderError}
+        </div>
+      )}
+
+      {loadingOrder && (
+        <p style={{ color: "var(--color-text-muted)", marginTop: "var(--space-4)" }}>
+          Loading order...
+        </p>
+      )}
+
+      {order && (
+        <div
+          style={{
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius)",
+            padding: "var(--space-6)",
+            marginTop: "var(--space-4)",
+          }}
+        >
+          {/* Order Header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "var(--space-4)",
+            }}
+          >
+            <div>
+              <strong>Order {order.order_id}</strong>
+              <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+                {new Date(order.created_at * 1000).toLocaleString()}
+              </p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <Money paise={order.total_paise} intent="credit" />
+              <p
+                style={{
+                  color: "var(--color-text-muted)",
+                  fontSize: "0.9rem",
+                  marginTop: "var(--space-1)",
+                }}
+              >
+                Status: {order.status}
+              </p>
+            </div>
+          </div>
+
+          {/* Settlement Timeline */}
+          <div style={{ margin: "var(--space-4) 0" }}>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+              Workflow Status
+            </p>
+            <StateMachine
+              steps={SETTLEMENT_STEPS}
+              current={order.workflow_status || "created"}
+              aria-label={`Settlement status for ${order.order_id}`}
+            />
+          </div>
+
+          {/* Items */}
+          <div style={{ marginTop: "var(--space-4)" }}>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+              Items
+            </p>
+            {order.items.map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "var(--space-2) 0",
+                  borderBottom:
+                    i < order.items.length - 1 ? `1px solid var(--color-border)` : "none",
+                }}
+              >
+                <span>
+                  {item.quantity}x {item.sku}
+                </span>
+                <Money paise={item.unit_price_paise * item.quantity} />
+              </div>
+            ))}
+          </div>
+
+          {/* Provenance */}
+          <button
+            onClick={() => open(order.order_id)}
+            style={{
+              marginTop: "var(--space-4)",
+              padding: "var(--space-2) var(--space-3)",
+              background: "transparent",
+              border: `1px solid var(--color-border)`,
+              color: "var(--color-text)",
+              borderRadius: "var(--radius)",
+              cursor: "pointer",
+            }}
+          >
+            Why? · View provenance ↗
+          </button>
+
+          {/* Audit Trail */}
+          {auditEntries.length > 0 && (
+            <div style={{ marginTop: "var(--space-6)" }}>
+              <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                Audit Trail ({auditEntries.length} entries)
+              </p>
+              {auditEntries.map((e, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: "0.85rem",
+                    padding: "var(--space-2) 0",
+                    borderTop: `1px solid var(--color-border)`,
+                  }}
+                >
+                  <strong>{e.step}</strong> at {e.timestamp}
+                  {e.error && (
+                    <p style={{ color: "var(--color-danger)" }}>{e.error}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function Compliance() {
+  const { approvals, loading: loadingApprovals, error: approvalsError, fetch: fetchApprovals } =
+    useHITLApprovals();
+  const { check, checking: checkingPayment } = useComplianceCheck();
+  const [lastCheckId, setLastCheckId] = useState<string | null>(null);
+  const {
+    result: checkResult,
+    loading: loadingCheckResult,
+    error: checkResultError,
+    fetch: fetchCheckResult,
+  } = useComplianceCheckResult(lastCheckId);
+
+  const handleCheckPayment = async () => {
+    const result = await check("demo-payment", "account-from", "account-to", 100000); // ₹1000
+    if (result) {
+      setLastCheckId(result.check_id);
+    }
+  };
+
+  useEffect(() => {
+    fetchApprovals();
+  }, [fetchApprovals]);
+
+  useEffect(() => {
+    if (lastCheckId) {
+      fetchCheckResult();
+    }
+  }, [lastCheckId, fetchCheckResult]);
+
+  const getRiskColor = (score: number) => {
+    if (score < 30) return "var(--color-success)"; // Low risk
+    if (score < 60) return "var(--color-warn)"; // Medium risk
+    return "var(--color-danger)"; // High risk
+  };
+
+  return (
+    <section>
+      <h1>Compliance</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        KYC onboarding, payment monitoring, AML screening, HITL approvals (Phase 3 real integration).
+      </p>
+
+      {/* Section 1: Payment Compliance Check */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Real-Time Payment Compliance</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Initiate an async compliance check with AML screening, velocity limits, and fraud detection.
+        </p>
+
+        <button
+          onClick={handleCheckPayment}
+          disabled={checkingPayment}
+          style={{
+            padding: "var(--space-2) var(--space-4)",
+            background: "var(--color-info)",
+            color: "white",
+            border: "none",
+            borderRadius: "var(--radius)",
+            cursor: "pointer",
+          }}
+        >
+          {checkingPayment ? "Checking..." : "Check payment compliance"}
+        </button>
+
+        {checkResultError && (
+          <p style={{ color: "var(--color-danger)", marginTop: "var(--space-2)" }}>
+            Error: {checkResultError}
+          </p>
+        )}
+
+        {checkResult && (
+          <div style={{ marginTop: "var(--space-4)" }}>
+            <h3>Check Result</h3>
+            <div style={{ fontSize: "0.9rem" }}>
+              <p>
+                <strong>Decision:</strong>{" "}
+                <span style={{ color: getRiskColor(checkResult.fraud_score) }}>
+                  {checkResult.decision.toUpperCase()}
+                </span>
+              </p>
+              <p>
+                <strong>AML Result:</strong> {checkResult.aml_result} {checkResult.aml_reason && `(${checkResult.aml_reason})`}
+              </p>
+              <p>
+                <strong>Velocity:</strong> {checkResult.velocity_result}
+                {checkResult.velocity_reason && ` – ${checkResult.velocity_reason}`}
+              </p>
+              <p>
+                <strong>Fraud Score:</strong>{" "}
+                <span style={{ color: getRiskColor(checkResult.fraud_score) }}>
+                  {checkResult.fraud_score}/100
+                </span>
+              </p>
+              {checkResult.detected_patterns.length > 0 && (
+                <p>
+                  <strong>Detected Patterns:</strong> {checkResult.detected_patterns.join(", ")}
+                </p>
+              )}
+              <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                Checked at: {new Date(checkResult.checked_at).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {loadingCheckResult && (
+          <p style={{ color: "var(--color-text-muted)", marginTop: "var(--space-4)" }}>
+            Fetching check result...
+          </p>
+        )}
+      </div>
+
+      {/* Section 2: HITL Approval Queue */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Human-in-the-Loop (HITL) Approval Queue</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Flagged KYC applications and payments requiring manual compliance review.
+        </p>
+
+        {approvalsError && (
+          <p style={{ color: "var(--color-danger)" }}>Error: {approvalsError}</p>
+        )}
+
+        {loadingApprovals ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading approvals...</p>
+        ) : approvals.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No pending approvals.</p>
+        ) : (
+          <div>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+              {approvals.length} pending approval{approvals.length !== 1 ? "s" : ""}
+            </p>
+            {approvals.map((approval, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <strong>
+                    {approval.request_type.toUpperCase()}: {approval.entity_id}
+                  </strong>
+                  <span style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                    {new Date(approval.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p style={{ color: "var(--color-text-muted)", margin: 0 }}>{approval.reason}</p>
+                {approval.risk_factors && approval.risk_factors.length > 0 && (
+                  <p style={{ color: "var(--color-warn)", margin: "var(--space-1) 0 0 0", fontSize: "0.85rem" }}>
+                    Risk: {approval.risk_factors.join(", ")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+export function Ops() {
+  const { agents, loading: loadingAgents, error: agentsError, fetch: fetchAgents } =
+    useAgentFleet();
+  const { incidents, loading: loadingIncidents, error: incidentsError, fetch: fetchIncidents } =
+    useIncidents(10);
+  const { status: killSwitchStatus, loading: loadingKillSwitch, fetch: fetchKillSwitch } =
+    useKillSwitch();
+
+  useEffect(() => {
+    fetchAgents();
+    fetchIncidents();
+    fetchKillSwitch();
+  }, [fetchAgents, fetchIncidents, fetchKillSwitch]);
+
+  const getRingColor = (ring: string) => {
+    switch (ring) {
+      case "admin":
+        return "var(--color-danger)";
+      case "standard":
+        return "var(--color-success)";
+      case "restricted":
+        return "var(--color-warn)";
+      case "sandboxed":
+        return "var(--color-info)";
+      default:
+        return "var(--color-text-muted)";
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "low":
+        return "var(--color-success)";
+      case "moderate":
+        return "var(--color-warn)";
+      case "high":
+        return "var(--color-danger)";
+      default:
+        return "var(--color-text-muted)";
+    }
+  };
+
+  return (
+    <section>
+      <h1>Governance & Safety</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Agent fleet monitoring, incident response, policy enforcement, and emergency controls (Phase 4).
+      </p>
+
+      {/* Section 1: Agent Fleet Dashboard */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Agent Fleet Health</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Real-time monitoring of all agents with trust scores and ring assignments.
+        </p>
+
+        {agentsError && <p style={{ color: "var(--color-danger)" }}>Error: {agentsError}</p>}
+
+        {loadingAgents ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading agents...</p>
+        ) : agents.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No agents found.</p>
+        ) : (
+          <div>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+              {agents.length} agents total
+            </p>
+            {agents.map((agent, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <div>
+                    <strong>{agent.name}</strong>
+                    <p style={{ color: "var(--color-text-muted)", margin: "var(--space-1) 0 0 0" }}>
+                      {agent.agent_id}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: getRingColor(agent.ring), fontWeight: "bold" }}>
+                      {agent.ring.toUpperCase()}
+                    </div>
+                    <div style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginTop: "var(--space-1)" }}>
+                      {agent.status.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem" }}>
+                  <span>Trust Score: {agent.trust_score}/100</span>
+                  <span>{agent.capabilities.join(", ")}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Incident Tracking */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Incident Response</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Recent incidents with severity, failure modes, and resolution status.
+        </p>
+
+        {incidentsError && <p style={{ color: "var(--color-danger)" }}>Error: {incidentsError}</p>}
+
+        {loadingIncidents ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading incidents...</p>
+        ) : incidents.length === 0 ? (
+          <p style={{ color: "var(--color-success)" }}>No recent incidents. 🎉</p>
+        ) : (
+          <div>
+            {incidents.map((incident, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <div>
+                    <strong>{incident.use_case}</strong>
+                    <p style={{ color: "var(--color-text-muted)", margin: "var(--space-1) 0 0 0" }}>
+                      {incident.description}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: getSeverityColor(incident.severity), fontWeight: "bold" }}>
+                      {incident.severity.toUpperCase()}
+                    </div>
+                    <div
+                      style={{
+                        color: incident.status === "ongoing" ? "var(--color-warn)" : "var(--color-success)",
+                        fontSize: "0.85rem",
+                        marginTop: "var(--space-1)",
+                      }}
+                    >
+                      {incident.status.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                  <p style={{ margin: 0 }}>
+                    <strong>Failure Mode:</strong> {incident.failure_mode}
+                  </p>
+                  <p style={{ margin: "var(--space-1) 0 0 0" }}>
+                    <strong>Detected:</strong> {new Date(incident.detected_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section 3: Kill Switch Controls */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Emergency Controls</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Global kill-switch status. Use only in emergencies to halt all agents.
+        </p>
+
+        {loadingKillSwitch ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading kill-switch status...</p>
+        ) : killSwitchStatus ? (
+          <div>
+            <div
+              style={{
+                padding: "var(--space-3)",
+                background: killSwitchStatus.is_active
+                  ? "var(--color-danger)"
+                  : "var(--color-success)",
+                color: "white",
+                borderRadius: "var(--radius)",
+                marginBottom: "var(--space-4)",
+                textAlign: "center",
+              }}
+            >
+              <strong>
+                {killSwitchStatus.is_active ? "🛑 KILL SWITCH ACTIVE" : "✓ All systems operational"}
+              </strong>
+            </div>
+
+            {killSwitchStatus.activations.length > 0 && (
+              <div>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+                  {killSwitchStatus.activations.length} activation{killSwitchStatus.activations.length !== 1 ? "s" : ""}
+                </p>
+                {killSwitchStatus.activations.slice(0, 3).map((activation, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "var(--space-2)",
+                      borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    <p style={{ margin: 0 }}>
+                      <strong>{activation.scope.toUpperCase()}</strong> {activation.target && `(${activation.target})`}
+                    </p>
+                    <p style={{ color: "var(--color-text-muted)", margin: "var(--space-1) 0 0 0" }}>
+                      {activation.reason}
+                    </p>
+                    <p style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "var(--space-1) 0 0 0" }}>
+                      {new Date(activation.activated_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+export function Evaluation() {
+  const { metrics, loading: loadingMetrics, error: metricsError, fetch: fetchMetrics } =
+    useEvaluationMetrics();
+  const { calibration, loading: loadingCalibration, fetch: fetchCalibration } =
+    useJudgeCalibration();
+  const { coverage, loading: loadingCoverage, fetch: fetchCoverage } = useCoverageStatus();
+
+  useEffect(() => {
+    fetchMetrics();
+    fetchCalibration();
+    fetchCoverage();
+  }, [fetchMetrics, fetchCalibration, fetchCoverage]);
+
+  const getJudgeScore = (tpr: number, tnr: number) => {
+    return ((tpr + tnr) / 2) * 100;
+  };
+
+  const getCoverageColor = (status: string) => {
+    switch (status) {
+      case "ok":
+        return "var(--color-success)";
+      case "warning":
+        return "var(--color-warn)";
+      case "critical":
+        return "var(--color-danger)";
+      default:
+        return "var(--color-text-muted)";
+    }
+  };
+
+  return (
+    <section>
+      <h1>Evaluation</h1>
+      <p style={{ color: "var(--color-text-muted)" }}>
+        Trace review, failure mode analysis, and judge calibration with drift detection (Phase 5).
+      </p>
+
+      {/* Section 1: Judge Accuracy Metrics */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Judge Calibration</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          LLM judge accuracy metrics with 95% confidence intervals.
+        </p>
+
+        {loadingCalibration ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading judge metrics...</p>
+        ) : calibration.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No calibration data available.</p>
+        ) : (
+          <div>
+            {calibration.map((judge, i) => {
+              const score = getJudgeScore(judge.tpr, judge.tnr);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    padding: "var(--space-3)",
+                    borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                    <strong>{judge.judge_type.toUpperCase()} Judge</strong>
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        color:
+                          score >= 90
+                            ? "var(--color-success)"
+                            : score >= 75
+                              ? "var(--color-warn)"
+                              : "var(--color-danger)",
+                      }}
+                    >
+                      {score.toFixed(1)}%
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", fontSize: "0.85rem" }}>
+                    <div>
+                      <p style={{ color: "var(--color-text-muted)", margin: 0 }}>TPR (Recall)</p>
+                      <p style={{ margin: "var(--space-1) 0 0 0" }}>
+                        {judge.tpr.toFixed(3)} [{judge.tpr_lower_bound.toFixed(3)}, {judge.tpr_upper_bound.toFixed(3)}]
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ color: "var(--color-text-muted)", margin: 0 }}>TNR (Specificity)</p>
+                      <p style={{ margin: "var(--space-1) 0 0 0" }}>
+                        {judge.tnr.toFixed(3)} [{judge.tnr_lower_bound.toFixed(3)}, {judge.tnr_upper_bound.toFixed(3)}]
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "var(--space-2) 0 0 0" }}>
+                    Tested on {judge.num_positives + judge.num_negatives} cases ({judge.num_positives} pass, {judge.num_negatives} fail)
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Evaluation Metrics & Drift */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Execution Metrics</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Pass rate, failure analysis, and drift detection across traced executions.
+        </p>
+
+        {metricsError && <p style={{ color: "var(--color-danger)" }}>Error: {metricsError}</p>}
+
+        {loadingMetrics ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading metrics...</p>
+        ) : metrics ? (
+          <div>
+            {metrics.drift_detected && (
+              <div
+                style={{
+                  padding: "var(--space-3)",
+                  background: "var(--color-warn)",
+                  color: "white",
+                  borderRadius: "var(--radius)",
+                  marginBottom: "var(--space-4)",
+                }}
+              >
+                <strong>⚠ Drift Detected: {metrics.drift_reason}</strong>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
+              <div style={{ background: "var(--color-bg)", padding: "var(--space-3)", borderRadius: "var(--radius)" }}>
+                <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: "0.85rem" }}>Pass Rate</p>
+                <p style={{ margin: "var(--space-1) 0 0 0", fontSize: "1.5rem", fontWeight: "bold", color: "var(--color-success)" }}>
+                  {metrics.pass_rate.toFixed(1)}%
+                </p>
+              </div>
+              <div style={{ background: "var(--color-bg)", padding: "var(--space-3)", borderRadius: "var(--radius)" }}>
+                <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: "0.85rem" }}>Total Traces</p>
+                <p style={{ margin: "var(--space-1) 0 0 0", fontSize: "1.5rem", fontWeight: "bold" }}>
+                  {metrics.total_traces}
+                </p>
+              </div>
+              <div style={{ background: "var(--color-bg)", padding: "var(--space-3)", borderRadius: "var(--radius)" }}>
+                <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: "0.85rem" }}>Failure Rate</p>
+                <p style={{ margin: "var(--space-1) 0 0 0", fontSize: "1.5rem", fontWeight: "bold", color: "var(--color-danger)" }}>
+                  {metrics.failure_rate.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
+            {metrics.most_common_failures.length > 0 && (
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: "var(--space-2)" }}>
+                  Top Failure Modes
+                </p>
+                {metrics.most_common_failures.slice(0, 5).map((failure, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "var(--space-2)",
+                      borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                      fontSize: "0.85rem",
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span>{failure.failure_mode}</span>
+                    <strong>{failure.count}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Section 3: Golden Dataset Coverage */}
+      <div
+        style={{
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          padding: "var(--space-6)",
+          marginTop: "var(--space-6)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Coverage Status</h2>
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Golden dataset test case coverage per failure mode (minimum 5 required).
+        </p>
+
+        {loadingCoverage ? (
+          <p style={{ color: "var(--color-text-muted)" }}>Loading coverage...</p>
+        ) : coverage.length === 0 ? (
+          <p style={{ color: "var(--color-text-muted)" }}>No coverage data available.</p>
+        ) : (
+          <div>
+            {coverage.slice(0, 10).map((cov, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "var(--space-3)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--color-border)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                  <strong>{cov.failure_mode}</strong>
+                  <span style={{ color: getCoverageColor(cov.status), fontWeight: "bold" }}>
+                    {cov.test_cases_count}/{cov.minimum_required}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    background: "var(--color-bg)",
+                    borderRadius: "var(--radius)",
+                    overflow: "hidden",
+                    height: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: getCoverageColor(cov.status),
+                      height: "100%",
+                      width: `${Math.min(cov.coverage_percent, 100)}%`,
+                    }}
+                  />
+                </div>
+                <p style={{ color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "var(--space-1) 0 0 0" }}>
+                  {cov.coverage_percent.toFixed(0)}% covered
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+export const Audit = () => (
+  <Stub title="Audit" blurb="Read-only lineage & regulator lens (Phase 6)." />
+);

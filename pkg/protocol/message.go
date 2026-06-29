@@ -19,24 +19,24 @@ type MessageRole string
 
 const (
 	// RoleUser identifies messages that represent end-user intent or input.
-	RoleUser      MessageRole = "user"
+	RoleUser MessageRole = "user"
 
 	// RoleSystem is reserved for control-plane/system-level instructions
 	// (e.g. "you must follow policy X") that typically shouldn't be mixed with
 	// end-user content.
-	RoleSystem    MessageRole = "system"
+	RoleSystem MessageRole = "system"
 
 	// RoleAgent identifies agent-authored messages (plans, intermediate steps,
 	// answers, delegations, etc.).
-	RoleAgent     MessageRole = "agent"
+	RoleAgent MessageRole = "agent"
 
 	// RoleTool identifies outputs produced by tools invoked by agents
 	// (search results, code execution, DB query responses, etc.).
-	RoleTool      MessageRole = "tool"
+	RoleTool MessageRole = "tool"
 
 	// RoleObserver identifies passive observation events (telemetry, audit,
 	// monitoring) that can be emitted into the same stream for tracing.
-	RoleObserver  MessageRole = "observer"
+	RoleObserver MessageRole = "observer"
 
 	// RoleEvaluator identifies evaluation events or rubric-based judgments.
 	RoleEvaluator MessageRole = "evaluator"
@@ -44,7 +44,7 @@ const (
 
 // Message represents a unit of communication between components (primarily agents).
 //
-// Mental model
+// # Mental model
 //
 // - A message is the "currency" of coordination.
 // - Orchestration routes messages to the appropriate agents.
@@ -52,22 +52,22 @@ const (
 // - Governance can allow/deny messages at boundaries.
 // - Observability and evaluation can consume the same message stream.
 //
-// Addressing
+// # Addressing
 //
-// - From: identity of the sender (agent id, "user", tool id, etc.).
-// - To: identity of the intended recipient. If empty, the message can be treated
-//   as broadcast (depending on the bus implementation).
+//   - From: identity of the sender (agent id, "user", tool id, etc.).
+//   - To: identity of the intended recipient. If empty, the message can be treated
+//     as broadcast (depending on the bus implementation).
 //
-// Classification
+// # Classification
 //
-// - Role: semantic source category (user/agent/tool/system/etc.)
-// - Type: short machine-friendly label used by agents to branch logic.
-//   Examples: "goal", "plan", "result", "tool:search", "event:audit", etc.
+//   - Role: semantic source category (user/agent/tool/system/etc.)
+//   - Type: short machine-friendly label used by agents to branch logic.
+//     Examples: "goal", "plan", "result", "tool:search", "event:audit", etc.
 //
-// Extensibility
+// # Extensibility
 //
-// - Metadata is the escape hatch for correlation ids, trace context, domain hints,
-//   safety labels, cost accounting, and other structured context.
+//   - Metadata is the escape hatch for correlation ids, trace context, domain hints,
+//     safety labels, cost accounting, and other structured context.
 type Message struct {
 	// ID uniquely identifies this message instance.
 	// The ID is useful for logging, auditing, and causal graphs.
@@ -117,4 +117,3 @@ func NewMessage(from string, to string, role MessageRole, msgType, content strin
 		Metadata:  metadata,
 	}
 }
-

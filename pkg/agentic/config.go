@@ -90,18 +90,18 @@ type Callbacks struct {
 
 // TokenUsage holds estimated token consumption for a conversation.
 type TokenUsage struct {
-	InputTokens  int
-	OutputTokens int
-	TotalTokens  int
+	InputTokens   int
+	OutputTokens  int
+	TotalTokens   int
 	ContextWindow int
-	Percentage   float64
+	Percentage    float64
 }
 
 // ─── Message ───────────────────────────────────────────────────────────────
 
 // Message is a single chat turn.
 type Message struct {
-	Role    string `json:"role"`    // "system" | "user" | "assistant" | "tool"
+	Role    string `json:"role"` // "system" | "user" | "assistant" | "tool"
 	Content string `json:"content"`
 	// ToolCallID is set on tool-result messages.
 	ToolCallID string `json:"tool_call_id,omitempty"`

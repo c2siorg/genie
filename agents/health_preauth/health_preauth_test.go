@@ -56,8 +56,8 @@ func TestDeniesPEDWaiting(t *testing.T) {
 func TestRoomRentProportionateDeduction(t *testing.T) {
 	d := New().Decide(Request{
 		PreauthID: "p4", NetworkPPN: true, Procedure: "appendectomy",
-		PolicyMonthsAtAdmit: 60,
-		EstimatedBillRupees: 100_000,
+		PolicyMonthsAtAdmit:  60,
+		EstimatedBillRupees:  100_000,
 		RoomRentPerDayRupees: 10_000, // 2× the sub-limit
 		LengthOfStayDays:     3,
 	}, basePlan())
@@ -75,8 +75,8 @@ func TestRoomRentProportionateDeduction(t *testing.T) {
 func TestProcedurePackageCap(t *testing.T) {
 	d := New().Decide(Request{
 		PreauthID: "p5", NetworkPPN: true, Procedure: "cataract",
-		PolicyMonthsAtAdmit: 60,
-		EstimatedBillRupees: 60_000,
+		PolicyMonthsAtAdmit:  60,
+		EstimatedBillRupees:  60_000,
 		RoomRentPerDayRupees: 4_000, // within sub-limit
 		LengthOfStayDays:     1,
 	}, basePlan())
@@ -91,8 +91,8 @@ func TestProcedurePackageCap(t *testing.T) {
 func TestHITLOnLargeBill(t *testing.T) {
 	d := New().Decide(Request{
 		PreauthID: "p6", NetworkPPN: true, Procedure: "cabg",
-		PolicyMonthsAtAdmit: 60,
-		EstimatedBillRupees: 600_000,
+		PolicyMonthsAtAdmit:  60,
+		EstimatedBillRupees:  600_000,
 		RoomRentPerDayRupees: 4_000,
 		LengthOfStayDays:     5,
 	}, basePlan())
@@ -104,8 +104,8 @@ func TestHITLOnLargeBill(t *testing.T) {
 func TestApproveFullCleanCase(t *testing.T) {
 	d := New().Decide(Request{
 		PreauthID: "p7", NetworkPPN: true, Procedure: "fever",
-		PolicyMonthsAtAdmit: 60,
-		EstimatedBillRupees: 25_000,
+		PolicyMonthsAtAdmit:  60,
+		EstimatedBillRupees:  25_000,
 		RoomRentPerDayRupees: 4_000,
 		LengthOfStayDays:     2,
 	}, basePlan())

@@ -15,10 +15,10 @@ const ProtocolVersion = "2025-06-18"
 // a third-party JSON-RPC library so the wire surface stays auditable.
 
 type rpcRequest struct {
-	JSONRPC string      `json:"jsonrpc"`
-	ID      any         `json:"id,omitempty"`
-	Method  string      `json:"method"`
-	Params  any         `json:"params,omitempty"`
+	JSONRPC string `json:"jsonrpc"`
+	ID      any    `json:"id,omitempty"`
+	Method  string `json:"method"`
+	Params  any    `json:"params,omitempty"`
 }
 
 type rpcResponse struct {

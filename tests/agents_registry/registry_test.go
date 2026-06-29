@@ -4,12 +4,12 @@
 //
 // What we check here:
 //
-//   * Every agent package under agents/ declares a stable string ID.
-//   * No two agents share the same ID — the registry would otherwise
+//   - Every agent package under agents/ declares a stable string ID.
+//   - No two agents share the same ID — the registry would otherwise
 //     silently overwrite handlers.
-//   * The set of declared IDs matches the directory list (no orphaned
+//   - The set of declared IDs matches the directory list (no orphaned
 //     directories, no missing IDs).
-//   * Every agent has a unit test file.
+//   - Every agent has a unit test file.
 //
 // Implementation note: rather than import every agent package (≥40
 // imports, brittle), we scan the source tree for the canonical
@@ -46,8 +46,21 @@ func agentsRoot(t *testing.T) string {
 	return ""
 }
 
+// infraDirs are subdirectories of agents/ that are NOT agents — they are the
+// shared transport/adapter/interface infrastructure that agents are built on.
+// They do not implement the agent contract (no ID const, no HandleMessage) and
+// must be skipped by the agent-contract meta-tests.
+var infraDirs = map[string]bool{
+	"core":       true, // agents/core: the Agent interface + domain types
+	"clients":    true, // agents/clients: HTTP/memory client adapters
+	"transports": true, // agents/transports: HTTP server transport
+	"adapter":    true, // agents/adapter: MessageBridgeAdapter (HandleMessage→Execute)
+	"agents":     true, // agents/agents: container dir for decoupled advisor agents
+	"cmd":        true, // agents/cmd: standalone binary entry points
+}
+
 // agentDirs returns every direct subdirectory of agents/ that contains at
-// least one non-test .go file.
+// least one non-test .go file AND is an actual agent (not infrastructure).
 func agentDirs(t *testing.T) []string {
 	root := agentsRoot(t)
 	entries, err := os.ReadDir(root)
@@ -57,6 +70,9 @@ func agentDirs(t *testing.T) []string {
 	out := []string{}
 	for _, e := range entries {
 		if !e.IsDir() {
+			continue
+		}
+		if infraDirs[e.Name()] {
 			continue
 		}
 		files, _ := os.ReadDir(filepath.Join(root, e.Name()))

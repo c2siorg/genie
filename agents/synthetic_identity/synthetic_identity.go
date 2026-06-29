@@ -3,11 +3,11 @@
 // fragments (e.g. a stolen PAN + a fake address + a thin credit file).
 //
 // Five rule families:
-//   * thin file — credit-bureau pull length too short for stated age
-//   * address-velocity — same address on multiple recent KYCs
-//   * pan-aadhaar mismatch — names don't agree
-//   * dob-pan inconsistency — PAN fourth char ≠ first letter of surname
-//   * email/phone freshness — recently created throwaway domains / numbers
+//   - thin file — credit-bureau pull length too short for stated age
+//   - address-velocity — same address on multiple recent KYCs
+//   - pan-aadhaar mismatch — names don't agree
+//   - dob-pan inconsistency — PAN fourth char ≠ first letter of surname
+//   - email/phone freshness — recently created throwaway domains / numbers
 package synthetic_identity
 
 import (
@@ -33,11 +33,11 @@ type Application struct {
 	BureauTenureMonths int    `json:"bureau_tenure_months"`
 	NameOnPAN          string `json:"name_on_pan"`
 	NameOnAadhaar      string `json:"name_on_aadhaar"`
-	PANNumber          string `json:"pan_number"`           // 10 chars
+	PANNumber          string `json:"pan_number"` // 10 chars
 	EmailDomain        string `json:"email_domain"`
-	PhoneCreatedDays   int    `json:"phone_created_days"`   // age of SIM in days
-	AddressID          string `json:"address_id"`           // canonicalised address fingerprint
-	AddressVelocity    int    `json:"address_velocity"`     // # other recent KYCs at same address
+	PhoneCreatedDays   int    `json:"phone_created_days"` // age of SIM in days
+	AddressID          string `json:"address_id"`         // canonicalised address fingerprint
+	AddressVelocity    int    `json:"address_velocity"`   // # other recent KYCs at same address
 }
 
 // Verdict is the wire output.

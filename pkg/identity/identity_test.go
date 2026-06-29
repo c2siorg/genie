@@ -16,7 +16,7 @@ func TestVC_IssueAndVerify(t *testing.T) {
 	vc := &VerifiableCredential{
 		Type: []string{"VerifiableCredential", "GenieAgentManifest"},
 		CredentialSubject: map[string]any{
-			"agentId": "ingestor",
+			"agentId":   "ingestor",
 			"riskClass": "low",
 		},
 	}

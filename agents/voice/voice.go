@@ -16,12 +16,12 @@ import (
 )
 
 const (
-	ID                 = "voice"
-	CapVoice           = "voice_io"
-	TypeTranscribeIn   = "voice_transcribe"
-	TypeTranscribeOut  = "voice_transcript"
-	TypeSynthesiseIn   = "voice_synthesise"
-	TypeSynthesiseOut  = "voice_audio"
+	ID                = "voice"
+	CapVoice          = "voice_io"
+	TypeTranscribeIn  = "voice_transcribe"
+	TypeTranscribeOut = "voice_transcript"
+	TypeSynthesiseIn  = "voice_synthesise"
+	TypeSynthesiseOut = "voice_audio"
 )
 
 // VoiceProvider is the adapter contract. Implementations call into Bhashini,

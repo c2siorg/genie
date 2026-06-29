@@ -41,26 +41,26 @@ const (
 // Application is one inbound KYC packet.
 type Application struct {
 	CustomerID         string  `json:"customer_id"`
-	PANNumber          string  `json:"pan_number"`             // 10 chars
+	PANNumber          string  `json:"pan_number"` // 10 chars
 	NameOnPAN          string  `json:"name_on_pan"`
-	AadhaarLast4       string  `json:"aadhaar_last4"`          // never the full number on the bus
-	AadhaarOfflineKYC  bool    `json:"aadhaar_offline_kyc"`    // user supplied UIDAI XML
+	AadhaarLast4       string  `json:"aadhaar_last4"`       // never the full number on the bus
+	AadhaarOfflineKYC  bool    `json:"aadhaar_offline_kyc"` // user supplied UIDAI XML
 	NameOnAadhaar      string  `json:"name_on_aadhaar"`
 	DigiLockerVerified bool    `json:"digilocker_verified"`
 	AddressMatchScore  float64 `json:"address_match_score_0_1"`
-	LivenessScore      float64 `json:"liveness_score_0_1"`     // from V-CIP / passive liveness
-	PEPHit             bool    `json:"pep_hit"`                // politically exposed person
-	SanctionsHit       bool    `json:"sanctions_hit"`          // OFAC / UN / MHA
-	CountryOfResidence string  `json:"country_of_residence"`   // ISO 3166-1 alpha-2
-	HighRiskCountry    bool    `json:"high_risk_country"`      // FATF grey/black-list
-	OccupationHighRisk bool    `json:"occupation_high_risk"`   // arms, gambling, NGO etc.
+	LivenessScore      float64 `json:"liveness_score_0_1"`   // from V-CIP / passive liveness
+	PEPHit             bool    `json:"pep_hit"`              // politically exposed person
+	SanctionsHit       bool    `json:"sanctions_hit"`        // OFAC / UN / MHA
+	CountryOfResidence string  `json:"country_of_residence"` // ISO 3166-1 alpha-2
+	HighRiskCountry    bool    `json:"high_risk_country"`    // FATF grey/black-list
+	OccupationHighRisk bool    `json:"occupation_high_risk"` // arms, gambling, NGO etc.
 }
 
 // Verdict is the structured output.
 type Verdict struct {
 	CustomerID      string   `json:"customer_id"`
-	Decision        string   `json:"decision"`       // "approve" | "edd" | "reject"
-	Tier            string   `json:"tier"`           // "sdd" | "standard" | "edd"
+	Decision        string   `json:"decision"` // "approve" | "edd" | "reject"
+	Tier            string   `json:"tier"`     // "sdd" | "standard" | "edd"
 	RiskScore       float64  `json:"risk_score_0_1"`
 	Reasons         []string `json:"reasons"`
 	NextSteps       []string `json:"next_steps"`

@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -58,23 +59,29 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agentgov"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/cbdc"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commerce"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commercesettlement"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeecompliance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeepayment"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/incidents"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/opa"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/sovereignty"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/synth"
@@ -82,6 +89,55 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/handlers"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
+
+// InMemorySettlementExecutor implements the settlement executor interface
+// for testing and in-memory operation.
+type InMemorySettlementExecutor struct {
+	batches map[string]*commercesettlement.SettlementBatch
+}
+
+func NewInMemorySettlementExecutor() *InMemorySettlementExecutor {
+	return &InMemorySettlementExecutor{
+		batches: make(map[string]*commercesettlement.SettlementBatch),
+	}
+}
+
+func (e *InMemorySettlementExecutor) ExecuteBatch(ctx context.Context, batchID string, positions map[string]int64) error {
+	// Create settlement entries from positions
+	entries := make(map[string]*commercesettlement.SettlementEntry)
+	totalAmount := int64(0)
+	merchantIDs := []string{}
+
+	for merchantID, amount := range positions {
+		entries[merchantID] = &commercesettlement.SettlementEntry{
+			MerchantID:      merchantID,
+			AmountOwedPaise: amount,
+			SettlementTxnID: batchID + "-" + merchantID,
+		}
+		totalAmount += amount
+		merchantIDs = append(merchantIDs, merchantID)
+	}
+
+	batch := &commercesettlement.SettlementBatch{
+		ID:               batchID,
+		SettlementDate:   time.Now().UTC(),
+		MerchantIDs:      merchantIDs,
+		TotalAmountPaise: totalAmount,
+		Status:           commercesettlement.StatusSettled,
+		CreatedAt:        time.Now().UTC(),
+		Entries:          entries,
+	}
+	e.batches[batchID] = batch
+	return nil
+}
+
+func (e *InMemorySettlementExecutor) GetBatchStatus(ctx context.Context, batchID string) (string, error) {
+	batch, exists := e.batches[batchID]
+	if !exists {
+		return "pending", nil
+	}
+	return string(batch.Status), nil
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -251,6 +307,30 @@ func run() error {
 		register(auditor.New(evalStore).WithJudge(llmStack.Provider, cst, llmStack.Model))
 	}
 
+	// ── Agent decoupling toggle (Week 3) ───────────────────────────────────
+	// Every agent above runs IN-PROCESS by default. Setting
+	// GENIE_AGENT_<ID>_MODE=http (plus GENIE_AGENT_<ID>_URL) REPLACES that one
+	// agent with an HTTPRegistryAgent that proxies to a remote agent service —
+	// the registry replaces by ID. This is additive and strictly opt-in: with no
+	// env vars set, the backend behaves exactly as before. Once every agent is
+	// validated in http mode, the in-process imports/registrations above can be
+	// removed to satisfy the "zero agent code in backend" mandate.
+	agentToken := os.Getenv("GENIE_AGENT_TOKEN")
+	for _, def := range registry.AllLegacyAgents {
+		key := "GENIE_AGENT_" + strings.ToUpper(def.ID) + "_MODE"
+		if os.Getenv(key) != "http" {
+			continue // default: keep the in-process agent
+		}
+		url := os.Getenv("GENIE_AGENT_" + strings.ToUpper(def.ID) + "_URL")
+		if url == "" {
+			logger.Error("agent set to http mode but URL missing; keeping in-process",
+				"agent", def.ID, "expected_env", "GENIE_AGENT_"+strings.ToUpper(def.ID)+"_URL")
+			continue
+		}
+		register(registry.NewHTTPRegistryAgent(def, url, agentToken))
+		logger.Info("agent switched to remote HTTP proxy", "agent", def.ID, "url", url)
+	}
+
 	incidentStore := postgres.NewIncidentStore(db)
 
 	// Build AGT governance bundle.
@@ -343,12 +423,43 @@ func run() error {
 		"recommender":       "recommender_fallback",
 	}
 
+	// E-Rupee Commerce Module Initialization
+	// Payment Agent
+	acctMgr := erupeepayment.NewInMemoryAccountManager(nil)
+	txnLog := erupeepayment.NewInMemoryTransactionLog(nil)
+	paymentAgent := erupeepayment.NewPaymentAgent(acctMgr, txnLog)
+
+	// Commerce Workflow (real stubs for payment & settlement agents)
+	orderMgr := commerce.NewInMemoryOrderManager()
+	paymentStub := commerce.NewRealPaymentAgentStub(paymentAgent)
+	settlementExecutor := NewInMemorySettlementExecutor()
+	settlementStub := commerce.NewRealSettlementAgentStub(settlementExecutor)
+	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, paymentStub, settlementStub)
+
+	// Merchant Onboarding
+	merchantMgr := merchant.NewInMemoryMerchantManager()
+	onboardingWf := merchant.NewInMemoryOnboardingWorkflow(merchantMgr)
+
+	// CBDC Ledger & Settlement
+	cbdcLedger := cbdc.NewInMemoryLedger()
+	cbdcBridge := cbdc.NewMockCBDCBridge(2)
+	rbiLimits := cbdc.NewRBILimitsValidator()
+
+	// Payment Compliance Engine
+	complianceEngine := erupeecompliance.NewComplianceEngine()
+
 	deps := web.Deps{
-		Issuer:    issuer,
-		Logger:    logger,
-		Users:     &handlers.Users{Repo: userRepo, Issuer: issuer},
-		Accounts:  &handlers.Accounts{Repo: acctRepo},
-		Documents: &handlers.Documents{Repo: docRepo, Encryptor: enc},
+		Issuer: issuer,
+		Logger: logger,
+		// CSRF stays report-only until the SPA sends X-CSRF-Token; flip with
+		// GENIE_CSRF_ENFORCE=true. No effect on Bearer-token API traffic.
+		CSRFEnforce: os.Getenv("GENIE_CSRF_ENFORCE") == "true",
+		// Eval observability endpoints (/v1/eval/*), admin-only. Shares the
+		// in-memory eval store with the auditor; annotations are in-memory.
+		EvalReview: handlers.NewEvalReviewHandler(evalStore, eval.NewInMemoryAnnotationStore()),
+		Users:      &handlers.Users{Repo: userRepo, Issuer: issuer},
+		Accounts:   &handlers.Accounts{Repo: acctRepo},
+		Documents:  &handlers.Documents{Repo: docRepo, Encryptor: enc},
 		Ask: &handlers.Ask{
 			Bus:                bus,
 			Correlator:         corr,
@@ -414,6 +525,16 @@ func run() error {
 			}
 			return nil
 		}(),
+		// E-Rupee Commerce Handlers
+		Payment: &handlers.Payment{
+			PaymentAgent:   paymentAgent,
+			AccountManager: acctMgr,
+			TransactionLog: txnLog,
+		},
+		Commerce:   handlers.NewCommerceHandler(orderMgr, workflowOrch),
+		Merchant:   handlers.NewMerchantHandler(merchantMgr, onboardingWf),
+		Compliance: handlers.NewComplianceHandler(complianceEngine),
+		CBDC:       handlers.NewCBDCHandler(cbdcBridge, cbdcLedger, rbiLimits),
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui

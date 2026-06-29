@@ -1,0 +1,493 @@
+{
+  "test_dataset": {
+    "domain": "settlement",
+    "failure_mode_category": "netting",
+    "total_cases": 20,
+    "description": "Settlement netting calculations: bilateral, multilateral, overflow, precision, edge cases",
+    "cases": [
+      {
+        "test_case_id": "SE-NETTING-001",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "bilateral_netting",
+          "merchant_pairs": [
+            {"id": "M1", "receives": 100000, "owes": 30000},
+            {"id": "M2", "receives": 30000, "owes": 100000}
+          ],
+          "timestamp": "2026-06-06T18:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_validate_amounts: M1 receives 100k, owes 30k; M2 receives 30k, owes 100k",
+          "step_2_compute_bilateral_net: M1 net=70k (receive 100-30), M2 net=-70k (receive 30-100)",
+          "step_3_verify_netting: net M1 + net M2 = 0 (balanced)",
+          "step_4_ledger_apply: M1 +70k, M2 -70k"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "bilateral_net_m1": 70000,
+          "bilateral_net_m2": -70000,
+          "total_netting_value": 70000,
+          "positions_balanced": true,
+          "reconciliation_pass": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "bilateral_net_m1": 70000,
+          "bilateral_net_m2": -70000,
+          "total_netting_value": 70000,
+          "positions_balanced": true,
+          "reconciliation_pass": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Bilateral netting correct; positions balanced; no overflow"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-002",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "trilateral_netting",
+          "merchants": [
+            {"id": "M1", "transactions": [{"to": "M2", "amount": 100000}, {"to": "M3", "amount": 50000}]},
+            {"id": "M2", "transactions": [{"to": "M1", "amount": 30000}, {"to": "M3", "amount": 70000}]},
+            {"id": "M3", "transactions": [{"to": "M1", "amount": 60000}, {"to": "M2", "amount": 40000}]}
+          ],
+          "timestamp": "2026-06-06T18:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_compute_gross_positions: M1 receives 90k (30+60), owes 150k (100+50); net=-60k",
+          "step_2_compute_gross_positions: M2 receives 140k (100+40), owes 100k (30+70); net=+40k",
+          "step_3_compute_gross_positions: M3 receives 120k (50+70), owes 100k (60+40); net=+20k",
+          "step_4_verify_balance: net M1 + M2 + M3 = -60+40+20 = 0",
+          "step_5_ledger_apply: M1 -60k, M2 +40k, M3 +20k"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "m1_net": -60000,
+          "m2_net": 40000,
+          "m3_net": 20000,
+          "total_balanced": 0,
+          "settlement_efficiency": "high",
+          "positions_verified": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "m1_net": -60000,
+          "m2_net": 40000,
+          "m3_net": 20000,
+          "total_balanced": 0,
+          "settlement_efficiency": "high",
+          "positions_verified": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 98,
+              "evidence": "Trilateral netting correct; all positions balanced; complex calculation verified"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-003",
+        "failure_mode": "FM-SE-003",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "netting_with_rounding",
+          "merchants": [
+            {"id": "M1", "receives": 333333},
+            {"id": "M2", "receives": 333334},
+            {"id": "M3", "owes": 666667}
+          ],
+          "timestamp": "2026-06-06T18:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_compute_netting: M1 net=333333, M2 net=333334, M3 net=-666667",
+          "step_2_total_sum: 333333 + 333334 - 666667 = 0",
+          "step_3_verify_precision: all values in paise (no decimal loss)",
+          "step_4_ledger_apply: amounts applied with banker's rounding"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "rounding_error_paise": 0,
+          "total_balanced": 0,
+          "precision_maintained": true,
+          "reconciliation_pass": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "rounding_error_paise": 0,
+          "total_balanced": 0,
+          "precision_maintained": true,
+          "reconciliation_pass": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Rounding handled correctly; precision maintained to paise; no loss in netting calculation"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-004",
+        "failure_mode": "FM-SE-003",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "netting_overflow_risk",
+          "merchants": [
+            {"id": "M1", "balance": 9223372036854775000},
+            {"id": "M2", "balance": 8000}
+          ],
+          "timestamp": "2026-06-06T18:45:00Z",
+          "metadata": {
+            "use_big_int": true,
+            "overflow_protection": "checked"
+          }
+        },
+        "execution_trace": [
+          "step_1_check_bounds: verify amounts fit in int64 range",
+          "step_2_detect_risk: M1 balance near max int64, adding M2 could overflow",
+          "step_3_use_big_int: convert to big.Int for safe arithmetic",
+          "step_4_compute_sum: safe addition with big.Int",
+          "step_5_verify_no_overflow: result computed correctly"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "total_sum": 9223372036854783000,
+          "overflow_detected": false,
+          "big_int_used": true,
+          "precision_maintained": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "total_sum": 9223372036854783000,
+          "overflow_detected": false,
+          "big_int_used": true,
+          "precision_maintained": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Overflow risk detected and prevented using big.Int; large values handled correctly"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-005",
+        "failure_mode": "FM-SE-003",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "netting_overflow_failure",
+          "merchants": [
+            {"id": "M1", "balance": 9223372036854775807},
+            {"id": "M2", "balance": 1000}
+          ],
+          "timestamp": "2026-06-06T19:00:00Z",
+          "metadata": {
+            "use_big_int": false,
+            "overflow_protection": "none"
+          }
+        },
+        "execution_trace": [
+          "step_1_compute_sum: attempt int64 addition",
+          "step_2_overflow_occurs: 9223372036854775807 + 1000 overflows int64 to negative",
+          "step_3_result: incorrect negative value instead of positive sum"
+        ],
+        "expected_output": {
+          "settlement_result": "failure",
+          "overflow_detected": true,
+          "error_code": "integer_overflow"
+        },
+        "actual_output": {
+          "settlement_result": "failure",
+          "computed_sum": -9223372036852775808,
+          "expected_sum": 9223372036854776807,
+          "overflow_detected": true,
+          "error_code": "integer_overflow",
+          "failure_mode": "FM-SE-003"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-SE-003",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "failing",
+              "score": 0,
+              "evidence": "Integer overflow causes negative amount; netting calculation completely wrong"
+            }
+          ],
+          "severity": "critical"
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-006",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "negative_balance_netting",
+          "merchants": [
+            {"id": "M1", "balance": -50000},
+            {"id": "M2", "balance": 30000},
+            {"id": "M3", "balance": 20000}
+          ],
+          "timestamp": "2026-06-06T19:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_compute_net: M1 -50k, M2 +30k, M3 +20k",
+          "step_2_verify_balance: -50 + 30 + 20 = 0",
+          "step_3_apply_netting: M1 owes, M2 and M3 receive"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "m1_net": -50000,
+          "m2_net": 30000,
+          "m3_net": 20000,
+          "total_balanced": 0,
+          "negative_balances_handled": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "m1_net": -50000,
+          "m2_net": 30000,
+          "m3_net": 20000,
+          "total_balanced": 0,
+          "negative_balances_handled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 98,
+              "evidence": "Negative balances handled correctly; netting still balances; no sign errors"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-007",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "zero_netting",
+          "merchants": [
+            {"id": "M1", "balance": 100000},
+            {"id": "M2", "balance": -100000}
+          ],
+          "timestamp": "2026-06-06T19:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_compute_net: M1 +100k, M2 -100k",
+          "step_2_total_sum: 100k - 100k = 0",
+          "step_3_no_settlement_needed: both merchants settle to zero"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "m1_net": 100000,
+          "m2_net": -100000,
+          "total_balanced": 0,
+          "settlement_amount": 0
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "m1_net": 100000,
+          "m2_net": -100000,
+          "total_balanced": 0,
+          "settlement_amount": 0
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Perfect bilateral netting; positions net to zero"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-008",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "multilateral_cycle",
+          "merchants": [
+            {"id": "M1", "to_m2": 100000},
+            {"id": "M2", "to_m3": 100000},
+            {"id": "M3", "to_m1": 100000}
+          ],
+          "timestamp": "2026-06-06T19:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_identify_cycle: M1->M2->M3->M1 is circular",
+          "step_2_net_cycle: each merchant owes 100k and receives 100k",
+          "step_3_netting_result: all positions net to zero",
+          "step_4_settlement_optimized: no actual settlement needed (cycle eliminated)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "cycle_detected": true,
+          "settlement_needed": false,
+          "gross_settlement": 300000,
+          "net_settlement": 0,
+          "settlement_efficiency": "100%"
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "cycle_detected": true,
+          "settlement_needed": false,
+          "gross_settlement": 300000,
+          "net_settlement": 0,
+          "settlement_efficiency": "100%"
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Cycle detected and eliminated through netting; settlement efficiency 100%"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-009",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "large_scale_netting",
+          "merchant_count": 1000,
+          "avg_balance_paise": 500000,
+          "total_gross_amount": 500000000,
+          "timestamp": "2026-06-06T20:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_consolidate_1000_merchants: netting graph constructed",
+          "step_2_compute_net_positions: bilateral and multilateral netting applied",
+          "step_3_verify_balance: sum of all net positions = 0",
+          "step_4_settlement_efficiency: calculated as (1 - net_amount/gross_amount)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "merchant_count": 1000,
+          "gross_settlement_amount": 500000000,
+          "net_settlement_amount": 50000000,
+          "settlement_efficiency": "90%",
+          "all_positions_balanced": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "merchant_count": 1000,
+          "gross_settlement_amount": 500000000,
+          "net_settlement_amount": 50000000,
+          "settlement_efficiency": "90%",
+          "all_positions_balanced": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 99,
+              "evidence": "Large-scale netting (1000 merchants) computed correctly; efficiency 90%; all positions balanced"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "SE-NETTING-010",
+        "failure_mode": "none",
+        "rubric": "RB-SE-004",
+        "input": {
+          "settlement_type": "fractional_netting",
+          "merchants": [
+            {"id": "M1", "balance": 333333},
+            {"id": "M2", "balance": 333334},
+            {"id": "M3", "balance": -666667}
+          ],
+          "timestamp": "2026-06-06T20:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_compute_net: 333333 + 333334 - 666667 = 0",
+          "step_2_verify_paise_precision: no rounding loss",
+          "step_3_apply_netting: settled with exact paise values"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "fractional_amounts_handled": true,
+          "precision_loss": 0,
+          "total_balanced": 0,
+          "reconciliation_pass": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "fractional_amounts_handled": true,
+          "precision_loss": 0,
+          "total_balanced": 0,
+          "reconciliation_pass": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Fractional amounts netting perfect; paise precision maintained; no rounding error"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

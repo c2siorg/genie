@@ -16,7 +16,7 @@ import (
 
 // Schema is the JSON-Schema subset Genie understands.
 type Schema struct {
-	Type                 string             `json:"type,omitempty"`     // object|array|string|number|integer|boolean
+	Type                 string             `json:"type,omitempty"` // object|array|string|number|integer|boolean
 	Required             []string           `json:"required,omitempty"`
 	Properties           map[string]*Schema `json:"properties,omitempty"`
 	Items                *Schema            `json:"items,omitempty"`

@@ -31,10 +31,10 @@ const (
 
 // Request is the wire payload. Monetary fields in rupees.
 type Request struct {
-	CurrentCorpus       float64 `json:"current_corpus_rupees"`
-	MonthlyContribution float64 `json:"monthly_contribution_rupees"`
-	TargetCorpus        float64 `json:"target_corpus_rupees"`
-	HorizonMonths       int     `json:"horizon_months"`
+	CurrentCorpus        float64 `json:"current_corpus_rupees"`
+	MonthlyContribution  float64 `json:"monthly_contribution_rupees"`
+	TargetCorpus         float64 `json:"target_corpus_rupees"`
+	HorizonMonths        int     `json:"horizon_months"`
 	ExpectedAnnualReturn float64 `json:"expected_annual_return"` // decimal e.g. 0.10
 	AnnualVolatility     float64 `json:"annual_volatility"`      // decimal e.g. 0.15
 	Paths                int     `json:"paths,omitempty"`        // override 1000
@@ -43,12 +43,12 @@ type Request struct {
 
 // Plan is the wire output.
 type Plan struct {
-	SuccessProbability  float64 `json:"success_probability_0_1"`
-	P10Corpus           float64 `json:"p10_corpus_rupees"`
-	P50Corpus           float64 `json:"p50_corpus_rupees"`
-	P90Corpus           float64 `json:"p90_corpus_rupees"`
-	RequiredMonthlyINR  float64 `json:"required_monthly_at_p50_rupees"`
-	Disclaimer          string  `json:"disclaimer"`
+	SuccessProbability float64 `json:"success_probability_0_1"`
+	P10Corpus          float64 `json:"p10_corpus_rupees"`
+	P50Corpus          float64 `json:"p50_corpus_rupees"`
+	P90Corpus          float64 `json:"p90_corpus_rupees"`
+	RequiredMonthlyINR float64 `json:"required_monthly_at_p50_rupees"`
+	Disclaimer         string  `json:"disclaimer"`
 }
 
 type Agent struct{}

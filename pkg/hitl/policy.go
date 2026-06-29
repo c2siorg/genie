@@ -127,18 +127,18 @@ func (p *PolicyApprover) RequestApproval(ctx context.Context, req ApprovalReques
 //   - everything else                           → ask human (fail-safe)
 func DefaultRules() []Rule {
 	return []Rule{
-		{ToolPattern: "read_*",   Action: RuleAllow,    Reason: "read-only: auto-approved"},
-		{ToolPattern: "list_*",   Action: RuleAllow,    Reason: "read-only: auto-approved"},
-		{ToolPattern: "get_*",    Action: RuleAllow,    Reason: "read-only: auto-approved"},
-		{ToolPattern: "search_*", Action: RuleAllow,    Reason: "read-only: auto-approved"},
+		{ToolPattern: "read_*", Action: RuleAllow, Reason: "read-only: auto-approved"},
+		{ToolPattern: "list_*", Action: RuleAllow, Reason: "read-only: auto-approved"},
+		{ToolPattern: "get_*", Action: RuleAllow, Reason: "read-only: auto-approved"},
+		{ToolPattern: "search_*", Action: RuleAllow, Reason: "read-only: auto-approved"},
 		{ToolPattern: "delete_*", Action: RuleAskHuman, Reason: "destructive: requires approval"},
 		{ToolPattern: "remove_*", Action: RuleAskHuman, Reason: "destructive: requires approval"},
-		{ToolPattern: "drop_*",   Action: RuleAskHuman, Reason: "destructive: requires approval"},
-		{ToolPattern: "shell_*",  Action: RuleAskHuman, Reason: "shell execution: requires approval"},
-		{ToolPattern: "exec_*",   Action: RuleAskHuman, Reason: "exec: requires approval"},
-		{ToolPattern: "write_*",  Action: RuleAskHuman, Reason: "write: requires approval"},
-		{ToolPattern: "send_*",   Action: RuleAskHuman, Reason: "send: requires approval"},
-		{ToolPattern: "post_*",   Action: RuleAskHuman, Reason: "post: requires approval"},
-		{ToolPattern: "*",        Action: RuleAskHuman, Reason: "unknown tool: requires approval"},
+		{ToolPattern: "drop_*", Action: RuleAskHuman, Reason: "destructive: requires approval"},
+		{ToolPattern: "shell_*", Action: RuleAskHuman, Reason: "shell execution: requires approval"},
+		{ToolPattern: "exec_*", Action: RuleAskHuman, Reason: "exec: requires approval"},
+		{ToolPattern: "write_*", Action: RuleAskHuman, Reason: "write: requires approval"},
+		{ToolPattern: "send_*", Action: RuleAskHuman, Reason: "send: requires approval"},
+		{ToolPattern: "post_*", Action: RuleAskHuman, Reason: "post: requires approval"},
+		{ToolPattern: "*", Action: RuleAskHuman, Reason: "unknown tool: requires approval"},
 	}
 }

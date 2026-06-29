@@ -68,7 +68,7 @@ func (h *AgentGov) GetAudit(w http.ResponseWriter, r *http.Request) {
 
 // killSwitchBody is the request body for POST/DELETE /v1/governance/killswitch.
 type killSwitchBody struct {
-	Scope   string `json:"scope"`   // "global", "agent:<id>", or "capability:<cap>"
+	Scope   string `json:"scope"` // "global", "agent:<id>", or "capability:<cap>"
 	Reason  string `json:"reason"`
 	Message string `json:"message"`
 }

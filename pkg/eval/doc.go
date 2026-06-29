@@ -1,6 +1,6 @@
 // Package eval provides evaluation hooks for multi-agent interactions.
 //
-// Why evaluation is a first-class building block
+// # Why evaluation is a first-class building block
 //
 // Multi-agent systems are dynamic and can degrade subtly as you:
 // - change prompts/tools/models
@@ -13,7 +13,7 @@
 // - Did it violate policies? Did it hallucinate?
 // - Is performance improving or regressing over time?
 //
-// In this repo
+// # In this repo
 //
 // The evaluation layer is intentionally minimal: a Store interface and an in-memory
 // implementation. A production system would add:
@@ -22,4 +22,3 @@
 // - CI gating (fail builds on regression)
 // - human review workflows
 package eval
-

@@ -14,7 +14,7 @@ import (
 // for tokens spent and latency per call. Cents-per-1k-tokens prices live in
 // CostsPer1k (set them at construction).
 type CostObserver struct {
-	Inner    Provider
+	Inner      Provider
 	CostsPer1k struct {
 		Prompt     float64
 		Completion float64

@@ -24,26 +24,26 @@ const (
 
 // HQLA buckets.
 type HQLA struct {
-	Level1INR         float64 `json:"level1_cash_govsec_rupees"`
-	Level2AINR        float64 `json:"level2a_corp_bonds_aa_plus_rupees"`
-	Level2BINR        float64 `json:"level2b_lower_rupees"`
+	Level1INR  float64 `json:"level1_cash_govsec_rupees"`
+	Level2AINR float64 `json:"level2a_corp_bonds_aa_plus_rupees"`
+	Level2BINR float64 `json:"level2b_lower_rupees"`
 }
 
 // Outflows buckets.
 type Outflows struct {
-	StableRetailINR        float64 `json:"stable_retail_deposits"`
-	LessStableRetailINR    float64 `json:"less_stable_retail_deposits"`
-	OperationalCorpINR     float64 `json:"operational_corporate_deposits"`
-	NonOperationalCorpINR  float64 `json:"non_operational_corporate_deposits"`
-	UnsecuredWholesaleINR  float64 `json:"unsecured_wholesale_funding"`
-	UndrawnCommitments     float64 `json:"undrawn_credit_commitments"`
+	StableRetailINR       float64 `json:"stable_retail_deposits"`
+	LessStableRetailINR   float64 `json:"less_stable_retail_deposits"`
+	OperationalCorpINR    float64 `json:"operational_corporate_deposits"`
+	NonOperationalCorpINR float64 `json:"non_operational_corporate_deposits"`
+	UnsecuredWholesaleINR float64 `json:"unsecured_wholesale_funding"`
+	UndrawnCommitments    float64 `json:"undrawn_credit_commitments"`
 }
 
 // Inflows buckets.
 type Inflows struct {
-	ContractualRetailINR   float64 `json:"contractual_retail_inflows"`
-	ContractualWholesale   float64 `json:"contractual_wholesale_inflows"`
-	OtherInflowsINR        float64 `json:"other_inflows"`
+	ContractualRetailINR float64 `json:"contractual_retail_inflows"`
+	ContractualWholesale float64 `json:"contractual_wholesale_inflows"`
+	OtherInflowsINR      float64 `json:"other_inflows"`
 }
 
 // Request is the wire payload.
@@ -55,13 +55,13 @@ type Request struct {
 
 // Result is the wire output.
 type Result struct {
-	TotalHQLA       float64 `json:"total_hqla_after_haircut_rupees"`
-	TotalOutflow    float64 `json:"total_outflow_rupees"`
-	TotalInflow     float64 `json:"total_inflow_capped_rupees"`
-	NetCashOutflow  float64 `json:"net_cash_outflow_rupees"`
-	LCRPct          float64 `json:"lcr_pct"`
-	Compliant       bool    `json:"compliant_with_100pct"`
-	Note            string  `json:"note"`
+	TotalHQLA      float64 `json:"total_hqla_after_haircut_rupees"`
+	TotalOutflow   float64 `json:"total_outflow_rupees"`
+	TotalInflow    float64 `json:"total_inflow_capped_rupees"`
+	NetCashOutflow float64 `json:"net_cash_outflow_rupees"`
+	LCRPct         float64 `json:"lcr_pct"`
+	Compliant      bool    `json:"compliant_with_100pct"`
+	Note           string  `json:"note"`
 }
 
 type Agent struct{}

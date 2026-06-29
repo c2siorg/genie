@@ -236,27 +236,46 @@ func TestUI_AdminGuardChecksRolesArray(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. The session storage shape includes roles (so the UI can compute isAdmin)
+// 4. The in-memory session captures the full user (so the UI can compute isAdmin)
 // ---------------------------------------------------------------------------
 
-// TestUI_PersistSessionStoresRoles asserts the session persisted to
-// localStorage carries the roles array, not just the token. Without
-// roles, isAdmin always evaluates false after a page reload and the
-// admin sees an empty governance tab.
-func TestUI_PersistSessionStoresRoles(t *testing.T) {
+// TestUI_SessionCapturesUserWithRoles asserts that on login/signup the client
+// stores the whole user object (which carries the roles array) in
+// state.user — that is what isAdmin reads to gate the governance panels.
+//
+// The UI no longer persists the session to localStorage (the retired
+// persistSession() wrote the bearer token there, which is XSS-exfiltratable).
+// The session is now an HttpOnly cookie set by the server and restored
+// implicitly on the next API call, while state.user is rehydrated from the
+// login/signup response. Without `state.user = out.user`, isAdmin would always
+// be false and the admin would see an empty governance tab. We assert that
+// invariant plus the absence of any localStorage-based persistence.
+func TestUI_SessionCapturesUserWithRoles(t *testing.T) {
 	js := readUIFile(t, "app.js")
-	// persistSession() body must reference state.user when writing.
-	const anchor = "function persistSession"
-	i := strings.Index(js, anchor)
-	if i < 0 {
-		t.Fatal("persistSession() missing")
+
+	// No client-side localStorage persistence of the session/token.
+	if strings.Contains(js, "localStorage") {
+		t.Error("app.js must not persist the session to localStorage — it is XSS-exfiltratable; rely on the HttpOnly cookie")
 	}
-	end := i + 400
-	if end > len(js) {
-		end = len(js)
-	}
-	body := js[i:end]
-	if !strings.Contains(body, "state.user") {
-		t.Error("persistSession() must include state.user (with roles) — otherwise admin status is lost across reloads")
+
+	// Both auth success paths must capture the full user object (with roles).
+	for _, anchor := range []string{
+		"$('#form-login').addEventListener",
+		"$('#form-signup').addEventListener",
+	} {
+		i := strings.Index(js, anchor)
+		if i < 0 {
+			t.Fatalf("anchor %q not found", anchor)
+		}
+		// Window comfortably covers the signup path, whose validation block
+		// pushes the success assignments ~1600 chars past the anchor.
+		end := i + 1800
+		if end > len(js) {
+			end = len(js)
+		}
+		body := js[i:end]
+		if !strings.Contains(body, "state.user = out.user") {
+			t.Errorf("%s must set `state.user = out.user` (with roles) — otherwise admin status is lost and isAdmin is always false", anchor)
+		}
 	}
 }

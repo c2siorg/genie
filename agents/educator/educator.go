@@ -21,14 +21,14 @@ const (
 )
 
 var glossary = map[string]string{
-	"sip":             "A Systematic Investment Plan invests a fixed amount in a mutual fund on a recurring schedule to average cost over time.",
-	"emi":             "Equated Monthly Installment: fixed monthly payment toward a loan covering both principal and interest.",
+	"sip":               "A Systematic Investment Plan invests a fixed amount in a mutual fund on a recurring schedule to average cost over time.",
+	"emi":               "Equated Monthly Installment: fixed monthly payment toward a loan covering both principal and interest.",
 	"compound interest": "Interest earned on both the principal and previously accrued interest, leading to exponential growth.",
-	"emergency fund":  "Liquid savings (typically 3-6 months of expenses) reserved for unexpected income or expense shocks.",
-	"asset allocation": "How investments are split between asset classes such as equity, debt, real estate, and cash.",
-	"ppf":             "Public Provident Fund: a government-backed long-term savings instrument with tax benefits.",
-	"nps":             "National Pension System: a market-linked, defined-contribution pension scheme.",
-	"index fund":      "A mutual fund that passively tracks a market index such as the Nifty 50 or S&P 500.",
+	"emergency fund":    "Liquid savings (typically 3-6 months of expenses) reserved for unexpected income or expense shocks.",
+	"asset allocation":  "How investments are split between asset classes such as equity, debt, real estate, and cash.",
+	"ppf":               "Public Provident Fund: a government-backed long-term savings instrument with tax benefits.",
+	"nps":               "National Pension System: a market-linked, defined-contribution pension scheme.",
+	"index fund":        "A mutual fund that passively tracks a market index such as the Nifty 50 or S&P 500.",
 }
 
 type Agent struct {
@@ -42,8 +42,8 @@ type Agent struct {
 // index is configured. Without RAG it still ships a plain-text answer for
 // backwards compatibility.
 type Answer struct {
-	Text      string             `json:"text"`
-	Citations []rag.ScoredChunk  `json:"citations,omitempty"`
+	Text      string            `json:"text"`
+	Citations []rag.ScoredChunk `json:"citations,omitempty"`
 }
 
 func New() *Agent {

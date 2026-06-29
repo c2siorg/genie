@@ -5,13 +5,13 @@
 // Seven tests covering every branch of TenantPolicy.Evaluate plus the
 // metaStringSlice coercion helper:
 //
-//   1. Missing tenant_id → deny.
-//   2. Matching tenant + expected_tenant → allow.
-//   3. Mismatched tenant + expected_tenant → deny (cross-tenant attempt).
-//   4. Message type not in AppliesTo → allow (policy not applicable).
-//   5. Admin role bypasses when AdminBypass=true.
-//   6. Admin role does NOT bypass when AdminBypass=false (default-off).
-//   7. metaStringSlice coerces []any → []string with non-string elements dropped.
+//  1. Missing tenant_id → deny.
+//  2. Matching tenant + expected_tenant → allow.
+//  3. Mismatched tenant + expected_tenant → deny (cross-tenant attempt).
+//  4. Message type not in AppliesTo → allow (policy not applicable).
+//  5. Admin role bypasses when AdminBypass=true.
+//  6. Admin role does NOT bypass when AdminBypass=false (default-off).
+//  7. metaStringSlice coerces []any → []string with non-string elements dropped.
 //
 // ─── Why each test exists ──────────────────────────────────────────────────
 //
@@ -117,8 +117,8 @@ func TestTenantPolicyAppliesToFilter(t *testing.T) {
 func TestTenantPolicyAdminBypass(t *testing.T) {
 	p := TenantPolicy{AdminBypass: true}
 	res, _ := p.Evaluate(context.Background(), mkMsg("audit_read", map[string]any{
-		"tenant_id":   "user-1",
-		"user_roles":  []string{"user", "admin"},
+		"tenant_id":       "user-1",
+		"user_roles":      []string{"user", "admin"},
 		"expected_tenant": "user-99",
 	}))
 	if res.Decision != DecisionAllow {

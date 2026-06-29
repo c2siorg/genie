@@ -25,24 +25,24 @@ const (
 
 // Request is the wire payload.
 type Request struct {
-	Shares                int     `json:"shares"`
-	CurrentPrice          float64 `json:"current_price_rupees"`
-	DividendPerShare      float64 `json:"dividend_per_share_rupees"`
-	DividendGrowthAnnual  float64 `json:"dividend_growth_annual"`   // decimal
-	PriceAppreciationAnn  float64 `json:"price_appreciation_annual"`
-	HorizonYears          int     `json:"horizon_years"`
-	TDSAndSlabPct         float64 `json:"tds_and_slab_pct"`
-	Reinvest              bool    `json:"reinvest_dividends"`
+	Shares               int     `json:"shares"`
+	CurrentPrice         float64 `json:"current_price_rupees"`
+	DividendPerShare     float64 `json:"dividend_per_share_rupees"`
+	DividendGrowthAnnual float64 `json:"dividend_growth_annual"` // decimal
+	PriceAppreciationAnn float64 `json:"price_appreciation_annual"`
+	HorizonYears         int     `json:"horizon_years"`
+	TDSAndSlabPct        float64 `json:"tds_and_slab_pct"`
+	Reinvest             bool    `json:"reinvest_dividends"`
 }
 
 // YearRow is one year of the projection.
 type YearRow struct {
-	Year          int     `json:"year"`
-	Shares        float64 `json:"shares"`
-	DPSGross      float64 `json:"dps_gross"`
-	DividendNet   float64 `json:"dividend_net_rupees"`
-	PriceEOY      float64 `json:"price_eoy"`
-	HoldingValue  float64 `json:"holding_value_eoy_rupees"`
+	Year         int     `json:"year"`
+	Shares       float64 `json:"shares"`
+	DPSGross     float64 `json:"dps_gross"`
+	DividendNet  float64 `json:"dividend_net_rupees"`
+	PriceEOY     float64 `json:"price_eoy"`
+	HoldingValue float64 `json:"holding_value_eoy_rupees"`
 }
 
 // Result is the wire output.

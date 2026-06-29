@@ -1,0 +1,85 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "test",
+      "label": "Run Go Tests",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["test", "./...", "-v"],
+      "port": 0,
+      "description": "Run all tests with verbose output"
+    },
+    {
+      "name": "test-commerce",
+      "label": "Run Phase 2 Commerce Tests",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["test", "./pkg/commerce", "-v"],
+      "port": 0,
+      "description": "Run e-Rupee commerce integration tests"
+    },
+    {
+      "name": "build",
+      "label": "Build API Server",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["build", "-o", "bin/api", "./cmd/api"],
+      "port": 0,
+      "description": "Build the Genie API server binary"
+    },
+    {
+      "name": "vet",
+      "label": "Run Go Vet",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["vet", "./..."],
+      "port": 0,
+      "description": "Run static analysis checks"
+    },
+    {
+      "name": "fmt",
+      "label": "Format Code",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["fmt", "./..."],
+      "port": 0,
+      "description": "Format all Go code"
+    },
+    {
+      "name": "mod-tidy",
+      "label": "Tidy Go Modules",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["mod", "tidy"],
+      "port": 0,
+      "description": "Clean up go.mod and go.sum"
+    },
+    {
+      "name": "lint",
+      "label": "Run GolangCI-Lint",
+      "runtimeExecutable": "golangci-lint",
+      "runtimeArgs": ["run", "./..."],
+      "port": 0,
+      "description": "Run comprehensive linting"
+    },
+    {
+      "name": "make-help",
+      "label": "Show Make Targets",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["help"],
+      "port": 0,
+      "description": "Display all available make targets"
+    },
+    {
+      "name": "make-up",
+      "label": "Start Dev Environment (make up)",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["up"],
+      "port": 8080,
+      "description": "Start development environment with Docker"
+    },
+    {
+      "name": "make-test",
+      "label": "Run Make Tests",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["test"],
+      "port": 0,
+      "description": "Run tests via Makefile"
+    }
+  ]
+}

@@ -14,13 +14,13 @@ import (
 //
 // The goal is to record enough to compare runs over time.
 type InteractionRecord struct {
-	ID        string            `json:"id"`
-	Scenario  string            `json:"scenario"`
-	Success   bool              `json:"success"`
-	Metrics   map[string]float64`json:"metrics,omitempty"`
-	Metadata  map[string]any    `json:"metadata,omitempty"`
-	StartedAt time.Time         `json:"started_at"`
-	EndedAt   time.Time         `json:"ended_at"`
+	ID        string             `json:"id"`
+	Scenario  string             `json:"scenario"`
+	Success   bool               `json:"success"`
+	Metrics   map[string]float64 `json:"metrics,omitempty"`
+	Metadata  map[string]any     `json:"metadata,omitempty"`
+	StartedAt time.Time          `json:"started_at"`
+	EndedAt   time.Time          `json:"ended_at"`
 }
 
 // Store persists evaluation records.
@@ -68,4 +68,3 @@ func (s *InMemoryStore) List() []InteractionRecord {
 	copy(out, s.records)
 	return out
 }
-

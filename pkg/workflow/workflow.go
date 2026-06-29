@@ -29,7 +29,7 @@ type Step struct {
 	DependsOn       []string
 	Run             func(ctx context.Context, state State) error
 	Compensate      func(ctx context.Context, state State) error // optional rollback
-	RequireApproval bool                                          // pause until ApproveStep is called
+	RequireApproval bool                                         // pause until ApproveStep is called
 }
 
 // State is the rolling key/value bag a step can read from + write to.
@@ -45,11 +45,11 @@ func (s State) Set(key string, v any) { s[key] = v }
 type EventKind string
 
 const (
-	EventStarted    EventKind = "started"
-	EventCompleted  EventKind = "completed"
-	EventFailed     EventKind = "failed"
-	EventAwaiting   EventKind = "awaiting_approval"
-	EventApproved   EventKind = "approved"
+	EventStarted     EventKind = "started"
+	EventCompleted   EventKind = "completed"
+	EventFailed      EventKind = "failed"
+	EventAwaiting    EventKind = "awaiting_approval"
+	EventApproved    EventKind = "approved"
 	EventCompensated EventKind = "compensated"
 )
 

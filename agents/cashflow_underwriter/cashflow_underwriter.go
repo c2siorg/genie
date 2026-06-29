@@ -5,12 +5,12 @@
 //
 // Six signals, each normalised to 0..100, then a weighted average:
 //
-//   inflow_stability   — coefficient of variation of monthly inflows
-//   savings_rate       — (inflow − outflow) / inflow
-//   debt_burden        — recurring EMI/SIP outflows / inflow
-//   bounce_rate        — share of debits that bounced (ECS/NACH returns)
-//   expense_volatility — coefficient of variation of monthly outflows
-//   tenure             — months of history present in the data
+//	inflow_stability   — coefficient of variation of monthly inflows
+//	savings_rate       — (inflow − outflow) / inflow
+//	debt_burden        — recurring EMI/SIP outflows / inflow
+//	bounce_rate        — share of debits that bounced (ECS/NACH returns)
+//	expense_volatility — coefficient of variation of monthly outflows
+//	tenure             — months of history present in the data
 //
 // Output is mapped to a 300–900 score (CIBIL-comparable scale) so a human
 // underwriter can compare at a glance — but the breakdown is the
@@ -59,7 +59,7 @@ type Signal struct {
 // Result is the message payload.
 type Result struct {
 	Score       float64  `json:"score_300_900"`
-	Grade       string   `json:"grade"`            // A/B/C/D
+	Grade       string   `json:"grade"` // A/B/C/D
 	Signals     []Signal `json:"signals"`
 	MonthsCover int      `json:"months_of_history"`
 	Disclaimer  string   `json:"disclaimer"`

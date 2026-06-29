@@ -32,33 +32,33 @@ const (
 // dataset (e.g. India-Doconomy / Klima).
 var EmissionFactors = map[string]float64{
 	"fuel":        0.0024,
-	"transport":   0.0006,  // ride hailing, taxis
+	"transport":   0.0006, // ride hailing, taxis
 	"flights":     0.0030,
 	"food":        0.0004,
 	"meat":        0.0010,
 	"groceries":   0.0003,
-	"utilities":   0.0014,  // electricity-heavy in India
+	"utilities":   0.0014, // electricity-heavy in India
 	"shopping":    0.0005,
 	"electronics": 0.0008,
-	"rent":        0.0001,  // imputed
+	"rent":        0.0001, // imputed
 	"income":      0.0000,
 	"investment":  0.0000,
 }
 
 // CategorySummary is one bucket result.
 type CategorySummary struct {
-	Category   string  `json:"category"`
-	SpentINR   float64 `json:"spent_rupees"`
-	KgCO2e     float64 `json:"kg_co2e"`
-	SharePct   float64 `json:"share_pct"`
+	Category string  `json:"category"`
+	SpentINR float64 `json:"spent_rupees"`
+	KgCO2e   float64 `json:"kg_co2e"`
+	SharePct float64 `json:"share_pct"`
 }
 
 // Suggestion is one reduction action.
 type Suggestion struct {
-	Category    string  `json:"category"`
-	ActionINR   float64 `json:"action_target_rupees"` // monthly spend cap
-	KgSavedYr   float64 `json:"kg_saved_per_year"`
-	Action      string  `json:"action"`
+	Category  string  `json:"category"`
+	ActionINR float64 `json:"action_target_rupees"` // monthly spend cap
+	KgSavedYr float64 `json:"kg_saved_per_year"`
+	Action    string  `json:"action"`
 }
 
 type analyzerView struct {
@@ -67,11 +67,11 @@ type analyzerView struct {
 
 // Result is the wire output.
 type Result struct {
-	TotalKgCO2e   float64           `json:"total_kg_co2e"`
-	ByCategory    []CategorySummary `json:"by_category"`
-	Suggestions   []Suggestion      `json:"suggestions"`
-	MoMChangePct  float64           `json:"month_over_month_change_pct"`
-	Disclaimer    string            `json:"disclaimer"`
+	TotalKgCO2e  float64           `json:"total_kg_co2e"`
+	ByCategory   []CategorySummary `json:"by_category"`
+	Suggestions  []Suggestion      `json:"suggestions"`
+	MoMChangePct float64           `json:"month_over_month_change_pct"`
+	Disclaimer   string            `json:"disclaimer"`
 }
 
 type Agent struct {
@@ -104,8 +104,8 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 // Compute walks the transactions, computes per-category footprint, ranks
 // reduction suggestions, and emits a MoM trend.
 func (a *Agent) Compute(txns []finance.Transaction) Result {
-	byCat := map[string]float64{}      // rupees per category
-	monthly := map[string]float64{}    // month → total kgCO2e
+	byCat := map[string]float64{}   // rupees per category
+	monthly := map[string]float64{} // month → total kgCO2e
 	for _, t := range txns {
 		if t.AmountCents >= 0 {
 			continue

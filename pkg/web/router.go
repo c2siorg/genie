@@ -27,12 +27,28 @@ type Deps struct {
 	Feedback    *handlers.Feedback
 	ChatWS      *handlers.ChatWS
 	UI          *handlers.UI
-	Elevation   *handlers.Elevation  // optional: time-bound privileged access (PCSE 1.4 analog)
-	AgentGov    *handlers.AgentGov   // optional: AGT governance endpoints
-	OPAHandler  *handlers.OPAHandler // optional: OPA policy introspection endpoints
-	HITL        *handlers.HITLHandler // optional: Human-in-the-Loop approval queue
-	RateLimit   *mid.RateLimit       // optional global limiter
-	Logger      mid.Logger
+	Elevation   *handlers.Elevation         // optional: time-bound privileged access (PCSE 1.4 analog)
+	AgentGov    *handlers.AgentGov          // optional: AGT governance endpoints
+	OPAHandler  *handlers.OPAHandler        // optional: OPA policy introspection endpoints
+	HITL        *handlers.HITLHandler       // optional: Human-in-the-Loop approval queue
+	EvalReview  *handlers.EvalReviewHandler // optional: eval trace review/observability
+	Settlement  *handlers.SettlementHandler // optional: Settlement Coordinator
+	AML         *handlers.AMLHandler        // optional: AML Risk Scoring
+	Consent     *handlers.ConsentHandler    // optional: Consent Registry
+	Lineage     *handlers.LineageHandler    // optional: Data Lineage Tracker
+	// E-Rupee Commerce APIs
+	Payment    *handlers.Payment           // optional: e-Rupee Payment Agent
+	Commerce   *handlers.CommerceHandler   // optional: Commerce Workflow Engine
+	Merchant   *handlers.MerchantHandler   // optional: Merchant Onboarding
+	Compliance *handlers.ComplianceHandler // optional: Payment Compliance
+	CBDC       *handlers.CBDCHandler       // optional: CBDC Ledger & Settlement
+	RateLimit  *mid.RateLimit              // optional global limiter
+	Logger     mid.Logger
+	// CSRFEnforce turns the cookie-scoped CSRF middleware from report-only into
+	// hard enforcement (403 on a missing/invalid token for cookie-authed,
+	// state-changing requests). Default false — flip once the SPA sends the
+	// X-CSRF-Token header. Has no effect on Bearer-token API traffic.
+	CSRFEnforce bool
 }
 
 // NewRouter builds the chi router with all middleware and routes wired up.
@@ -42,6 +58,18 @@ func NewRouter(d Deps) http.Handler {
 	r.Use(mid.Recovery(d.Logger))
 	r.Use(mid.AccessLog(d.Logger))
 	r.Use(mid.Trace("github.com/c2siorg/genie/pkg/web"))
+	// Defensive response headers (CSP, X-Frame-Options: DENY, nosniff,
+	// Referrer-Policy, Permissions-Policy) on every response, including errors.
+	// The default CSP is same-origin ('self'); verify the embedded SPA loads
+	// clean in staging before promoting (a CSP tweak is one line).
+	r.Use(mid.SecurityHeaders())
+	// Cookie-scoped CSRF protection. Self-scopes to cookie-authenticated,
+	// state-changing requests — a no-op for Bearer-token API traffic and
+	// uncredentialed requests — so it is safe to install globally. Report-only
+	// until d.CSRFEnforce is set (see GENIE_CSRF_ENFORCE).
+	if d.Issuer != nil {
+		r.Use(mid.CookieScopedCSRF(d.Issuer, d.CSRFEnforce, d.Logger))
+	}
 
 	// Public routes — no rate limit (k8s probes and disclosure surface
 	// must not be throttled).
@@ -124,6 +152,104 @@ func NewRouter(d Deps) http.Handler {
 						r.Get("/{id}", d.HITL.Get)
 						r.Post("/{id}/approve", d.HITL.Approve)
 						r.Post("/{id}/deny", d.HITL.Deny)
+					})
+				}
+
+				// Finance Module APIs (Settlement, AML, Consent, Lineage)
+				if d.Settlement != nil {
+					r.Route("/settlement", func(r chi.Router) {
+						r.Route("/request", func(r chi.Router) {
+							r.Post("/", d.Settlement.CreateRequest)
+							r.Get("/{request_id}", d.Settlement.GetRequest)
+							r.Post("/{request_id}/execute", d.Settlement.ExecuteSettlement)
+							r.Get("/{request_id}/audit", d.Settlement.GetAuditLog)
+						})
+					})
+				}
+
+				if d.AML != nil {
+					r.Route("/aml", func(r chi.Router) {
+						r.Post("/score", d.AML.ScoreTransaction)
+						r.Get("/score/{score_id}", d.AML.GetScore)
+						r.Get("/history/{txn_id}", d.AML.GetHistory)
+					})
+				}
+
+				if d.Consent != nil {
+					r.Route("/consent", func(r chi.Router) {
+						r.Post("/grant", d.Consent.GrantConsent)
+						r.Post("/revoke", d.Consent.RevokeConsent)
+						r.Get("/list", d.Consent.ListGrants)
+						r.Get("/audit/{consent_id}", d.Consent.GetAuditDecisions)
+					})
+				}
+
+				if d.Lineage != nil {
+					r.Route("/lineage", func(r chi.Router) {
+						r.Post("/query", d.Lineage.QueryLineage)
+						r.Post("/verify", d.Lineage.VerifyIntegrity)
+						r.Get("/export/{entity_id}", d.Lineage.ExportAuditTrail)
+					})
+				}
+
+				// Eval observability — GET /v1/eval/traces, /clusters, /search,
+				// POST /v1/eval/traces/{id}/feedback. Admin-only: interaction
+				// traces can contain sensitive content. The handler self-mounts.
+				if d.EvalReview != nil {
+					r.With(mid.RequireRole(auth.RoleAdmin)).Route("/eval", d.EvalReview.Mount)
+				}
+
+				// E-Rupee Commerce APIs
+				if d.Payment != nil {
+					r.Route("/payment", func(r chi.Router) {
+						r.Post("/initiate", d.Payment.InitiatePayment)
+						r.Get("/{payment_id}", d.Payment.GetPayment)
+					})
+					r.Route("/account", func(r chi.Router) {
+						r.Post("/", d.Payment.CreateAccount)
+						r.Get("/{account_id}", d.Payment.GetAccount)
+					})
+					r.Route("/transaction", func(r chi.Router) {
+						r.Get("/{transaction_id}", d.Payment.ListTransactions)
+					})
+				}
+
+				if d.Commerce != nil {
+					r.Route("/commerce/order", func(r chi.Router) {
+						r.Post("/", d.Commerce.CreateOrder)
+						r.Get("/{order_id}", d.Commerce.GetOrder)
+						r.Post("/{order_id}/execute", d.Commerce.ExecuteWorkflow)
+						r.Get("/{order_id}/audit", d.Commerce.GetAuditLog)
+					})
+				}
+
+				if d.Merchant != nil {
+					r.Route("/merchant", func(r chi.Router) {
+						r.Post("/onboard", d.Merchant.OnboardMerchant)
+						r.Get("/{merchant_id}", d.Merchant.GetMerchant)
+						r.Get("/{merchant_id}/onboarding", d.Merchant.GetOnboardingStatus)
+						r.Post("/{merchant_id}/approve", d.Merchant.ApproveMerchant)
+						r.Post("/{merchant_id}/limits", d.Merchant.UpdateLimits)
+					})
+				}
+
+				if d.Compliance != nil {
+					r.Route("/compliance", func(r chi.Router) {
+						r.Post("/check", d.Compliance.CheckPayment)
+						r.Get("/check/{check_id}", d.Compliance.GetCheck)
+						r.Get("/account/{account_id}/velocity", d.Compliance.GetVelocity)
+						r.Get("/account/{account_id}/fraud-history", d.Compliance.GetFraudHistory)
+						r.Post("/admin/reset-velocity", d.Compliance.ResetVelocity)
+					})
+				}
+
+				if d.CBDC != nil {
+					r.Route("/cbdc", func(r chi.Router) {
+						r.Post("/transaction", d.CBDC.InitiateTransaction)
+						r.Get("/transaction/{transaction_id}", d.CBDC.GetTransaction)
+						r.Get("/block/{height}", d.CBDC.GetBlock)
+						r.Get("/limits/{account_id}", d.CBDC.GetLimits)
+						r.Get("/health", d.CBDC.Health)
 					})
 				}
 

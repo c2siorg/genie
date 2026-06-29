@@ -46,11 +46,11 @@ type MockToolConfig struct {
 // Using a separate wire type keeps the public API clean while matching
 // exactly what Ollama / OpenAI expect.
 type wireMessage struct {
-	Role       string       `json:"role"`
-	Content    any          `json:"content"` // string or null for tool-call turns
+	Role       string         `json:"role"`
+	Content    any            `json:"content"` // string or null for tool-call turns
 	ToolCalls  []WireToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string       `json:"tool_call_id,omitempty"`
-	Name       string       `json:"name,omitempty"`
+	ToolCallID string         `json:"tool_call_id,omitempty"`
+	Name       string         `json:"name,omitempty"`
 }
 
 // WireToolCall is the OpenAI function-call shape inside a model response.
@@ -66,7 +66,7 @@ type WireToolCall struct {
 // Message is a public conversation turn. It supports both plain text turns
 // and tool-call turns. Use this in EvalData.Messages for pre-filled history.
 type Message struct {
-	Role    string `json:"role"`    // "system" | "user" | "assistant" | "tool"
+	Role    string `json:"role"` // "system" | "user" | "assistant" | "tool"
 	Content string `json:"content"`
 }
 

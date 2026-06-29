@@ -5,10 +5,10 @@
 // in pkg/governance is a Go struct — the team has to ship code. With this
 // DSL they can drop a YAML file in config/policies/ that looks like:
 //
-//	- id: deny_offshore_pii
-//	  when: classification == "pii" AND metadata.region != "in"
-//	  decision: deny
-//	  reason: "PII bound for non-home region"
+//   - id: deny_offshore_pii
+//     when: classification == "pii" AND metadata.region != "in"
+//     decision: deny
+//     reason: "PII bound for non-home region"
 //
 // and the system loads it at boot.
 //

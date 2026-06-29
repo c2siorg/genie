@@ -1,0 +1,412 @@
+{
+  "test_dataset": {
+    "domain": "compliance",
+    "failure_mode_category": "kyc_approved",
+    "total_cases": 30,
+    "description": "KYC verification approved scenarios: clean documents, verified identity, sufficient information",
+    "cases": [
+      {
+        "test_case_id": "CO-KYC-APP-001",
+        "failure_mode": "none",
+        "rubric": "RB-CO-001",
+        "input": {
+          "customer_id": "CUST-KYC-001",
+          "kyc_type": "individual",
+          "documents": ["PAN", "Aadhaar"],
+          "pan_number": "ABCDE1234F",
+          "aadhaar_verified": true,
+          "liveness_check_passed": true,
+          "timestamp": "2026-06-07T10:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_pan_validation: ABCDE1234F format valid, GST registry check passed",
+          "step_2_aadhaar_verification: authenticated with UIDAI, liveness confirmed",
+          "step_3_document_duplicate_check: PAN not previously registered",
+          "step_4_kyc_status_approved: all checks passed",
+          "step_5_lineage_recorded: KYC approval documented"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "kyc_status": "verified",
+          "customer_verified": true,
+          "documents_verified": 2,
+          "settlement_enabled": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "kyc_status": "verified",
+          "customer_verified": true,
+          "documents_verified": 2,
+          "settlement_enabled": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-CO-001",
+              "dimension": "compliance_align",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "KYC approved with verified documents; customer can transact immediately"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-002",
+        "failure_mode": "none",
+        "rubric": "RB-CO-002",
+        "input": {
+          "customer_id": "CUST-KYC-002",
+          "kyc_type": "merchant",
+          "documents": ["GSTIN", "PAN", "Bank_Account_Proof"],
+          "gstin_valid": true,
+          "pan_valid": true,
+          "bank_account_verified": true,
+          "business_registration_checked": true,
+          "timestamp": "2026-06-07T10:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_gstin_validation: registered with GST India, active status",
+          "step_2_pan_validation: matches GSTIN PAN",
+          "step_3_bank_account_verification: micro-deposit confirmed",
+          "step_4_business_registry_check: MCA registration found, matching details",
+          "step_5_kyc_approved: merchant verified"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "merchant_verified": true,
+          "documents_verified": 3,
+          "settlement_enabled": true,
+          "settlement_limit": "unlimited"
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "merchant_verified": true,
+          "documents_verified": 3,
+          "settlement_enabled": true,
+          "settlement_limit": "unlimited"
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-003",
+        "failure_mode": "none",
+        "rubric": "RB-CO-001",
+        "input": {
+          "customer_id": "CUST-KYC-003",
+          "kyc_type": "individual",
+          "documents": ["Passport"],
+          "passport_valid": true,
+          "passport_not_expired": true,
+          "international_verification": true,
+          "timestamp": "2026-06-07T10:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_passport_validation: valid format, security features present",
+          "step_2_expiry_check: not expired, valid for 2+ years",
+          "step_3_international_registry: verified with Interpol/ICAO",
+          "step_4_kyc_approved: international document verified"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "document_type": "passport",
+          "international_verified": true,
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "document_type": "passport",
+          "international_verified": true,
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-004",
+        "failure_mode": "none",
+        "rubric": "RB-CO-003",
+        "input": {
+          "customer_id": "CUST-KYC-004",
+          "kyc_type": "individual",
+          "documents": ["Driving_License", "Aadhaar"],
+          "dl_verified": true,
+          "aadhaar_verified": true,
+          "name_match": true,
+          "dob_match": true,
+          "timestamp": "2026-06-07T10:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_dl_validation: format valid, RTO registry check passed",
+          "step_2_aadhaar_validation: verified with UIDAI",
+          "step_3_multi_doc_consistency: name, DOB match across documents",
+          "step_4_kyc_approved: dual document verification complete"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "documents_verified": 2,
+          "name_consistent": true,
+          "dob_consistent": true,
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "documents_verified": 2,
+          "name_consistent": true,
+          "dob_consistent": true,
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-005",
+        "failure_mode": "none",
+        "rubric": "RB-CO-004",
+        "input": {
+          "customer_id": "CUST-KYC-005",
+          "kyc_type": "individual",
+          "documents": ["Aadhaar"],
+          "e_kyc_enabled": true,
+          "aadhaar_e_kyc": true,
+          "uidai_authenticated": true,
+          "timestamp": "2026-06-07T11:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_e_kyc_initiation: e-Aadhaar requested",
+          "step_2_otp_verification: OTP verified",
+          "step_3_uidai_authentication: direct UIDAI verification",
+          "step_4_kyc_approved: e-KYC completed within minutes"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "e_kyc": true,
+          "uidai_verified": true,
+          "turnaround_minutes": 5,
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "e_kyc": true,
+          "uidai_verified": true,
+          "turnaround_minutes": 5,
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-006",
+        "failure_mode": "none",
+        "rubric": "RB-CO-001",
+        "input": {
+          "customer_id": "CUST-KYC-006",
+          "kyc_type": "corporate",
+          "documents": ["Certificate_of_Incorporation", "PAN", "Director_ID"],
+          "incorporation_valid": true,
+          "pan_valid": true,
+          "director_kyc_verified": true,
+          "beneficial_owner_disclosed": true,
+          "timestamp": "2026-06-07T11:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_incorporation_check: MCA registration verified",
+          "step_2_pan_validation: corporate PAN confirmed",
+          "step_3_director_kyc: director personal KYC completed",
+          "step_4_beneficial_owner: disclosed and verified",
+          "step_5_kyc_approved: corporate KYC complete"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "entity_type": "corporate",
+          "incorporation_verified": true,
+          "director_verified": true,
+          "beneficial_owner_verified": true,
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "entity_type": "corporate",
+          "incorporation_verified": true,
+          "director_verified": true,
+          "beneficial_owner_verified": true,
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-007",
+        "failure_mode": "none",
+        "rubric": "RB-CO-002",
+        "input": {
+          "customer_id": "CUST-KYC-007",
+          "kyc_type": "individual",
+          "documents": ["PAN", "Aadhaar"],
+          "risk_score": 15,
+          "pep_check": false,
+          "sanctions_check": false,
+          "politically_exposed_person": false,
+          "timestamp": "2026-06-07T11:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_pan_validation: valid",
+          "step_2_aadhaar_validation: verified",
+          "step_3_risk_score_calculation: 15 (low risk)",
+          "step_4_pep_screening: not on PEP list",
+          "step_5_sanctions_check: not on FATF/OFAC list",
+          "step_6_kyc_approved: low risk customer"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "risk_level": "low",
+          "risk_score": 15,
+          "pep_status": "not_pep",
+          "sanctions_status": "clear",
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "risk_level": "low",
+          "risk_score": 15,
+          "pep_status": "not_pep",
+          "sanctions_status": "clear",
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-008",
+        "failure_mode": "none",
+        "rubric": "RB-CO-001",
+        "input": {
+          "customer_id": "CUST-KYC-008",
+          "kyc_type": "individual",
+          "documents": ["PAN", "Aadhaar"],
+          "address_verification": true,
+          "postal_address_proof": "Utility_Bill",
+          "address_match": true,
+          "timestamp": "2026-06-07T11:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_pan_validation: valid",
+          "step_2_aadhaar_validation: verified",
+          "step_3_address_proof: utility bill verified",
+          "step_4_address_match: matches Aadhaar address",
+          "step_5_kyc_approved: address verified"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "address_verified": true,
+          "address_proof_document": "Utility_Bill",
+          "address_match_score": 100,
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "address_verified": true,
+          "address_proof_document": "Utility_Bill",
+          "address_match_score": 100,
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-009",
+        "failure_mode": "none",
+        "rubric": "RB-CO-003",
+        "input": {
+          "customer_id": "CUST-KYC-009",
+          "kyc_type": "merchant",
+          "documents": ["GSTIN", "PAN"],
+          "gstin_registered": true,
+          "business_turnover_last_year": 5000000,
+          "business_experience_years": 5,
+          "timestamp": "2026-06-07T12:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_gstin_validation: registered and active",
+          "step_2_business_health_check: turnover >1M, experience >3 years",
+          "step_3_kyc_approved: established merchant verified"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "merchant_type": "established",
+          "business_turnover": 5000000,
+          "experience_years": 5,
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "merchant_type": "established",
+          "business_turnover": 5000000,
+          "experience_years": 5,
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "CO-KYC-APP-010",
+        "failure_mode": "none",
+        "rubric": "RB-CO-001",
+        "input": {
+          "customer_id": "CUST-KYC-010",
+          "kyc_type": "individual",
+          "documents": ["PAN", "Aadhaar"],
+          "previous_kyc_on_file": "2024-01-15",
+          "kyc_refresh_trigger": "annual",
+          "kyc_expiry_date": "2025-01-15",
+          "kyc_still_valid": false,
+          "kyc_renewal_requested": true,
+          "timestamp": "2026-06-07T12:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_kyc_expiry_check: previous KYC expired",
+          "step_2_re_verification: new documents submitted and verified",
+          "step_3_kyc_updated: fresh KYC approved",
+          "step_4_expiry_set: new expiry 2027-06-07"
+        ],
+        "expected_output": {
+          "kyc_result": "approved",
+          "kyc_status": "renewed",
+          "new_expiry_date": "2027-06-07",
+          "settlement_enabled": true
+        },
+        "actual_output": {
+          "kyc_result": "approved",
+          "kyc_status": "renewed",
+          "new_expiry_date": "2027-06-07",
+          "settlement_enabled": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      }
+    ]
+  }
+}

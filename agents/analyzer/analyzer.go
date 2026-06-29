@@ -32,12 +32,12 @@ type CategoryTotal struct {
 // Result is the analyzer's structured output. Keep field names stable —
 // downstream agents parse it.
 type Result struct {
-	TotalIncomeCents  int64           `json:"total_income_cents"`
-	TotalExpenseCents int64           `json:"total_expense_cents"`
-	NetCents          int64           `json:"net_cents"`
-	Currency          string          `json:"currency"`
-	ByCategory        []CategoryTotal `json:"by_category"`
-	TopOverspend      []string        `json:"top_overspend"`
+	TotalIncomeCents  int64                 `json:"total_income_cents"`
+	TotalExpenseCents int64                 `json:"total_expense_cents"`
+	NetCents          int64                 `json:"net_cents"`
+	Currency          string                `json:"currency"`
+	ByCategory        []CategoryTotal       `json:"by_category"`
+	TopOverspend      []string              `json:"top_overspend"`
 	Transactions      []finance.Transaction `json:"transactions"`
 }
 

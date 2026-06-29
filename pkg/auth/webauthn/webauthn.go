@@ -29,7 +29,7 @@ import (
 
 // Credential is one passkey registered by a user.
 type Credential struct {
-	ID        string             // base64url
+	ID        string // base64url
 	UserID    string
 	PublicKey ed25519.PublicKey
 	SignCount uint32
@@ -45,9 +45,9 @@ type Ceremony struct {
 
 // Service stores registered credentials and pending ceremonies.
 type Service struct {
-	RPID          string // relying-party id (the API domain — "genie.example")
-	RPName        string
-	ChallengeTTL  time.Duration
+	RPID         string // relying-party id (the API domain — "genie.example")
+	RPName       string
+	ChallengeTTL time.Duration
 
 	mu          sync.Mutex
 	credentials map[string]*Credential

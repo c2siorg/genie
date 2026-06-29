@@ -51,3 +51,20 @@ func (b *Bundle) RecordSuccess(agentID string, latency time.Duration) {
 	_ = b.SLO.RecordEvent("agent.availability", true, latency)
 	_ = b.SLO.RecordEvent("agent.latency", true, latency)
 }
+
+// RecordFailure records a failed operation for an agent: it penalizes trust,
+// appends a Deny entry (tagged with reason) to the audit log, and records failed
+// SLO events. This mirrors the body of the onError orchestrator hook and exists
+// so callers outside the orchestrator hook path — e.g. MessageBridgeAdapter
+// wrapping a decomposed agent — can record failures consistently, preserving
+// trust scoring and kill-switch enforcement for decomposed agents.
+func (b *Bundle) RecordFailure(agentID string, latency time.Duration, reason string) {
+	b.Trust.RecordFailure(agentID, 0.1)
+	action := "agent_error"
+	if reason != "" {
+		action = "agent_error:" + reason
+	}
+	b.Audit.Log(agentID, action, agentmesh.Deny)
+	_ = b.SLO.RecordEvent("agent.availability", false, latency)
+	_ = b.SLO.RecordEvent("agent.latency", false, latency)
+}

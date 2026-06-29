@@ -59,8 +59,8 @@ func wrap(fn func(req CompletionRequest) (CompletionResponse, error)) *fnProvide
 	return &fnProvider{fn: fn}
 }
 
-func (p *fnProvider) Name() string                                              { return "fn" }
-func (p *fnProvider) Region() string                                            { return "on-prem" }
+func (p *fnProvider) Name() string   { return "fn" }
+func (p *fnProvider) Region() string { return "on-prem" }
 func (p *fnProvider) Complete(_ context.Context, req CompletionRequest) (CompletionResponse, error) {
 	return p.fn(req)
 }

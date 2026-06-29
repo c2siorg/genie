@@ -41,8 +41,8 @@ type Summary struct {
 	MSFRate             float64 `json:"msf_rate_pct"`
 	CRRPct              float64 `json:"crr_pct"`
 	SLRPct              float64 `json:"slr_pct"`
-	Stance              string  `json:"stance"`              // "accommodative" | "neutral" | "withdrawal_of_accommodation"
-	VoteFor             int     `json:"vote_for"`            // out of 6
+	Stance              string  `json:"stance"`   // "accommodative" | "neutral" | "withdrawal_of_accommodation"
+	VoteFor             int     `json:"vote_for"` // out of 6
 	VoteAgainst         int     `json:"vote_against"`
 	CPIProjectionPctYoY float64 `json:"cpi_projection_pct"`
 	GDPProjectionPctYoY float64 `json:"gdp_projection_pct"`
@@ -59,9 +59,9 @@ type Request struct {
 type Signal struct {
 	MeetingDate     string   `json:"meeting_date"`
 	RepoChangeBps   int      `json:"repo_change_bps"`
-	StanceShift     string   `json:"stance_shift"` // "easing" | "neutral" | "tightening" | "unchanged"
+	StanceShift     string   `json:"stance_shift"`      // "easing" | "neutral" | "tightening" | "unchanged"
 	HawkishnessΔ    string   `json:"hawkishness_delta"` // "more_hawkish" | "more_dovish" | "unchanged"
-	SurpriseVsMkt   string   `json:"surprise"`     // "hawkish_surprise" | "dovish_surprise" | "in_line"
+	SurpriseVsMkt   string   `json:"surprise"`          // "hawkish_surprise" | "dovish_surprise" | "in_line"
 	CPIRevisionBps  int      `json:"cpi_revision_bps"`
 	GDPRevisionBps  int      `json:"gdp_revision_bps"`
 	DownstreamHints []string `json:"downstream_hints"`

@@ -90,12 +90,12 @@ func webSearchFn(ctx context.Context, args map[string]any) (string, error) {
 
 func tavilySearch(ctx context.Context, query string, maxResults int) (string, error) {
 	body, _ := json.Marshal(map[string]any{
-		"api_key":              os.Getenv("TAVILY_API_KEY"),
-		"query":                query,
-		"max_results":          maxResults,
-		"include_answer":       true,
-		"include_raw_content":  false,
-		"search_depth":         "basic",
+		"api_key":             os.Getenv("TAVILY_API_KEY"),
+		"query":               query,
+		"max_results":         maxResults,
+		"include_answer":      true,
+		"include_raw_content": false,
+		"search_depth":        "basic",
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		"https://api.tavily.com/search", bytes.NewReader(body))
@@ -147,10 +147,10 @@ func tavilySearch(ctx context.Context, query string, maxResults int) (string, er
 
 func exaSearch(ctx context.Context, query string, maxResults int) (string, error) {
 	body, _ := json.Marshal(map[string]any{
-		"query":           query,
-		"numResults":      maxResults,
-		"useAutoprompt":   true,
-		"contents":        map[string]any{"text": map[string]any{"maxCharacters": 500}},
+		"query":         query,
+		"numResults":    maxResults,
+		"useAutoprompt": true,
+		"contents":      map[string]any{"text": map[string]any{"maxCharacters": 500}},
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		"https://api.exa.ai/search", bytes.NewReader(body))
@@ -176,9 +176,9 @@ func exaSearch(ctx context.Context, query string, maxResults int) (string, error
 
 	var out struct {
 		Results []struct {
-			Title   string `json:"title"`
-			URL     string `json:"url"`
-			Text    string `json:"text"`
+			Title string `json:"title"`
+			URL   string `json:"url"`
+			Text  string `json:"text"`
 		} `json:"results"`
 	}
 	if err := json.Unmarshal(raw, &out); err != nil {
@@ -271,9 +271,9 @@ func ddgSearch(ctx context.Context, query string) (string, error) {
 	}
 
 	var out struct {
-		AbstractText string `json:"AbstractText"`
-		AbstractURL  string `json:"AbstractURL"`
-		Answer       string `json:"Answer"`
+		AbstractText  string `json:"AbstractText"`
+		AbstractURL   string `json:"AbstractURL"`
+		Answer        string `json:"Answer"`
 		RelatedTopics []struct {
 			Text string `json:"Text"`
 			URL  string `json:"FirstURL"`

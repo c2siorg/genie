@@ -115,13 +115,17 @@ type jwtHeader struct {
 
 // Issue returns a signed JWT for the given user identity.
 //
-// Sets the standard claims (sub, email, roles, iat, exp, iss, aud)
-// using the Issuer's defaults. Does NOT set Actor — that's the
-// IssueWithActor path for token-exchange flows.
+// Sets the standard claims (sub, email, roles, iat, exp, iss, aud) and
+// a fresh CSRF secret (csrf_secret) using the Issuer's defaults.
+// Does NOT set Actor — that's the IssueWithActor path for token-exchange flows.
+//
+// The CSRF secret is generated with crypto/rand, 32 bytes hex-encoded.
+// It's used by the HTTP middleware to validate that state-changing requests
+// carry a matching CSRF token in a header (e.g., X-CSRF-Token).
 //
 // Returns the encoded token (header.payload.signature), the populated
 // Claims struct (so the caller can inspect without re-decoding), and
-// any encode error.
+// any encode error. Errors may come from encoding or CSRF secret generation.
 //
 // Used by the password-login handler and the OAuth code-exchange flow.
 func (i *Issuer) Issue(userID, email string, roles []Role) (string, Claims, error) {
@@ -129,23 +133,31 @@ func (i *Issuer) Issue(userID, email string, roles []Role) (string, Claims, erro
 	// "seconds since the epoch, UTC." Using time.Now().UTC() avoids
 	// confusion in mixed-tz deployments.
 	now := time.Now().UTC()
+
+	// Generate a fresh CSRF secret for this token.
+	csrfSecret, err := GenerateCSRFSecret()
+	if err != nil {
+		return "", Claims{}, err
+	}
+
 	claims := Claims{
-		Subject:   userID,
-		Email:     email,
-		Roles:     roles,
-		IssuedAt:  now.Unix(),
-		ExpiresAt: now.Add(i.TTL).Unix(),
-		Issuer:    i.Issuer,
-		Audience:  i.Audience,
+		Subject:    userID,
+		Email:      email,
+		Roles:      roles,
+		IssuedAt:   now.Unix(),
+		ExpiresAt:  now.Add(i.TTL).Unix(),
+		Issuer:     i.Issuer,
+		Audience:   i.Audience,
+		CSRFSecret: csrfSecret,
 	}
 	tok, err := encode(jwtHeader{Alg: "HS256", Typ: "JWT"}, claims, i.Secret)
 	return tok, claims, err
 }
 
-// IssueWithActor returns a signed JWT with a custom audience and an RFC
-// 8693 actor claim. Used by the token-exchange flow to mint a
-// dual-identity token whose Subject stays the original user and Actor
-// identifies the service currently acting on the user's behalf.
+// IssueWithActor returns a signed JWT with a custom audience, RFC 8693
+// actor claim, and a fresh CSRF secret. Used by the token-exchange flow
+// to mint a dual-identity token whose Subject stays the original user and
+// Actor identifies the service currently acting on the user's behalf.
 //
 // When audience is nil the Issuer's default audience is used. Pass an
 // explicit audience to scope the token to a specific upstream target.
@@ -153,6 +165,10 @@ func (i *Issuer) Issue(userID, email string, roles []Role) (string, Claims, erro
 // This is the only path that sets the Actor field — the first-party
 // Issue() path leaves it nil, which keeps the JWT small for the common
 // case (one Actor adds ~40 bytes to the base64-encoded payload).
+//
+// Like Issue(), generates a fresh CSRF secret for this token. Token-exchange
+// flows get their own CSRF protection to ensure downstream services can
+// validate the exchanged token without a separate CSRF round-trip.
 //
 // Why a separate method instead of overloading Issue: keeps the common
 // case (Issue with no audience override, no actor) ergonomic, and makes
@@ -168,15 +184,23 @@ func (i *Issuer) IssueWithActor(userID, email string, roles []Role, audience []s
 	if len(aud) == 0 {
 		aud = i.Audience
 	}
+
+	// Generate a fresh CSRF secret for this token.
+	csrfSecret, err := GenerateCSRFSecret()
+	if err != nil {
+		return "", Claims{}, err
+	}
+
 	claims := Claims{
-		Subject:   userID,
-		Email:     email,
-		Roles:     roles,
-		IssuedAt:  now.Unix(),
-		ExpiresAt: now.Add(i.TTL).Unix(),
-		Issuer:    i.Issuer,
-		Audience:  aud,
-		Actor:     actor,
+		Subject:    userID,
+		Email:      email,
+		Roles:      roles,
+		IssuedAt:   now.Unix(),
+		ExpiresAt:  now.Add(i.TTL).Unix(),
+		Issuer:     i.Issuer,
+		Audience:   aud,
+		CSRFSecret: csrfSecret,
+		Actor:      actor,
 	}
 	tok, err := encode(jwtHeader{Alg: "HS256", Typ: "JWT"}, claims, i.Secret)
 	return tok, claims, err
@@ -214,18 +238,25 @@ func (i *Issuer) VerifyIgnoringAudience(token string) (Claims, error) {
 // token.
 //
 // Algorithm:
-//   1. Split on '.' — JWT format is header.payload.signature, 3 parts.
-//   2. Base64-decode the header; require Alg=HS256, Typ=JWT.
-//   3. Recompute the signature over header+'.'+payload and compare with
-//      hmac.Equal (constant-time).
-//   4. Base64-decode the payload into Claims.
-//   5. Check expiry: exp > now.
-//   6. Check issuer: iss == this Issuer's Issuer (if non-empty).
-//   7. Check audience: at least one of our audiences is in the token's
-//      audience list (if our audience is non-empty).
+//  1. Split on '.' — JWT format is header.payload.signature, 3 parts.
+//  2. Base64-decode the header; require Alg=HS256, Typ=JWT.
+//  3. Recompute the signature over header+'.'+payload and compare with
+//     hmac.Equal (constant-time).
+//  4. Base64-decode the payload into Claims.
+//  5. Check expiry: exp > now.
+//  6. Check issuer: iss == this Issuer's Issuer (if non-empty).
+//  7. Check audience: at least one of our audiences is in the token's
+//     audience list (if our audience is non-empty).
 //
 // On any failure, returns ErrInvalidToken (sometimes wrapped with the
 // underlying detail for logs). Returns the parsed Claims on success.
+//
+// The Claims struct includes CSRFSecret when the token was issued by a
+// current version of Issuer.Issue or Issuer.IssueWithActor. Handlers can
+// extract this secret and use it for CSRF validation via request headers.
+// For backward compatibility, tokens without csrf_secret are accepted
+// (CSRFSecret will be empty string); handlers should gracefully degrade
+// CSRF checking or return 400 if CSRF is mandatory.
 //
 // Defence against the classic JWT attacks:
 //   - alg=none — rejected at step 2 (we require HS256)
@@ -236,6 +267,7 @@ func (i *Issuer) VerifyIgnoringAudience(token string) (Claims, error) {
 //   - expired token replay — caught at step 5
 //   - audience confusion — caught at step 7 (if audience is set)
 //   - issuer confusion in federated setups — caught at step 6
+//   - CSRF attacks — mitigated when handlers check the csrf_secret (step 7.5)
 func (i *Issuer) Verify(token string) (Claims, error) {
 	// JWT format: three dot-separated base64-url parts.
 	parts := strings.Split(token, ".")
@@ -310,9 +342,9 @@ func audienceContains(have, want []string) bool {
 // encode produces a signed JWT from a header, claims, and secret.
 //
 // Two-stage:
-//   1. Marshal header and claims to JSON, base64-URL encode each.
-//   2. Concatenate header.payload, compute HMAC-SHA256 over the
-//      concatenation, base64-URL encode the signature, append.
+//  1. Marshal header and claims to JSON, base64-URL encode each.
+//  2. Concatenate header.payload, compute HMAC-SHA256 over the
+//     concatenation, base64-URL encode the signature, append.
 //
 // Output: "header.payload.signature".
 func encode(h jwtHeader, c Claims, secret []byte) (string, error) {

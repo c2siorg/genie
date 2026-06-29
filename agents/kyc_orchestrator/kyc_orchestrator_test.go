@@ -17,13 +17,13 @@ func (testEnv) Logf(format string, args ...any) {}
 
 func TestCleanProfileApproves(t *testing.T) {
 	v := New().Decide(Application{
-		CustomerID:         "c-1",
-		PANNumber:          "ABCPS1234F", // 4th=P, 5th=S matches "Singh"
-		NameOnPAN:          "Asha Singh",
-		AadhaarOfflineKYC:  true,
-		NameOnAadhaar:      "Asha Singh",
-		AddressMatchScore:  0.95,
-		LivenessScore:      0.90,
+		CustomerID:        "c-1",
+		PANNumber:         "ABCPS1234F", // 4th=P, 5th=S matches "Singh"
+		NameOnPAN:         "Asha Singh",
+		AadhaarOfflineKYC: true,
+		NameOnAadhaar:     "Asha Singh",
+		AddressMatchScore: 0.95,
+		LivenessScore:     0.90,
 	})
 	if v.Decision != "approve" {
 		t.Fatalf("clean profile should approve, got %s (score=%.2f reasons=%v)", v.Decision, v.RiskScore, v.Reasons)
@@ -59,15 +59,15 @@ func TestSanctionsAutoReject(t *testing.T) {
 
 func TestPEPRoutesToEDD(t *testing.T) {
 	v := New().Decide(Application{
-		CustomerID:        "c-3",
-		PANNumber:         "ABCPS1234F",
-		NameOnPAN:         "Asha Singh",
-		AadhaarOfflineKYC: true,
-		NameOnAadhaar:     "Asha Singh",
-		AddressMatchScore: 0.70, // weak address adds risk
-		LivenessScore:     0.85,
-		PEPHit:            true,
-		HighRiskCountry:   true,
+		CustomerID:         "c-3",
+		PANNumber:          "ABCPS1234F",
+		NameOnPAN:          "Asha Singh",
+		AadhaarOfflineKYC:  true,
+		NameOnAadhaar:      "Asha Singh",
+		AddressMatchScore:  0.70, // weak address adds risk
+		LivenessScore:      0.85,
+		PEPHit:             true,
+		HighRiskCountry:    true,
 		OccupationHighRisk: true,
 	})
 	if v.Decision != "edd" {

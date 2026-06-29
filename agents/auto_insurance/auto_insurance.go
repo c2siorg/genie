@@ -29,31 +29,31 @@ const (
 
 // Request is one motor-insurance ask. Kind drives the branch.
 type Request struct {
-	Kind                 string  `json:"kind"` // "fnol" | "roadside" | "renewal_quote"
-	PolicyNumber         string  `json:"policy_number"`
-	VehicleRegNumber     string  `json:"vehicle_reg"`
-	IDVRupees            float64 `json:"idv_rupees"`         // current insured declared value
-	EstRepairCostRupees  float64 `json:"est_repair_cost_rupees"`
-	IncidentType         string  `json:"incident_type"`      // accident | theft | flood | fire | third-party
-	LocationLat          float64 `json:"lat"`
-	LocationLng          float64 `json:"lng"`
-	HoursToExpiry        int     `json:"hours_to_expiry"`    // for renewal quote
-	NCBPct               float64 `json:"ncb_pct"`            // 0..50 in steps
-	ClaimedThisYear      bool    `json:"claimed_this_year"`
-	ZeroDepAddOn         bool    `json:"zero_dep_addon"`     // affects renewal premium
+	Kind                string  `json:"kind"` // "fnol" | "roadside" | "renewal_quote"
+	PolicyNumber        string  `json:"policy_number"`
+	VehicleRegNumber    string  `json:"vehicle_reg"`
+	IDVRupees           float64 `json:"idv_rupees"` // current insured declared value
+	EstRepairCostRupees float64 `json:"est_repair_cost_rupees"`
+	IncidentType        string  `json:"incident_type"` // accident | theft | flood | fire | third-party
+	LocationLat         float64 `json:"lat"`
+	LocationLng         float64 `json:"lng"`
+	HoursToExpiry       int     `json:"hours_to_expiry"` // for renewal quote
+	NCBPct              float64 `json:"ncb_pct"`         // 0..50 in steps
+	ClaimedThisYear     bool    `json:"claimed_this_year"`
+	ZeroDepAddOn        bool    `json:"zero_dep_addon"` // affects renewal premium
 }
 
 // Response is the shaped output.
 type Response struct {
-	Kind          string   `json:"kind"`
-	Action        string   `json:"action"`
+	Kind           string   `json:"kind"`
+	Action         string   `json:"action"`
 	NetworkGarages []string `json:"network_garages,omitempty"`
-	TotalLoss     bool     `json:"total_loss_flag,omitempty"`
-	SettlementHint float64 `json:"settlement_hint_rupees,omitempty"`
-	NewNCBPct     float64  `json:"new_ncb_pct,omitempty"`
-	RenewalPremium float64 `json:"renewal_premium_rupees,omitempty"`
-	NextSteps     []string `json:"next_steps"`
-	Disclaimer    string   `json:"disclaimer"`
+	TotalLoss      bool     `json:"total_loss_flag,omitempty"`
+	SettlementHint float64  `json:"settlement_hint_rupees,omitempty"`
+	NewNCBPct      float64  `json:"new_ncb_pct,omitempty"`
+	RenewalPremium float64  `json:"renewal_premium_rupees,omitempty"`
+	NextSteps      []string `json:"next_steps"`
+	Disclaimer     string   `json:"disclaimer"`
 }
 
 type Agent struct {
@@ -137,8 +137,8 @@ func (a *Agent) handleFNOL(req Request) Response {
 func (a *Agent) handleRoadside(req Request) Response {
 	city := cityFromLatLng(req.LocationLat, req.LocationLng)
 	return Response{
-		Kind:   "roadside",
-		Action: "dispatch_partner",
+		Kind:           "roadside",
+		Action:         "dispatch_partner",
 		NetworkGarages: a.Garages[city],
 		NextSteps: []string{
 			"Roadside partner dispatched; ETA notified by SMS.",

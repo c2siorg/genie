@@ -145,8 +145,8 @@ func (a *Agent) Consolidate(req Request) Summary {
 // sides (so the net effect on cashflow is zero).
 func dedupe(txns []Txn) []Txn {
 	type key struct {
-		amount     float64
-		descToken  string
+		amount    float64
+		descToken string
 	}
 	matched := make([]bool, len(txns))
 

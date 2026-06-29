@@ -42,9 +42,9 @@ func (s *SelfRAG) Should(ctx context.Context, query string) (bool, error) {
 // the relevant ones, and reports overall confidence so callers can decide
 // whether to fall back (e.g. to web search) when confidence is low.
 type CRAG struct {
-	Provider          llm.Provider
-	Model             string
-	RelevanceMin      float64 // 0..1; chunks below this are dropped
+	Provider     llm.Provider
+	Model        string
+	RelevanceMin float64 // 0..1; chunks below this are dropped
 }
 
 // NewCRAG wraps a Provider with a relevance threshold (default 0.5).

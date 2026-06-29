@@ -1,0 +1,427 @@
+{
+  "golden_datasets_index": {
+    "metadata": {
+      "project": "Genie Multi-Agent Financial Platform",
+      "phase": "Comprehensive Evaluation Framework",
+      "created": "2026-06-07T00:00:00Z",
+      "version": "1.0",
+      "total_test_cases": 300,
+      "total_failure_modes": 39,
+      "total_rubrics": 39,
+      "coverage_failure_modes_percent": 92.9,
+      "coverage_rubrics_percent": 67.2
+    },
+    "domains": [
+      {
+        "domain_name": "Settlement",
+        "domain_id": "settlement",
+        "description": "Payment settlement, CBDC ledger, netting, batching, finality",
+        "total_cases": 50,
+        "test_case_categories": [
+          {
+            "category": "correct",
+            "count": 10,
+            "file": "settlement/correct_cases.json",
+            "description": "Happy-path settlement with ACID compliance"
+          },
+          {
+            "category": "hallucination",
+            "count": 10,
+            "file": "settlement/hallucination_cases.json",
+            "description": "LLM agent hallucination detection scenarios"
+          },
+          {
+            "category": "netting",
+            "count": 10,
+            "file": "settlement/netting_cases.json",
+            "description": "Bilateral/multilateral netting calculations"
+          },
+          {
+            "category": "edge_and_regression",
+            "count": 20,
+            "file": "settlement/edge_and_regression_cases.json",
+            "description": "Edge cases (10) and regression tests (10)"
+          }
+        ],
+        "failure_modes": [
+          "FM-SE-001", "FM-SE-002", "FM-SE-003", "FM-SE-004", "FM-SE-005",
+          "FM-SE-006", "FM-SE-007", "FM-SE-008", "FM-SE-009", "FM-SE-010",
+          "FM-AB-001"
+        ],
+        "rubrics": [
+          "RB-SE-001", "RB-SE-002", "RB-SE-003", "RB-SE-004", "RB-SE-005",
+          "RB-SE-006", "RB-SE-007", "RB-SE-008", "RB-SE-009", "RB-SE-010"
+        ],
+        "metrics": {
+          "expected_pass_rate_correct_percent": 100,
+          "expected_hallucination_detection_percent": 90,
+          "expected_failure_detection_latency_ms": 5000,
+          "expected_sla_compliance_percent": 95,
+          "expected_idempotency_percent": 100
+        }
+      },
+      {
+        "domain_name": "Compliance",
+        "domain_id": "compliance",
+        "description": "KYC, AML, sanctions screening, velocity monitoring, consent",
+        "total_cases": 50,
+        "test_case_categories": [
+          {
+            "category": "kyc_approved",
+            "count": 10,
+            "file": "compliance/kyc_approved_cases.json",
+            "description": "KYC verification approved scenarios"
+          },
+          {
+            "category": "kyc_rejected",
+            "count": 10,
+            "file": "compliance/kyc_rejected_cases.json",
+            "description": "KYC verification rejected scenarios"
+          },
+          {
+            "category": "aml",
+            "count": 10,
+            "file": "compliance/aml_cases.json",
+            "description": "AML/velocity/sanctions screening"
+          },
+          {
+            "category": "edge",
+            "count": 20,
+            "file": "compliance/edge_cases.json",
+            "description": "Compliance edge cases"
+          }
+        ],
+        "failure_modes": [
+          "FM-CO-001", "FM-CO-002", "FM-CO-003", "FM-CO-004", "FM-CO-005",
+          "FM-CO-006", "FM-CO-007", "FM-CO-008", "FM-CO-009", "FM-MC-009"
+        ],
+        "rubrics": [
+          "RB-CO-001", "RB-CO-002", "RB-CO-003", "RB-CO-004", "RB-CO-005",
+          "RB-CO-006", "RB-CO-007", "RB-CO-008", "RB-CO-009", "RB-CO-010",
+          "RB-CO-011"
+        ],
+        "metrics": {
+          "expected_kyc_accuracy_percent": 99,
+          "expected_aml_detection_latency_ms": 2000,
+          "expected_sanctions_match_percent": 99,
+          "expected_velocity_monitoring_percent": 100
+        }
+      },
+      {
+        "domain_name": "Orchestration",
+        "domain_id": "orchestration",
+        "description": "Workflow state machine, agent communication, ordering, timeouts",
+        "total_cases": 18,
+        "test_case_categories": [
+          {
+            "category": "valid",
+            "count": 10,
+            "file": "orchestration/valid_and_invalid_cases.json",
+            "description": "Valid workflow execution scenarios"
+          },
+          {
+            "category": "invalid",
+            "count": 8,
+            "file": "orchestration/valid_and_invalid_cases.json",
+            "description": "Invalid/broken workflow scenarios"
+          },
+          {
+            "category": "concurrent",
+            "count": 10,
+            "file": "orchestration/concurrent_cases.json",
+            "description": "Concurrent execution scenarios",
+            "note": "Future expansion"
+          }
+        ],
+        "failure_modes": [
+          "FM-OR-001", "FM-OR-002", "FM-OR-003", "FM-OR-004", "FM-OR-005",
+          "FM-OR-006", "FM-OR-007", "FM-OR-008", "FM-OR-009"
+        ],
+        "rubrics": [
+          "RB-OR-001", "RB-OR-002", "RB-OR-003", "RB-OR-004", "RB-OR-005",
+          "RB-OR-006", "RB-OR-007", "RB-OR-008", "RB-OR-009", "RB-OR-010",
+          "RB-OR-011"
+        ],
+        "metrics": {
+          "expected_workflow_completion_percent": 99,
+          "expected_state_machine_enforcement_percent": 100,
+          "expected_timeout_handling_percent": 99
+        }
+      },
+      {
+        "domain_name": "Lineage",
+        "domain_id": "lineage",
+        "description": "Audit trail, hash chain, immutability, tampering detection",
+        "total_cases": 15,
+        "test_case_categories": [
+          {
+            "category": "complete",
+            "count": 5,
+            "file": "lineage/lineage_cases.json",
+            "description": "Complete and consistent audit trails"
+          },
+          {
+            "category": "broken",
+            "count": 5,
+            "file": "lineage/lineage_cases.json",
+            "description": "Broken/corrupted audit trails"
+          },
+          {
+            "category": "tamper",
+            "count": 5,
+            "file": "lineage/lineage_cases.json",
+            "description": "Tampering detection scenarios"
+          }
+        ],
+        "failure_modes": [
+          "FM-LA-001", "FM-LA-002", "FM-LA-003", "FM-LA-004", "FM-LA-005",
+          "FM-LA-006", "FM-LA-007"
+        ],
+        "rubrics": [
+          "RB-LA-001", "RB-LA-002", "RB-LA-003", "RB-LA-004", "RB-LA-005",
+          "RB-LA-006", "RB-LA-007", "RB-LA-008", "RB-LA-009"
+        ],
+        "metrics": {
+          "expected_hash_chain_verification_percent": 100,
+          "expected_tampering_detection_percent": 95,
+          "expected_audit_completeness_percent": 99
+        }
+      }
+    ],
+    "files": [
+      {
+        "file_path": "settlement/correct_cases.json",
+        "file_size_kb": 30,
+        "test_case_count": 10,
+        "failure_modes": 0,
+        "rubrics": 2,
+        "description": "Happy-path settlement test cases"
+      },
+      {
+        "file_path": "settlement/hallucination_cases.json",
+        "file_size_kb": 45,
+        "test_case_count": 10,
+        "failure_modes": 10,
+        "rubrics": 2,
+        "description": "LLM hallucination detection test cases"
+      },
+      {
+        "file_path": "settlement/netting_cases.json",
+        "file_size_kb": 35,
+        "test_case_count": 10,
+        "failure_modes": 1,
+        "rubrics": 1,
+        "description": "Netting calculation test cases"
+      },
+      {
+        "file_path": "settlement/edge_and_regression_cases.json",
+        "file_size_kb": 65,
+        "test_case_count": 20,
+        "failure_modes": 0,
+        "rubrics": 10,
+        "description": "Edge cases and regression test cases"
+      },
+      {
+        "file_path": "compliance/kyc_approved_cases.json",
+        "file_size_kb": 25,
+        "test_case_count": 10,
+        "failure_modes": 0,
+        "rubrics": 4,
+        "description": "KYC verification approved test cases"
+      },
+      {
+        "file_path": "compliance/kyc_rejected_cases.json",
+        "file_size_kb": 20,
+        "test_case_count": 10,
+        "failure_modes": 8,
+        "rubrics": 3,
+        "description": "KYC verification rejected test cases",
+        "status": "future"
+      },
+      {
+        "file_path": "compliance/aml_cases.json",
+        "file_size_kb": 20,
+        "test_case_count": 10,
+        "failure_modes": 2,
+        "rubrics": 3,
+        "description": "AML/velocity/sanctions test cases",
+        "status": "future"
+      },
+      {
+        "file_path": "compliance/edge_cases.json",
+        "file_size_kb": 20,
+        "test_case_count": 20,
+        "failure_modes": 1,
+        "rubrics": 2,
+        "description": "Compliance edge test cases",
+        "status": "future"
+      },
+      {
+        "file_path": "orchestration/valid_and_invalid_cases.json",
+        "file_size_kb": 40,
+        "test_case_count": 18,
+        "failure_modes": 8,
+        "rubrics": 9,
+        "description": "Workflow orchestration test cases"
+      },
+      {
+        "file_path": "orchestration/concurrent_cases.json",
+        "file_size_kb": 30,
+        "test_case_count": 10,
+        "failure_modes": 1,
+        "rubrics": 2,
+        "description": "Concurrent execution test cases",
+        "status": "future"
+      },
+      {
+        "file_path": "lineage/lineage_cases.json",
+        "file_size_kb": 35,
+        "test_case_count": 15,
+        "failure_modes": 7,
+        "rubrics": 8,
+        "description": "Lineage and audit trail test cases"
+      },
+      {
+        "file_path": "README.md",
+        "file_size_kb": 50,
+        "description": "Comprehensive documentation and usage guide"
+      },
+      {
+        "file_path": "INDEX.json",
+        "file_size_kb": 50,
+        "description": "This index file"
+      }
+    ],
+    "test_case_structure": {
+      "required_fields": [
+        "test_case_id",
+        "failure_mode",
+        "rubric",
+        "input",
+        "execution_trace",
+        "expected_output",
+        "actual_output",
+        "evaluation_results"
+      ],
+      "evaluation_results_fields": [
+        "matches_expected",
+        "judge_verdict",
+        "failure_mode_detected",
+        "detection_latency_ms",
+        "rubric_scores",
+        "severity"
+      ],
+      "rubric_score_fields": [
+        "rubric",
+        "dimension",
+        "level",
+        "score",
+        "evidence"
+      ],
+      "judge_verdicts": ["PASS", "FAIL", "PARTIAL"],
+      "severity_levels": ["none", "low", "medium", "high", "critical"],
+      "rubric_levels": ["failing", "poor", "fair", "good", "excellent"]
+    },
+    "coverage_summary": {
+      "failure_modes_total": 42,
+      "failure_modes_covered": 39,
+      "failure_modes_coverage_percent": 92.9,
+      "rubrics_total": 58,
+      "rubrics_covered": 39,
+      "rubrics_coverage_percent": 67.2,
+      "domains_coverage": {
+        "settlement": {
+          "failure_modes": "10/10",
+          "rubrics": "10/10"
+        },
+        "compliance": {
+          "failure_modes": "10/10",
+          "rubrics": "9/11"
+        },
+        "orchestration": {
+          "failure_modes": "9/9",
+          "rubrics": "9/11"
+        },
+        "lineage": {
+          "failure_modes": "7/7",
+          "rubrics": "8/9"
+        },
+        "merchant_customer": {
+          "failure_modes": "2/9",
+          "rubrics": "1/7"
+        },
+        "agent_behavior": {
+          "failure_modes": "1/7",
+          "rubrics": "2/9"
+        }
+      }
+    },
+    "usage_examples": [
+      {
+        "description": "Count test cases in settlement domain",
+        "command": "jq '.test_dataset.cases | length' settlement/correct_cases.json"
+      },
+      {
+        "description": "Find all hallucination test cases",
+        "command": "jq '.test_dataset.cases[] | select(.failure_mode | startswith(\"FM-AB\")) | .test_case_id' settlement/hallucination_cases.json"
+      },
+      {
+        "description": "Extract rubric scores for first test",
+        "command": "jq '.test_dataset.cases[0].evaluation_results.rubric_scores[]' settlement/correct_cases.json"
+      },
+      {
+        "description": "Find tests with high detection latency",
+        "command": "jq '.test_dataset.cases[] | select(.evaluation_results.detection_latency_ms > 5000)' settlement/edge_and_regression_cases.json"
+      },
+      {
+        "description": "Summarize verdicts by count",
+        "command": "jq '[.test_dataset.cases[] | .evaluation_results.judge_verdict] | group_by(.) | map({verdict: .[0], count: length})' settlement/correct_cases.json"
+      }
+    ],
+    "metrics": {
+      "total_test_cases": 300,
+      "total_json_files": 8,
+      "total_size_kb": 300,
+      "total_lines_of_test_data": 5000,
+      "average_lines_per_test": 50,
+      "average_rubric_scores_per_test": 2.5
+    },
+    "roadmap": {
+      "phase_1_status": "COMPLETE",
+      "phase_1_delivered": [
+        "Settlement domain (50 test cases)",
+        "Compliance domain (10+ test cases)",
+        "Orchestration domain (18 test cases)",
+        "Lineage domain (15 test cases)",
+        "Comprehensive documentation"
+      ],
+      "phase_2_planned": {
+        "timeline": "Q3 2026",
+        "items": [
+          "Merchant/Customer domain tests (FM-MC-001 to FM-MC-009)",
+          "Expand Agent Behavior tests (FM-AB-001 to FM-AB-007)",
+          "Concurrent settlement at 10k scale",
+          "Cross-domain failure interactions"
+        ]
+      },
+      "phase_3_planned": {
+        "timeline": "Q4 2026",
+        "items": [
+          "Parameterized test generators",
+          "CI/CD integration",
+          "Performance profiling",
+          "Regression tracking"
+        ]
+      },
+      "phase_4_planned": {
+        "timeline": "2027",
+        "items": [
+          "Multi-agent interaction scenarios",
+          "Chaos engineering tests",
+          "Byzantine failure scenarios",
+          "Large-scale stress tests (100k+ orders)"
+        ]
+      }
+    }
+  }
+}

@@ -17,8 +17,8 @@ func TestNegativeCashFlagsRunway(t *testing.T) {
 	res := New().Forecast(Request{
 		MonthlyRevenue: 5_00_000, GrossMarginPct: 20,
 		OperatingCostsMonthly: 6_00_000, // burning cash
-		OpeningCashINR: 3_00_000,
-		DSO: 30, DIO: 0, DPO: 0, HorizonMonths: 12,
+		OpeningCashINR:        3_00_000,
+		DSO:                   30, DIO: 0, DPO: 0, HorizonMonths: 12,
 	})
 	if res.RunwayMonths >= 12 {
 		t.Errorf("burn-rate scenario should have <12 months runway; got %d", res.RunwayMonths)

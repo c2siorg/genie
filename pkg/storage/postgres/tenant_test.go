@@ -79,10 +79,10 @@ func TestWithTenantRejectsEmpty(t *testing.T) {
 // catches it before deploy).
 //
 // To deliberately change either string:
-//   1. Update the constant in tenant.go.
-//   2. Update every reference in migrations/0005_rls.sql.
-//   3. Update this test.
-//   All three in the same commit, or the build fails.
+//  1. Update the constant in tenant.go.
+//  2. Update every reference in migrations/0005_rls.sql.
+//  3. Update this test.
+//     All three in the same commit, or the build fails.
 func TestAdminTenantSentinelValue(t *testing.T) {
 	// Hard-coded so accidental refactors don't shift the policy contract.
 	if AdminTenant != "__admin__" {

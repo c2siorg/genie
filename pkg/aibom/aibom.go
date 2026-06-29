@@ -30,7 +30,7 @@ const (
 type Manifest struct {
 	ID                string            `json:"id"`
 	Name              string            `json:"name"`
-	Kind              string            `json:"kind"`              // "agent" | "llm" | "embedder" | "reranker" | "tool"
+	Kind              string            `json:"kind"` // "agent" | "llm" | "embedder" | "reranker" | "tool"
 	Version           string            `json:"version,omitempty"`
 	Model             string            `json:"model,omitempty"`
 	Provider          string            `json:"provider,omitempty"`

@@ -47,9 +47,9 @@ type ToolDef struct {
 	Fn              func(ctx context.Context, args map[string]any) (string, error)
 }
 
-func (t *ToolDef) Name() string                { return t.ToolName }
-func (t *ToolDef) Description() string         { return t.ToolDescription }
-func (t *ToolDef) Schema() map[string]any      { return t.ToolSchema }
+func (t *ToolDef) Name() string           { return t.ToolName }
+func (t *ToolDef) Description() string    { return t.ToolDescription }
+func (t *ToolDef) Schema() map[string]any { return t.ToolSchema }
 func (t *ToolDef) Execute(ctx context.Context, args map[string]any) (string, error) {
 	return t.Fn(ctx, args)
 }

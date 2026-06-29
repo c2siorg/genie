@@ -40,7 +40,7 @@ func TestReAct_CallsTool(t *testing.T) {
 	}
 	called := 0
 	tools := []Tool{{
-		Name: "lookup_rate",
+		Name:        "lookup_rate",
 		Description: "returns FX rate",
 		Run: func(_ context.Context, input string) (string, error) {
 			called++

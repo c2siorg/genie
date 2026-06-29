@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"path"
 	"strings"
 )
 
@@ -46,6 +47,19 @@ func (h *UI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := fs.ReadFile(h.root, rel)
 	if err != nil {
+		// SPA fallback for the React app subtree (served at /ui/app/). A
+		// client-side route like /ui/app/commerce has no corresponding file;
+		// serve app/index.html so the router can take over. Requests that look
+		// like assets (have a file extension) still 404, so a genuinely missing
+		// bundle file is not masked as a 200.
+		if isAppRoute(rel) {
+			if idx, e := fs.ReadFile(h.root, "app/index.html"); e == nil {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Header().Set("Cache-Control", "no-cache, max-age=60")
+				_, _ = w.Write(idx)
+				return
+			}
+		}
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
@@ -60,6 +74,16 @@ func (h *UI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // a bare GET / lands on the app instead of a 404.
 func (h *UI) IndexHTML(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/ui/", http.StatusFound)
+}
+
+// isAppRoute reports whether rel is a client-side route of the React app
+// (the /ui/app/ subtree) that should fall back to app/index.html. Extension-
+// bearing paths (assets) are excluded so missing files surface as 404s.
+func isAppRoute(rel string) bool {
+	if rel != "app" && !strings.HasPrefix(rel, "app/") {
+		return false
+	}
+	return path.Ext(rel) == ""
 }
 
 // contentTypeForPath picks a Content-Type from the extension. Keep this

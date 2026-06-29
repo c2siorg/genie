@@ -17,15 +17,15 @@
 //
 // ─── The contract ──────────────────────────────────────────────────────────
 //
-//   1. Engineer E requests elevation to RoleAdmin with a TTL ≤ MaxDuration
-//      and a non-empty Reason.
-//   2. Approver A (must hold RoleAdmin, must not be E) approves the
-//      request. With N-eye policy (RequireApprovers > 1), N distinct
-//      approvers must each call Approve.
-//   3. The grant becomes Active with ExpiresAt = approve_time + TTL.
-//   4. Effective roles for E include the elevated role until ExpiresAt.
-//   5. After ExpiresAt the grant is treated as Expired on the next read.
-//   6. Revocation by any admin is possible at any time before expiry.
+//  1. Engineer E requests elevation to RoleAdmin with a TTL ≤ MaxDuration
+//     and a non-empty Reason.
+//  2. Approver A (must hold RoleAdmin, must not be E) approves the
+//     request. With N-eye policy (RequireApprovers > 1), N distinct
+//     approvers must each call Approve.
+//  3. The grant becomes Active with ExpiresAt = approve_time + TTL.
+//  4. Effective roles for E include the elevated role until ExpiresAt.
+//  5. After ExpiresAt the grant is treated as Expired on the next read.
+//  6. Revocation by any admin is possible at any time before expiry.
 //
 // Every transition (Request, Approve, Deny, Revoke, lazy Expire on
 // first observed read after the deadline) writes one entry to the
@@ -249,10 +249,11 @@ type Service struct {
 // New constructs a Service with the conservative defaults.
 //
 // Defaults applied:
-//   MaxDuration:      4 * time.Hour
-//   RequireApprovers: 1
-//   ElevatableRoles:  [RoleAdmin]
-//   Now:              time.Now (UTC)
+//
+//	MaxDuration:      4 * time.Hour
+//	RequireApprovers: 1
+//	ElevatableRoles:  [RoleAdmin]
+//	Now:              time.Now (UTC)
 //
 // The audit log is required — passing nil panics later on the first
 // transition because every transition writes one entry. Construct with
@@ -389,12 +390,12 @@ func (s *Service) Approve(ctx context.Context, grantID string, approver auth.Cla
 	// Record the approval.
 	g.Approvers = append(g.Approvers, approver.Subject)
 	if _, err := s.Audit.Append(ctx, approver.Subject, "elevation.approve", g.ID, map[string]any{
-		"grant_id":    g.ID,
-		"subject":     g.Subject,
-		"role":        string(g.Role),
-		"approver_n":  len(g.Approvers),
-		"approvers":   g.Approvers,
-		"audit_root":  g.AuditEntryID,
+		"grant_id":   g.ID,
+		"subject":    g.Subject,
+		"role":       string(g.Role),
+		"approver_n": len(g.Approvers),
+		"approvers":  g.Approvers,
+		"audit_root": g.AuditEntryID,
 	}); err != nil {
 		// Audit failure rolls back the approver list — the audit chain
 		// is the source of truth; a missing entry means the approval

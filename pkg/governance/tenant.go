@@ -7,10 +7,10 @@
 // CompositePolicy; one of the policies in that composite is TenantPolicy,
 // which:
 //
-//   1. Denies a message that doesn't carry metadata.tenant_id.
-//   2. Denies a message whose metadata.expected_tenant doesn't match its
-//      tenant_id (cross-tenant routing attempt).
-//   3. Optionally allows admin role to bypass (off by default).
+//  1. Denies a message that doesn't carry metadata.tenant_id.
+//  2. Denies a message whose metadata.expected_tenant doesn't match its
+//     tenant_id (cross-tenant routing attempt).
+//  3. Optionally allows admin role to bypass (off by default).
 //
 // The DB-layer half is pkg/storage/postgres + migrations/0005_rls.sql.
 //
@@ -116,11 +116,11 @@ type TenantPolicy struct {
 //
 // The decision flow:
 //
-//   if type ∉ AppliesTo (when set)     → ALLOW (policy not applicable)
-//   if tenant_id missing / empty       → DENY (missing tenant_id in metadata)
-//   if AdminBypass && role.admin       → ALLOW (admin tenant bypass)
-//   if expected_tenant ≠ tenant_id     → DENY (tenant mismatch: a got b)
-//   otherwise                          → ALLOW (tenant ok)
+//	if type ∉ AppliesTo (when set)     → ALLOW (policy not applicable)
+//	if tenant_id missing / empty       → DENY (missing tenant_id in metadata)
+//	if AdminBypass && role.admin       → ALLOW (admin tenant bypass)
+//	if expected_tenant ≠ tenant_id     → DENY (tenant mismatch: a got b)
+//	otherwise                          → ALLOW (tenant ok)
 //
 // The denial reason includes both the expected and the got tenant ids so
 // the on-call operator can tell at a glance whether the bug is a missing

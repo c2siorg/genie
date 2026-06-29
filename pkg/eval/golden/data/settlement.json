@@ -1,0 +1,80 @@
+{
+  "domain": "settlement",
+  "category": "core",
+  "description": "Settlement correctness + failure-detection cases, keyed to SettlementJudgeInput. Happy-path cases assert PASS; failure-mode cases assert FAIL (the judge must DETECT the fault). Verdicts are computed by the deterministic settlement judge (threshold 0.6): amount-match +0.3, cbdc_committed +0.3, reconciliation_passed +0.2, valid netting +0.1.",
+  "total_cases": 8,
+  "cases": [
+    {
+      "id": "SE-OK-001",
+      "domain": "settlement",
+      "failure_mode": "none",
+      "scenario": "Clean settlement: amount matches, CBDC committed, reconciliation passes.",
+      "input": {"order_id": "ORD-SE-001", "settlement_id": "STL-001", "settlement_amount": 50000, "expected_amount": 50000, "order_amount": 50000, "cbdc_committed": true, "reconciliation_passed": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "settlement", "severity": "low", "category": "correct"}
+    },
+    {
+      "id": "SE-OK-002",
+      "domain": "settlement",
+      "failure_mode": "none",
+      "scenario": "Netted settlement: amount matches, committed, reconciled, valid netting applied.",
+      "input": {"order_id": "ORD-SE-002", "settlement_id": "STL-002", "settlement_amount": 75000, "expected_amount": 75000, "order_amount": 90000, "netting_applied": true, "netted_amount": 60000, "cbdc_committed": true, "reconciliation_passed": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "settlement", "severity": "low", "category": "netting"}
+    },
+    {
+      "id": "SE-OK-003",
+      "domain": "settlement",
+      "failure_mode": "none",
+      "scenario": "Small clean settlement, fully reconciled.",
+      "input": {"order_id": "ORD-SE-003", "settlement_id": "STL-003", "settlement_amount": 20000, "expected_amount": 20000, "order_amount": 20000, "cbdc_committed": true, "reconciliation_passed": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "settlement", "severity": "low", "category": "correct"}
+    },
+    {
+      "id": "SE-FAIL-001",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-001",
+      "scenario": "Double-spend: settled amount exceeds the expected amount and reconciliation fails — must be detected.",
+      "input": {"order_id": "ORD-SE-101", "settlement_id": "STL-101", "settlement_amount": 100000, "expected_amount": 50000, "order_amount": 50000, "cbdc_committed": true, "reconciliation_passed": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "critical", "category": "double_spend"}
+    },
+    {
+      "id": "SE-FAIL-002",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-002",
+      "scenario": "Ledger not committed: amount and reconciliation fine, but CBDC commit did not finalize — must be detected.",
+      "input": {"order_id": "ORD-SE-102", "settlement_id": "STL-102", "settlement_amount": 30000, "expected_amount": 30000, "order_amount": 30000, "cbdc_committed": false, "reconciliation_passed": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "critical", "category": "finality"}
+    },
+    {
+      "id": "SE-FAIL-003",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-003",
+      "scenario": "Reconciliation mismatch plus invalid (zero) netting — must be detected.",
+      "input": {"order_id": "ORD-SE-103", "settlement_id": "STL-103", "settlement_amount": 40000, "expected_amount": 40000, "order_amount": 40000, "netting_applied": true, "netted_amount": 0, "cbdc_committed": true, "reconciliation_passed": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "high", "category": "reconciliation"}
+    },
+    {
+      "id": "SE-FAIL-004",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-004",
+      "scenario": "Invalid netting and uncommitted ledger — compound settlement failure.",
+      "input": {"order_id": "ORD-SE-104", "settlement_id": "STL-104", "settlement_amount": 45000, "expected_amount": 45000, "order_amount": 60000, "netting_applied": true, "netted_amount": 0, "cbdc_committed": false, "reconciliation_passed": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "high", "category": "netting"}
+    },
+    {
+      "id": "SE-FAIL-005",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-005",
+      "scenario": "Amount tampering: settled amount far below the expected order amount — must be detected.",
+      "input": {"order_id": "ORD-SE-105", "settlement_id": "STL-105", "settlement_amount": 999, "expected_amount": 50000, "order_amount": 50000, "cbdc_committed": true, "reconciliation_passed": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "critical", "category": "tamper"}
+    }
+  ]
+}

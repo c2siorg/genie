@@ -150,14 +150,29 @@ func TestUI_NoAlertCallsInProductionPaths(t *testing.T) {
 	}
 }
 
-// TestUI_LocalStorageKeysStable pins the localStorage keys; the session
-// upgrade path depends on stable names.
-func TestUI_LocalStorageKeysStable(t *testing.T) {
+// TestUI_SessionIsCookieBasedNotLocalStorage pins the secure session model.
+//
+// app.js previously persisted the auth bearer token in localStorage under
+// keys like "genie.session.v1". That made the token readable by any injected
+// script (XSS exfiltration). The current design stores the session in an
+// HttpOnly cookie (JS cannot read it) and keeps only the CSRF token in memory.
+// This test guards against a regression back to localStorage-based auth.
+func TestUI_SessionIsCookieBasedNotLocalStorage(t *testing.T) {
 	js := readUIFile(t, "app.js")
-	for _, want := range []string{"genie.session.v1", "genie.apibase.v1"} {
-		if !strings.Contains(js, want) {
-			t.Errorf("localStorage key %q missing — would break session restore", want)
-		}
+
+	// No localStorage at all — the retired insecure persistence path.
+	if strings.Contains(js, "localStorage") {
+		t.Error("app.js must not use localStorage for sessions — auth token in localStorage is XSS-exfiltratable; use the HttpOnly cookie + in-memory CSRF token model")
+	}
+
+	// The HttpOnly session cookie is sent by including credentials on requests.
+	if !strings.Contains(js, "credentials: 'include'") {
+		t.Error("app.js must send the HttpOnly session cookie via `credentials: 'include'`")
+	}
+
+	// The CSRF token is tracked in memory on the state object.
+	if !strings.Contains(js, "state.csrfToken") {
+		t.Error("app.js must track the CSRF token in memory (state.csrfToken) for unsafe requests")
 	}
 }
 
@@ -213,21 +228,30 @@ func TestUI_HideHelperSetsInlineDisplay(t *testing.T) {
 }
 
 // TestUI_LoginSuccessEntersApp asserts both login and signup success paths
-// (a) persist the session and (b) call enterApp(), which is what triggers
-// hide(views.auth). If either branch ever stops calling enterApp(), the
-// Welcome card would stay on screen.
+// (a) capture the session user and CSRF token and (b) call enterApp(), which
+// is what triggers hide(views.auth). If either branch ever stops calling
+// enterApp(), the Welcome card would stay on screen.
+//
+// Note: app.js now uses HttpOnly cookies + an in-memory CSRF token instead of
+// a localStorage-persisted bearer token. The session is held by the server
+// cookie (JS cannot read it); the client only keeps state.user and
+// state.csrfToken in memory. We assert that secure shape here rather than the
+// retired `state.token = out.token` / `persistSession()` pattern, which stored
+// the auth token in localStorage and was XSS-exfiltratable.
 func TestUI_LoginSuccessEntersApp(t *testing.T) {
 	js := readUIFile(t, "app.js")
 
 	// sliceBetween isn't quote/brace-aware, and the handler bodies contain
 	// `});` from `api(..., {...})` calls, so we walk a fixed window after
-	// each anchor instead.
+	// each anchor instead. Window of 1800 chars accommodates signup validation
+	// logic plus the success path (enterApp() lands ~1600 chars in) — longer
+	// than login.
 	mustContainNear := func(label, anchor string, want []string) {
 		i := strings.Index(js, anchor)
 		if i < 0 {
 			t.Fatalf("%s: anchor %q not found", label, anchor)
 		}
-		end := i + 800
+		end := i + 1800
 		if end > len(js) {
 			end = len(js)
 		}
@@ -239,9 +263,18 @@ func TestUI_LoginSuccessEntersApp(t *testing.T) {
 		}
 	}
 
-	successCalls := []string{"state.token = out.token", "persistSession()", "enterApp()"}
+	// On success the client must (1) record the user (so isAdmin/roles work),
+	// (2) capture the CSRF token in memory for subsequent unsafe requests, and
+	// (3) call enterApp() to leave the auth view.
+	successCalls := []string{"state.user = out.user", "state.csrfToken = out.csrf_token", "enterApp()"}
 	mustContainNear("login success path", "$('#form-login').addEventListener", successCalls)
 	mustContainNear("signup success path", "$('#form-signup').addEventListener", successCalls)
+
+	// The CSRF token must never be persisted to localStorage — it lives only in
+	// memory. (The session itself is an HttpOnly cookie set by the server.)
+	if strings.Contains(js, "localStorage") {
+		t.Error("app.js must not use localStorage — session is an HttpOnly cookie and the CSRF token is in-memory only")
+	}
 
 	// And enterApp itself must hide views.auth — otherwise calling it after
 	// login wouldn't move the user out of the auth section.

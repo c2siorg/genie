@@ -150,6 +150,4 @@ func (b *InMemoryBus) Publish(ctx context.Context, msg protocol.Message) {
 	}
 }
 
-
 var _ Bus = (*InMemoryBus)(nil)
-

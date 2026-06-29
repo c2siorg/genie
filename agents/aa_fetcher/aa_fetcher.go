@@ -30,12 +30,12 @@ const (
 
 // Statement is a normalised account statement returned by the AA layer.
 type Statement struct {
-	AccountID  string                  `json:"account_id"`
-	Currency   string                  `json:"currency"`
-	From       string                  `json:"from"`
-	To         string                  `json:"to"`
-	Transactions []map[string]any      `json:"transactions"`
-	Source     string                  `json:"source"` // "sahamati://..."
+	AccountID      string                  `json:"account_id"`
+	Currency       string                  `json:"currency"`
+	From           string                  `json:"from"`
+	To             string                  `json:"to"`
+	Transactions   []map[string]any        `json:"transactions"`
+	Source         string                  `json:"source"` // "sahamati://..."
 	Classification protocol.Classification `json:"classification"`
 }
 
@@ -109,7 +109,9 @@ type InMemoryFIClient struct {
 }
 
 // NewInMemoryFIClient builds the fixture.
-func NewInMemoryFIClient() *InMemoryFIClient { return &InMemoryFIClient{statements: map[string]Statement{}} }
+func NewInMemoryFIClient() *InMemoryFIClient {
+	return &InMemoryFIClient{statements: map[string]Statement{}}
+}
 
 // Seed registers a statement under (userID, accountID).
 func (c *InMemoryFIClient) Seed(userID, accountID string, s Statement) {

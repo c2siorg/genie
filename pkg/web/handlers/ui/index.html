@@ -11,14 +11,14 @@
   <header class="topbar">
     <div class="brand">
       <span class="logo" aria-hidden="true">🧞</span>
-      <span class="brand-name">Genie</span>
-      <span class="brand-sub">AI Financial Assistant</span>
+      <span class="brand-name" aria-label="Genie - AI Financial Assistant">Genie</span>
+      <span class="brand-sub" aria-hidden="true">AI Financial Assistant</span>
     </div>
-    <nav class="tabs" id="tabs" hidden>
-      <button class="tab active" data-tab="ask">Ask</button>
-      <button class="tab" data-tab="documents">Documents</button>
-      <button class="tab" data-tab="governance">Governance</button>
-      <button class="tab" data-tab="settings">Settings</button>
+    <nav class="tabs" id="tabs" hidden role="tablist" aria-label="Main navigation">
+      <button class="tab active" data-tab="ask" role="tab" aria-selected="true" aria-controls="view-ask" tabindex="0">Ask</button>
+      <button class="tab" data-tab="documents" role="tab" aria-selected="false" aria-controls="view-documents" tabindex="-1">Documents</button>
+      <button class="tab" data-tab="governance" role="tab" aria-selected="false" aria-controls="view-governance" tabindex="-1">Governance</button>
+      <button class="tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="view-settings" tabindex="-1">Settings</button>
     </nav>
     <div class="user" id="user-chip" hidden>
       <span class="user-email"></span>
@@ -38,20 +38,36 @@
           <button class="tab-inline" data-auth="signup">Sign up</button>
         </div>
 
+        <div role="alert" aria-live="polite" class="form-error" id="form-login-error" hidden></div>
         <form id="form-login" class="stack">
-          <label>Email <input type="email" name="email" required autocomplete="email" /></label>
-          <label>Password <input type="password" name="password" required autocomplete="current-password" /></label>
-          <button type="submit" class="primary">Sign in</button>
+          <label>Email
+            <input type="email" name="email" aria-label="Email address" aria-describedby="email-error password-hint" aria-required="true" required autocomplete="email" />
+            <small class="field-error" id="email-error" aria-live="polite"></small>
+          </label>
+          <label>Password
+            <input type="password" name="password" aria-label="Password" aria-describedby="password-hint password-error" aria-required="true" required autocomplete="current-password" />
+            <small class="muted" id="password-hint">Your secure password.</small>
+            <small class="field-error" id="password-error" aria-live="polite"></small>
+          </label>
+          <button type="submit" class="primary" aria-label="Sign in to your account" data-label="Sign in">Sign in</button>
         </form>
 
+        <div role="alert" aria-live="polite" class="form-error" id="form-signup-error" hidden></div>
         <form id="form-signup" class="stack" hidden>
-          <label>Name <input type="text" name="name" autocomplete="name" /></label>
-          <label>Email <input type="email" name="email" required autocomplete="email" /></label>
-          <label>Password
-            <input type="password" name="password" required autocomplete="new-password" minlength="8" />
-            <small class="muted">At least 8 characters.</small>
+          <label>Name
+            <input type="text" name="name" aria-label="Your full name" aria-describedby="name-error" autocomplete="name" />
+            <small class="field-error" id="name-error" aria-live="polite"></small>
           </label>
-          <button type="submit" class="primary">Create account</button>
+          <label>Email
+            <input type="email" name="email" aria-label="Email address" aria-describedby="signup-email-error" aria-required="true" required autocomplete="email" />
+            <small class="field-error" id="signup-email-error" aria-live="polite"></small>
+          </label>
+          <label>Password
+            <input type="password" name="password" aria-label="Password" aria-describedby="signup-password-hint signup-password-error" aria-required="true" required autocomplete="new-password" minlength="8" />
+            <small class="muted" id="signup-password-hint">At least 8 characters.</small>
+            <small class="field-error" id="signup-password-error" aria-live="polite"></small>
+          </label>
+          <button type="submit" class="primary" aria-label="Create a new account" data-label="Create account">Create account</button>
         </form>
 
         <p class="muted small">
@@ -68,32 +84,33 @@
           <p class="muted">Pick a document, type a question, watch the multi-agent pipeline run.</p>
 
           <label>Document
-            <select id="ask-doc"></select>
+            <select id="ask-doc" aria-label="Select a document to ask about" aria-required="true"></select>
           </label>
 
           <label>Question
-            <textarea id="ask-question" rows="3" placeholder="Where am I overspending this month?"></textarea>
+            <textarea id="ask-question" rows="3" aria-label="Your question" aria-describedby="question-hint" placeholder="Where am I overspending this month?"></textarea>
+            <small class="muted" id="question-hint">Ask anything about the document you uploaded.</small>
           </label>
 
           <div class="row">
-            <button id="btn-ask" class="primary">Ask</button>
-            <button id="btn-ask-stream" class="secondary">Ask (stream)</button>
-            <button id="btn-stop" class="link" hidden>Stop</button>
+            <button id="btn-ask" class="primary" aria-label="Submit question for analysis">Ask</button>
+            <button id="btn-ask-stream" class="secondary" aria-label="Submit question and stream live agent responses">Ask (stream)</button>
+            <button id="btn-stop" class="link" hidden aria-label="Stop the streaming response">Stop</button>
           </div>
 
-          <p class="muted small disclosure" id="ai-disclosure"></p>
+          <p class="muted small disclosure" id="ai-disclosure" role="status" aria-live="polite" aria-label="AI transparency notice"></p>
         </div>
 
         <div class="card">
           <h2>Agent pipeline</h2>
           <p class="muted">Live events from the bus.</p>
-          <ol class="events" id="events"></ol>
+          <ol class="events" id="events" role="log" aria-live="polite" aria-label="Agent pipeline events"></ol>
         </div>
       </div>
 
-      <div class="card report" id="report-card" hidden>
+      <div class="card report" id="report-card" hidden role="region" aria-label="Analysis report" aria-live="polite">
         <h2>Report</h2>
-        <pre class="report-body" id="report-body"></pre>
+        <pre class="report-body" id="report-body" role="article" aria-label="Detailed analysis results"></pre>
       </div>
     </section>
 
@@ -105,27 +122,33 @@
 
         <form id="form-upload" class="stack">
           <label>CSV file
-            <input type="file" id="upload-file" accept=".csv,text/csv" required />
+            <input type="file" id="upload-file" accept=".csv,text/csv" aria-label="Select CSV file to upload" aria-describedby="file-hint" required />
+            <small class="muted" id="file-hint">Upload a CSV file with transaction data. File is encrypted end-to-end before storage.</small>
           </label>
           <label>Description (optional)
-            <input type="text" id="upload-desc" placeholder="January statement" />
+            <input type="text" id="upload-desc" aria-label="Document description" placeholder="January statement" />
           </label>
           <label>Classification
-            <select id="upload-class">
+            <select id="upload-class" aria-label="Data classification level">
               <option value="pii" selected>pii</option>
               <option value="internal">internal</option>
               <option value="public">public</option>
             </select>
           </label>
-          <button type="submit" class="primary">Upload</button>
+          <button type="submit" class="primary" aria-label="Upload CSV file">Upload</button>
         </form>
       </div>
 
       <div class="card">
         <h2>Your documents</h2>
-        <table class="table">
-          <thead><tr><th>ID</th><th>Description</th><th>Classification</th><th>KEK</th></tr></thead>
-          <tbody id="doc-list"></tbody>
+        <table class="table" aria-label="Uploaded documents">
+          <caption class="sr-only">List of uploaded CSV documents with ID, description, classification, and encryption key</caption>
+          <thead><tr><th scope="col">ID</th><th scope="col">Description</th><th scope="col">Classification</th><th scope="col">KEK</th></tr></thead>
+          <tbody id="doc-list">
+            <!-- Skeletons shown while loading -->
+            <tr class="skeleton-row" id="doc-skeleton-1"><td colspan="4"><span class="skeleton skeleton-cell skeleton-id"></span><span class="skeleton skeleton-cell"></span><span class="skeleton skeleton-cell skeleton-badge"></span><span class="skeleton skeleton-cell"></span></td></tr>
+            <tr class="skeleton-row" id="doc-skeleton-2"><td colspan="4"><span class="skeleton skeleton-cell skeleton-id"></span><span class="skeleton skeleton-cell"></span><span class="skeleton skeleton-cell skeleton-badge"></span><span class="skeleton skeleton-cell"></span></td></tr>
+          </tbody>
         </table>
       </div>
     </section>
@@ -156,8 +179,8 @@
         <h2>API base</h2>
         <p class="muted">Point the UI at a different Genie instance.</p>
         <div class="row">
-          <input type="text" id="settings-base" placeholder="https://genie.example/v1" />
-          <button id="settings-save" class="primary">Save</button>
+          <input type="text" id="settings-base" aria-label="API base URL" placeholder="https://genie.example/v1" />
+          <button id="settings-save" class="primary" aria-label="Save API base URL">Save</button>
         </div>
       </div>
       <div class="card">

@@ -1,0 +1,62 @@
+/*
+ * Genie design tokens — the single source of design truth (plan.md §7).
+ * Everything else (components, workspaces) references these custom properties;
+ * no hard-coded colors/spacing at call sites.
+ */
+:root {
+  /* Brand */
+  --color-bg: #0f1419;
+  --color-surface: #1a2029;
+  --color-surface-2: #232b36;
+  --color-border: #2e3947;
+  --color-text: #e6edf3;
+  --color-text-muted: #9aa7b4;
+
+  /* Semantic status */
+  --color-success: #2ea043;
+  --color-warn: #d29922;
+  --color-danger: #f85149;
+  --color-info: #58a6ff;
+
+  /* Risk bands (compliance/AML) */
+  --risk-low: #2ea043;
+  --risk-medium: #d29922;
+  --risk-high: #f85149;
+
+  /* Money intents */
+  --money-credit: #2ea043;
+  --money-debit: #f85149;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Type */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 8px;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Money component theming — driven by intent, not inline styles. */
+.money {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.money--credit {
+  color: var(--money-credit);
+}
+.money--debit {
+  color: var(--money-debit);
+}
