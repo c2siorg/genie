@@ -61,9 +61,11 @@ validate_phase2() {
   check_test "Commerce unit tests pass" \
     "cd . && go test ./pkg/commerce/... -v -timeout 30s"
 
-  # API contract validation
+  # API contract validation. The line total is computed in pkg/commerce/order.go
+  # as `int64(item.Quantity) * item.UnitPricePaise`, so match the real Go
+  # identifiers (the prior lowercase same-line pattern never matched).
   check_test "Settlement amount calculated correctly" \
-    "grep -r 'total_paise' pkg/commerce && grep -r 'quantity.*unit_price' pkg/commerce"
+    "grep -r 'total_paise' pkg/commerce && grep -rE 'Quantity.*UnitPrice|quantity.*unit_price' pkg/commerce"
 }
 
 # Phase 3: Compliance Validation
@@ -77,8 +79,10 @@ validate_phase3() {
   check_test "Compliance types defined" \
     "grep -r 'type.*Compliance' pkg/compliance || grep -r 'interface.*Compliance' frontend/src/types/"
 
+  # Velocity/limit enforcement lives in the e-Rupee compliance engine
+  # (pkg/erupeecompliance/velocity.go), not pkg/compliance (audit/consent/reporting).
   check_test "Velocity limit enforcement" \
-    "grep -r 'velocity' pkg/compliance && grep -r 'limit' pkg/compliance"
+    "grep -r 'velocity' pkg/erupeecompliance && grep -r 'limit' pkg/erupeecompliance"
 
   check_test "Compliance tests pass" \
     "cd . && go test ./pkg/compliance/... -v -timeout 30s"
@@ -159,8 +163,11 @@ validate_crossphase() {
   echo ""
   echo "=== Cross-Phase Validation ==="
 
-  check_test "Commerce → Compliance flow (data passed)" \
-    "grep -r 'merchant_id' pkg/commerce && grep -r 'merchant_id' pkg/compliance"
+  # The shared merchant_id correlates commerce orders with merchant
+  # KYC/compliance onboarding (pkg/merchant: pending → … → compliance_cleared).
+  # pkg/compliance is audit/consent/reporting and never carried merchant_id.
+  check_test "Commerce → Compliance flow (merchant_id shared)" \
+    "grep -r 'merchant_id' pkg/commerce && grep -r 'merchant_id' pkg/merchant"
 
   check_test "All phases use audit/lineage" \
     "grep -r 'lineage\\|audit' pkg/commerce pkg/compliance pkg/agentgov"
