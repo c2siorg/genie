@@ -223,6 +223,16 @@ spec:
       port: 53    # DNS
     - protocol: UDP
       port: 53
+  # Decoupled agents (Week 3): allow the backend to reach agent services on 8080.
+  # Without this rule, GENIE_AGENT_<ID>_MODE=http calls are SILENTLY dropped by
+  # this NetworkPolicy. Agent pods carry the label genie-agent: "true".
+  - to:
+    - podSelector:
+        matchLabels:
+          genie-agent: "true"
+    ports:
+    - protocol: TCP
+      port: 8080  # agent /execute and /handle endpoints
 
 ---
 # Rollout status can be checked with:
