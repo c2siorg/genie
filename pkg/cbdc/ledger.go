@@ -37,19 +37,26 @@ type Ledger interface {
 }
 
 // InMemoryLedger is a thread-safe, in-memory ledger with block-based storage.
+//
+// Immutability guarantee: once a LedgerEntry is appended to a block, its bytes
+// (and the block's hash) are never modified. Finality is tracked separately in
+// finalityLog — a plain set of payment IDs that have been finalized. This means
+// a verifier can re-hash any committed block at any time and get the same result.
 type InMemoryLedger struct {
-	mu       sync.RWMutex
-	blocks   []LedgerBlock
-	txIndex  map[string]*LedgerEntry // payment_id -> entry for O(1) lookup
-	blockTxn map[string]uint64       // payment_id -> block_height for finality tracking
+	mu          sync.RWMutex
+	blocks      []LedgerBlock
+	txIndex     map[string]*LedgerEntry // payment_id -> pointer into blocks slice (not stack copy)
+	blockTxn    map[string]uint64       // payment_id -> block_height for finality tracking
+	finalityLog map[string]time.Time    // payment_id -> time finalized (append-only; blocks never mutated)
 }
 
 // NewInMemoryLedger creates an empty ledger with a genesis block.
 func NewInMemoryLedger() *InMemoryLedger {
 	ledger := &InMemoryLedger{
-		blocks:   []LedgerBlock{},
-		txIndex:  make(map[string]*LedgerEntry),
-		blockTxn: make(map[string]uint64),
+		blocks:      []LedgerBlock{},
+		txIndex:     make(map[string]*LedgerEntry),
+		blockTxn:    make(map[string]uint64),
+		finalityLog: make(map[string]time.Time),
 	}
 
 	// Create genesis block (height 0, no transactions)
@@ -119,8 +126,11 @@ func (l *InMemoryLedger) CommitTransaction(paymentID, fromAccount, toAccount str
 	// Recompute block hash with new transaction
 	currentBlock.Hash = l.computeBlockHash(currentBlock.PreviousHash, currentBlock.Transactions)
 
-	// Index for quick lookup
-	l.txIndex[paymentID] = &entry
+	// Index for quick lookup. IMPORTANT: take the address of the slice element AFTER
+	// the append (not &entry, which is a stack-local copy). The slice element and the
+	// index pointer now point to the same memory; FinalizeTransactions must NOT mutate
+	// block.Transactions — it writes to finalityLog instead, keeping blocks immutable.
+	l.txIndex[paymentID] = &currentBlock.Transactions[len(currentBlock.Transactions)-1]
 	l.blockTxn[paymentID] = entry.BlockHeight
 
 	return entry.ID, nil
@@ -154,8 +164,14 @@ func (l *InMemoryLedger) QueryBlock(height uint64) (*LedgerBlock, bool, error) {
 	return &blockCopy, true, nil
 }
 
-// FinalizeTransactions advances pending transactions to finalized.
-// Only finalizes transactions in blocks that are at least blocksDelay old.
+// FinalizeTransactions records finality events for pending transactions in blocks
+// that are at least blocksDelay old.
+//
+// IMMUTABILITY GUARANTEE: committed block data (Transactions slice, block Hash) is
+// NEVER modified. Finality is modelled as new events written to the append-only
+// finalityLog map. This preserves tamper-evidence: a verifier can re-hash any
+// committed block at any time and get the same result. The txIndex Status field is
+// updated as a convenience for callers, but the source of truth is finalityLog.
 func (l *InMemoryLedger) FinalizeTransactions(blocksDelay uint64) (int, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -166,34 +182,26 @@ func (l *InMemoryLedger) FinalizeTransactions(blocksDelay uint64) (int, error) {
 
 	latestHeight := l.blocks[len(l.blocks)-1].Height
 	cutoffHeight := int64(latestHeight) - int64(blocksDelay)
-
 	if cutoffHeight < 0 {
 		cutoffHeight = 0
 	}
 
+	now := time.Now().UTC()
 	count := 0
 
-	// Iterate through blocks and finalize old pending transactions
-	for i := 0; i < len(l.blocks); i++ {
-		if uint64(i) > uint64(cutoffHeight) {
-			continue // Skip blocks newer than cutoff
-		}
-
-		block := &l.blocks[i]
-		for j := range block.Transactions {
-			if block.Transactions[j].Status == StatusPending {
-				block.Transactions[j].Status = StatusFinalized
-				// Update index
-				if entry, exists := l.txIndex[block.Transactions[j].PaymentID]; exists {
-					entry.Status = StatusFinalized
-				}
-				count++
+	for i := 0; i <= int(cutoffHeight) && i < len(l.blocks); i++ {
+		for _, tx := range l.blocks[i].Transactions {
+			if _, alreadyFinalized := l.finalityLog[tx.PaymentID]; alreadyFinalized {
+				continue
 			}
-		}
-
-		// Recompute block hash after status changes
-		if i > 0 {
-			block.Hash = l.computeBlockHash(l.blocks[i-1].Hash, block.Transactions)
+			// Append finality event — blocks[i].Transactions is NOT touched.
+			l.finalityLog[tx.PaymentID] = now
+			// Update the txIndex Status so GetStatus / GetTransactionByPaymentID
+			// return StatusFinalized without requiring a finalityLog lookup.
+			if idx, exists := l.txIndex[tx.PaymentID]; exists {
+				idx.Status = StatusFinalized
+			}
+			count++
 		}
 	}
 

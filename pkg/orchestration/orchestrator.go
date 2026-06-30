@@ -44,6 +44,10 @@ type Orchestrator struct {
 type Hooks struct {
 	OnPolicyDeny func(ctx context.Context, msg agent.Message, reason string)
 	OnAgentError func(ctx context.Context, agentID string, msg agent.Message, err error)
+	// PreDispatch is called just before ag.HandleMessage. Return (false, reason) to
+	// block dispatch — use this to enforce ring-based capability checks and kill-switch
+	// status without coupling pkg/orchestration to pkg/agentgov. A nil hook = allow all.
+	PreDispatch func(ctx context.Context, agentID string, msg agent.Message) (allow bool, reason string)
 }
 
 // WithHooks installs the orchestrator hooks. Idempotent.
@@ -145,6 +149,19 @@ func (o *Orchestrator) Start(ctx context.Context) {
 						o.hooks.OnPolicyDeny(c, msg, res.Reason)
 					}
 					o.env.Logf("message %s denied by policy: %s", msg.ID, res.Reason)
+					return
+				}
+			}
+
+			// Ring enforcement + kill-switch gate (injected by cmd/api via PreDispatch hook).
+			if o.hooks.PreDispatch != nil {
+				if allow, reason := o.hooks.PreDispatch(c, agentID, msg); !allow {
+					span.SetAttributes(attribute.String("genie.dispatch.blocked_reason", reason))
+					span.SetStatus(codes.Error, "dispatch blocked by pre-dispatch hook")
+					if o.hooks.OnPolicyDeny != nil {
+						o.hooks.OnPolicyDeny(c, msg, reason)
+					}
+					o.env.Logf("dispatch blocked for agent %s: %s", agentID, reason)
 					return
 				}
 			}

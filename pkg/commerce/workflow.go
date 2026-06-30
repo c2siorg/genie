@@ -43,6 +43,7 @@ type DefaultWorkflowOrchestrator struct {
 	orderMgr          OrderManager
 	paymentAgent      PaymentAgentStub
 	settlementAgent   SettlementAgentStub
+	gate              ComplianceGate // optional, fail-closed pre-payment control
 	mu                sync.RWMutex
 	workflows         map[string]*CommerceWorkflow
 	auditLog          map[string][]*AuditEntry // keyed by orderID
@@ -65,6 +66,20 @@ func NewDefaultWorkflowOrchestrator(
 		maxPaymentRetries: 3,
 		paymentPollWait:   500 * time.Millisecond,
 	}
+}
+
+// WithComplianceGate installs a deterministic, fail-closed compliance gate that
+// ExecuteWorkflow evaluates BEFORE initiating payment. When the gate denies an
+// order, the workflow blocks it (no money moves), records the block to the
+// audit trail, and transitions the order to StatusComplianceBlocked.
+//
+// Production wiring MUST supply a gate so the money path fails closed. A nil
+// gate (the default) runs no pre-payment compliance and is intended only for
+// unit tests that exercise concerns other than compliance. Returns the
+// orchestrator for fluent construction.
+func (o *DefaultWorkflowOrchestrator) WithComplianceGate(g ComplianceGate) *DefaultWorkflowOrchestrator {
+	o.gate = g
+	return o
 }
 
 // ExecuteWorkflow orchestrates the complete workflow for an order.
@@ -100,6 +115,25 @@ func (o *DefaultWorkflowOrchestrator) ExecuteWorkflow(ctx context.Context, order
 
 	// Step 1: order_created
 	o.recordAudit(orderID, StepOrderCreated, "order_created", order, nil, "")
+
+	// Step 1.5: compliance gate (fail-closed). This runs BEFORE any money
+	// moves. A denied order is blocked here and never reaches payment — a
+	// deterministic regulatory control, not an LLM judgement. The gate is
+	// optional in construction but REQUIRED in production (see WithComplianceGate).
+	if o.gate != nil {
+		decision := o.gate.Evaluate(ctx, order)
+		o.recordAudit(orderID, StepComplianceChecked, "compliance_checked", order, decision, "")
+		if !decision.Allowed {
+			o.recordAudit(orderID, StepComplianceChecked, "compliance_blocked", order, decision, decision.Reason)
+			o.updateWorkflow(orderID, StepComplianceChecked, StatusComplianceBlocked, decision.Reason, false)
+			if _, uErr := o.orderMgr.UpdateStatus(orderID, StatusComplianceBlocked); uErr != nil {
+				// Even if we cannot persist the terminal status, we still refuse
+				// to proceed: fail closed.
+				return false, StatusComplianceBlocked, fmt.Errorf("compliance blocked: %s (status update failed: %v)", decision.Reason, uErr)
+			}
+			return false, StatusComplianceBlocked, fmt.Errorf("compliance blocked: %s", decision.Reason)
+		}
+	}
 
 	// Step 2: payment_initiated
 	paymentReq := PaymentInitiationRequest{

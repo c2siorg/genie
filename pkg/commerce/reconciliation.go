@@ -26,9 +26,19 @@ type ReconciliationCheck struct {
 	Issues           []string
 }
 
-// VerifyOrderSettlement checks that an order matches its CBDC ledger commits and lineage.
-// Returns nil if verification passes, or a ReconciliationCheck with issues if it fails.
-func VerifyOrderSettlement(ctx context.Context, orderID string, ledger cbdc.Ledger, lineageRec lineage.Recorder, orderMgr OrderManager) (*ReconciliationCheck, error) {
+// VerifyOrderSettlement checks that an order is backed by a real CBDC ledger
+// entry of the correct amount and an intact lineage chain.
+//
+// settlementLedgerID is the payment ID under which the order's settlement was
+// committed to the ledger (e.g. the settlement batch key). It is supplied
+// explicitly because the order itself does not yet persist its ledger linkage —
+// passing it makes the order→ledger correspondence auditable rather than
+// assumed. (Persisting the linkage on the order is the durable follow-up.)
+//
+// Unlike the previous version — which hard-coded AmountMatched and
+// NoDuplicateSpend to true — this queries the ledger and only sets those flags
+// when the ledger actually confirms them.
+func VerifyOrderSettlement(ctx context.Context, orderID, settlementLedgerID string, ledger cbdc.Ledger, lineageRec lineage.Recorder, orderMgr OrderManager) (*ReconciliationCheck, error) {
 	if orderID == "" {
 		return nil, fmt.Errorf("order_id required")
 	}
@@ -50,7 +60,6 @@ func VerifyOrderSettlement(ctx context.Context, orderID string, ledger cbdc.Ledg
 	if lineageRec == nil {
 		check.Issues = append(check.Issues, "lineage recorder not initialized")
 	} else {
-		// Check lineage integrity
 		result := lineageRec.Verify(ctx)
 		if result.Valid {
 			check.LineageComplete = true
@@ -59,30 +68,50 @@ func VerifyOrderSettlement(ctx context.Context, orderID string, ledger cbdc.Ledg
 		}
 	}
 
-	// Step 3: Verify CBDC ledger has the transaction (simplified)
-	// For in-memory ledger, just check status
-	// In production, would query the actual blocks
-	if ledger != nil {
-		// Assume if order is fulfilled and ledger exists, transaction was recorded
-		check.NoDuplicateSpend = true
-	} else {
+	// Step 3+4: Verify the CBDC ledger actually holds the settlement entry, and
+	// that its amount matches the order. These are REAL queries against the
+	// ledger — not assumptions.
+	switch {
+	case ledger == nil:
 		check.Issues = append(check.Issues, "CBDC ledger not initialized")
-	}
+	case settlementLedgerID == "":
+		check.Issues = append(check.Issues, "settlement ledger id not provided; cannot verify ledger commit")
+	default:
+		entry, found, lErr := ledger.GetTransactionByPaymentID(settlementLedgerID)
+		switch {
+		case lErr != nil:
+			check.Issues = append(check.Issues, fmt.Sprintf("ledger query failed for %s: %v", settlementLedgerID, lErr))
+		case !found || entry == nil:
+			check.Issues = append(check.Issues, fmt.Sprintf("no ledger entry for settlement %s (order not settled)", settlementLedgerID))
+		default:
+			// The ledger rejects duplicate payment IDs at commit time
+			// (double-spend prevention), so a single found, non-rejected entry
+			// for this settlement ID confirms it settled exactly once.
+			if entry.Status == cbdc.StatusRejected {
+				check.Issues = append(check.Issues, fmt.Sprintf("ledger entry %s is rejected", settlementLedgerID))
+			} else {
+				check.NoDuplicateSpend = true
+			}
 
-	// Step 4: Verify amounts (simplified)
-	// In production, would verify against actual ledger blocks
-	if order.TotalPaise > 0 {
-		check.AmountMatched = true
-	} else {
-		check.Issues = append(check.Issues, "invalid order amount")
+			if entry.AmountPaise == order.TotalPaise {
+				check.AmountMatched = true
+			} else {
+				check.Issues = append(check.Issues, fmt.Sprintf(
+					"ledger amount mismatch: order=%d paise, ledger=%d paise", order.TotalPaise, entry.AmountPaise))
+			}
+		}
 	}
 
 	// Step 5: Verify settlement status
-	if order.Status == StatusFulfilled {
+	switch order.Status {
+	case StatusFulfilled:
 		check.SettlementStatus = "settled"
-	} else if order.Status == StatusPaymentFailed {
+	case StatusPaymentFailed:
 		check.SettlementStatus = "failed"
-	} else {
+	case StatusComplianceBlocked:
+		check.SettlementStatus = "blocked"
+		check.Issues = append(check.Issues, "order was blocked by compliance and never settled")
+	default:
 		check.SettlementStatus = string(order.Status)
 		check.Issues = append(check.Issues, fmt.Sprintf("unexpected order status: %v", order.Status))
 	}

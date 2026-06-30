@@ -13,6 +13,13 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeepayment"
 )
 
+// noopEnv is a minimal agent.Environment that discards all log output.
+// Used when calling PaymentAgent.InitiatePayment outside of a real bus dispatch.
+type noopEnv struct{}
+
+func (noopEnv) Now() time.Time                          { return time.Now() }
+func (noopEnv) Logf(_ string, _ ...interface{})         {}
+
 // RealPaymentAgentStub bridges the workflow orchestrator to the actual PaymentAgent.
 // Instead of HTTP calls, it directly processes payments through the agent logic.
 type RealPaymentAgentStub struct {
@@ -26,34 +33,56 @@ func NewRealPaymentAgentStub(agent *erupeepayment.PaymentAgent) *RealPaymentAgen
 	}
 }
 
-// InitiatePayment initiates an e-Rupee payment.
-// Simplified: just creates a payment ID without full agent processing.
+// InitiatePayment initiates a real e-Rupee payment through the actual PaymentAgent.
+// Maps commerce fields (CustomerID/MerchantID) to the agent's from/to account model.
 func (s *RealPaymentAgentStub) InitiatePayment(ctx context.Context, req PaymentInitiationRequest) (string, error) {
 	if s.agent == nil {
 		return "", fmt.Errorf("payment agent not initialized")
 	}
 
-	// Generate transaction ID based on order
-	paymentID := "txn-" + req.OrderID
+	result := s.agent.InitiatePayment(ctx, erupeepayment.PaymentInitiationRequest{
+		FromAccount: req.CustomerID,  // customer account is debited
+		ToAccount:   req.MerchantID,  // merchant account is credited
+		AmountPaise: req.AmountPaise,
+		Reference:   req.OrderID,
+	}, noopEnv{})
 
-	// In production, this would call s.agent.InitiatePayment()
-	// For testing, we just return the ID and let the workflow proceed
-	return paymentID, nil
+	if result.Status == erupeepayment.StatusFailed {
+		return "", fmt.Errorf("payment rejected: %s", result.Error)
+	}
+
+	return result.PaymentID, nil
 }
 
-// PollPaymentStatus checks if a payment has been confirmed.
+// PollPaymentStatus queries the real PaymentAgent for confirmation status.
+// Returns success for pending/any non-failed status (optimistic confirm for in-process workflow).
 func (s *RealPaymentAgentStub) PollPaymentStatus(ctx context.Context, transactionID string) (*PaymentConfirmation, error) {
 	if s.agent == nil {
 		return nil, fmt.Errorf("payment agent not initialized")
 	}
 
-	// For testing, always return success
-	// In production, this would query actual payment status
+	status, found := s.agent.GetPaymentStatus(transactionID)
+	if !found {
+		return &PaymentConfirmation{
+			TransactionID: transactionID,
+			Success:       false,
+			ErrorReason:   "payment not found in log",
+		}, nil
+	}
+
+	if status == erupeepayment.StatusFailed {
+		return &PaymentConfirmation{
+			TransactionID: transactionID,
+			Success:       false,
+			ConfirmedAt:   time.Now(),
+			ErrorReason:   "payment failed",
+		}, nil
+	}
+
 	return &PaymentConfirmation{
 		TransactionID: transactionID,
 		Success:       true,
 		ConfirmedAt:   time.Now(),
-		ErrorReason:   "",
 	}, nil
 }
 

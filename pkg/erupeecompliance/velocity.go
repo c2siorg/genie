@@ -192,3 +192,82 @@ func (v *InMemoryVelocityMonitor) GetRecordSafe(ctx context.Context, accountID s
 		UpdatedAt:        time.Now().UTC(),
 	}
 }
+
+// WouldExceed reports whether recording `amount` for accountID at time `now`
+// WOULD breach the hourly amount limit, the daily amount limit, or the hourly
+// transaction-count limit — without mutating any state.
+//
+// This is the PROSPECTIVE check a pre-authorization gate needs. CheckVelocity
+// only evaluates activity that has ALREADY been recorded, so a fresh account's
+// first oversized payment slips past it; WouldExceed projects the limits as if
+// the payment had been recorded, so a single large payment is rejected before
+// it is committed.
+func (v *InMemoryVelocityMonitor) WouldExceed(ctx context.Context, accountID string, amount int64, now time.Time) (bool, string) {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	return v.wouldExceedLocked(accountID, amount, now)
+}
+
+// wouldExceedLocked is the lock-free core of WouldExceed. Callers must hold at
+// least a read lock.
+func (v *InMemoryVelocityMonitor) wouldExceedLocked(accountID string, amount int64, now time.Time) (bool, string) {
+	hAmount, hCount := projectVelocity(v.hourly[accountID], amount, now, time.Hour)
+	if hCount > v.config.MaxTransactionsPerHour {
+		return true, fmt.Sprintf("Hourly transaction limit exceeded: %d > %d", hCount, v.config.MaxTransactionsPerHour)
+	}
+	if hAmount > v.config.MaxAmountPerHour {
+		return true, fmt.Sprintf("Hourly amount limit exceeded: %.2f INR > %.2f INR",
+			float64(hAmount)/100.0, float64(v.config.MaxAmountPerHour)/100.0)
+	}
+
+	dAmount, _ := projectVelocity(v.daily[accountID], amount, now, 24*time.Hour)
+	if dAmount > v.config.MaxAmountPerDay {
+		return true, fmt.Sprintf("Daily amount limit exceeded: %.2f INR > %.2f INR",
+			float64(dAmount)/100.0, float64(v.config.MaxAmountPerDay)/100.0)
+	}
+
+	return false, "Within velocity limits"
+}
+
+// CheckAndRecord atomically evaluates whether `amount` for accountID would
+// breach velocity limits at time `now` and, ONLY if it would not, records it.
+// Returns (allowed, reason).
+//
+// Check-and-record happen under a single write lock, so concurrent callers
+// cannot both slip past a limit (there is no TOCTOU window between a separate
+// WouldExceed and RecordTransaction). This is the gate-safe primitive a
+// pre-payment compliance control should use.
+func (v *InMemoryVelocityMonitor) CheckAndRecord(ctx context.Context, accountID string, amount int64, now time.Time) (bool, string) {
+	if accountID == "" {
+		return false, "account ID cannot be empty"
+	}
+	// A pre-payment control must reject non-positive amounts: a zero-value
+	// "transaction" carries no money yet still consumes the per-hour count
+	// budget, so it must not be silently recorded.
+	if amount <= 0 {
+		return false, "amount must be positive"
+	}
+
+	v.mu.Lock()
+	defer v.mu.Unlock()
+
+	if exceeded, reason := v.wouldExceedLocked(accountID, amount, now); exceeded {
+		return false, reason
+	}
+
+	// Allowed → record under the same lock so the next caller sees this txn.
+	v.updateRecord(v.hourly, accountID, amount, now, "hourly")
+	v.updateRecord(v.daily, accountID, amount, now, "daily")
+	return true, "Within velocity limits"
+}
+
+// projectVelocity returns the (amount, count) an account would have in the
+// given window if `amount` were recorded at `now`, honoring window resets. A
+// nil record (no prior activity) or an expired window both mean this would be
+// the first transaction in a fresh window.
+func projectVelocity(rec *VelocityRecord, amount int64, now time.Time, window time.Duration) (int64, int) {
+	if rec == nil || now.Sub(rec.LastReset) > window {
+		return amount, 1
+	}
+	return rec.TotalAmount + amount, rec.TransactionCount + 1
+}

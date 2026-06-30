@@ -12,11 +12,12 @@ import (
 type OrderStatus string
 
 const (
-	StatusPending       OrderStatus = "pending"        // order created, awaiting payment
-	StatusPaid          OrderStatus = "paid"           // payment confirmed
-	StatusFulfilled     OrderStatus = "fulfilled"      // order fulfilled to customer
-	StatusCancelled     OrderStatus = "cancelled"      // order cancelled or reverted
-	StatusPaymentFailed OrderStatus = "payment_failed" // payment failed, awaiting retry/manual intervention
+	StatusPending           OrderStatus = "pending"            // order created, awaiting payment
+	StatusPaid              OrderStatus = "paid"               // payment confirmed
+	StatusFulfilled         OrderStatus = "fulfilled"          // order fulfilled to customer
+	StatusCancelled         OrderStatus = "cancelled"          // order cancelled or reverted
+	StatusPaymentFailed     OrderStatus = "payment_failed"     // payment failed, awaiting retry/manual intervention
+	StatusComplianceBlocked OrderStatus = "compliance_blocked" // rejected by the pre-payment compliance gate (terminal)
 )
 
 // WorkflowStep represents a phase in the order-to-fulfillment pipeline.
@@ -24,6 +25,7 @@ type WorkflowStep string
 
 const (
 	StepOrderCreated        WorkflowStep = "order_created"
+	StepComplianceChecked   WorkflowStep = "compliance_checked"
 	StepPaymentInitiated    WorkflowStep = "payment_initiated"
 	StepPaymentConfirmed    WorkflowStep = "payment_confirmed"
 	StepSettlementInitiated WorkflowStep = "settlement_initiated"

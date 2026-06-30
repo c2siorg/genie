@@ -133,9 +133,10 @@ func (m *InMemoryOrderManager) ListOrders(merchantID string) ([]*Order, error) {
 func isValidTransition(from, to OrderStatus) bool {
 	validTransitions := map[OrderStatus]map[OrderStatus]bool{
 		StatusPending: {
-			StatusPaid:          true,
-			StatusPaymentFailed: true,
-			StatusCancelled:     true,
+			StatusPaid:              true,
+			StatusPaymentFailed:     true,
+			StatusCancelled:         true,
+			StatusComplianceBlocked: true,
 		},
 		StatusPaid: {
 			StatusFulfilled:     true,
@@ -149,7 +150,8 @@ func isValidTransition(from, to OrderStatus) bool {
 		StatusFulfilled: {
 			StatusCancelled: true, // rare, but allow refund
 		},
-		StatusCancelled: {}, // terminal
+		StatusCancelled:         {}, // terminal
+		StatusComplianceBlocked: {}, // terminal: rejected before payment
 	}
 
 	transitions, ok := validTransitions[from]

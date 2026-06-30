@@ -370,6 +370,12 @@ func run() error {
 	orch.SetFallback("portfolio_advisor", "portfolio_advisor_fallback")
 	orch.SetFallback("recommender", "recommender_fallback")
 	orch.WithHooks(orchestration.Hooks{
+		// PreDispatch enforces ring-based capability limits and kill-switch status before
+		// every HandleMessage call. Previously the RingEnforcer was constructed but never
+		// called at dispatch — governance was decorative. Now it is load-bearing.
+		PreDispatch: func(ctx context.Context, agentID string, msg agent.Message) (bool, string) {
+			return govBundle.CheckDispatch(agentID)
+		},
 		OnPolicyDeny: func(ctx context.Context, msg agent.Message, reason string) {
 			govOnDeny(ctx, msg, reason)
 			_, _ = incidentStore.Create(ctx, incidents.Incident{
@@ -434,7 +440,11 @@ func run() error {
 	paymentStub := commerce.NewRealPaymentAgentStub(paymentAgent)
 	settlementExecutor := NewInMemorySettlementExecutor()
 	settlementStub := commerce.NewRealSettlementAgentStub(settlementExecutor)
-	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, paymentStub, settlementStub)
+	// Fail-closed deterministic compliance gate: the production money path must
+	// run a velocity/AML control BEFORE payment. A denied order is blocked and
+	// never reaches settlement (see commerce.WithComplianceGate).
+	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, paymentStub, settlementStub).
+		WithComplianceGate(commerce.NewVelocityComplianceGate())
 
 	// Merchant Onboarding
 	merchantMgr := merchant.NewInMemoryMerchantManager()

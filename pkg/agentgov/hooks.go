@@ -43,6 +43,32 @@ func (b *Bundle) OrchestratorHooks() (
 	return onDeny, onError
 }
 
+// CheckDispatch is the pre-dispatch gate intended for the orchestrator's
+// PreDispatch hook. It returns (false, reason) if EITHER:
+//   - a global or per-agent kill switch is active, OR
+//   - the agent's ring does not grant the "message.handle" capability.
+//
+// Both checks are fast, lock-free reads against in-memory data. Returning false
+// causes the orchestrator to drop the message without calling HandleMessage.
+func (b *Bundle) CheckDispatch(agentID string) (allow bool, reason string) {
+	// Kill-switch check: global kill switch or per-agent kill switch.
+	decision := b.KillSwitches.DecisionFor(agentID, "message.handle")
+	if !decision.Allowed {
+		reason := ""
+		if decision.Event != nil {
+			reason = string(decision.Event.Reason)
+		}
+		return false, "kill-switch active: " + reason
+	}
+
+	// Ring enforcement: agent must have the message.handle capability.
+	if !b.Rings.CheckAccess(agentID, "message.handle") {
+		return false, "ring policy denied message.handle for agent " + agentID
+	}
+
+	return true, ""
+}
+
 // RecordSuccess records a successful operation for an agent, rewarding trust
 // and logging a success SLO event. Call this from within a custom success hook.
 func (b *Bundle) RecordSuccess(agentID string, latency time.Duration) {
