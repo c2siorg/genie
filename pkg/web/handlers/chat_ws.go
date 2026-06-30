@@ -30,6 +30,11 @@ type ChatWS struct {
 	Encryptor *crypto.Encryptor
 	Timeout   time.Duration
 
+	// AllowedOrigins is the set of origins permitted to open a WebSocket connection.
+	// Configure from GENIE_WS_ORIGINS (comma-separated). An empty slice allows any
+	// origin — this is only acceptable in development environments.
+	AllowedOrigins []string
+
 	AIDisclosureBanner string
 }
 
@@ -51,8 +56,12 @@ func (h *ChatWS) Serve(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+	origins := h.AllowedOrigins
+	if len(origins) == 0 {
+		origins = []string{"*"} // dev fallback — set GENIE_WS_ORIGINS in production
+	}
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		OriginPatterns:  []string{"*"}, // tighten for production
+		OriginPatterns:  origins,
 		CompressionMode: websocket.CompressionDisabled,
 	})
 	if err != nil {

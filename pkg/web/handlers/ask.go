@@ -69,7 +69,7 @@ func (h *Ask) Post(w http.ResponseWriter, r *http.Request) {
 	}
 	plain, err := h.Encryptor.Decrypt(doc.Payload)
 	if err != nil {
-		http.Error(w, "decrypt failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "operation failed", http.StatusInternalServerError)
 		return
 	}
 

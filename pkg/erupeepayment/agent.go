@@ -211,7 +211,8 @@ func (a *PaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiatio
 		}
 	}
 
-	// Validation 7: Sender must have sufficient balance
+	// Validation 7: Sender must have sufficient balance (early-exit read; not
+	// the authoritative reservation — see UpdateBalance call below).
 	if fromAcct.BalancePaise < req.AmountPaise {
 		return PaymentResult{
 			PaymentID:     paymentID,
@@ -233,6 +234,25 @@ func (a *PaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiatio
 		}
 	}
 
+	// Reserve: atomically deduct from sender before ledger commit.
+	//
+	// This closes the double-spend window: two concurrent payments for the same
+	// account both pass the read check above (balance unchanged), but only the
+	// first to call UpdateBalance succeeds — the second sees insufficient balance.
+	// Without this reservation, both goroutines would commit to the ledger (with
+	// different paymentIDs) and both attempts to debit the balance would succeed
+	// if the account had enough for each individually, or the second would fail
+	// AFTER the ledger already recorded it as confirmed (consensus violation).
+	if err := a.accountMgr.UpdateBalance(req.FromAccount, -req.AmountPaise); err != nil {
+		return PaymentResult{
+			PaymentID:     paymentID,
+			Status:        StatusFailed,
+			Error:         "insufficient balance (concurrent reservation conflict)",
+			CorrelationID: correlationID,
+			Timestamp:     now,
+		}
+	}
+
 	// Record the pending transaction
 	txnRecord := &TransactionRecord{
 		PaymentID:   paymentID,
@@ -243,6 +263,8 @@ func (a *PaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiatio
 		Status:      StatusPending,
 	}
 	if err := a.txnLog.Record(txnRecord); err != nil {
+		// Recording failed after reservation — refund and abort.
+		_ = a.accountMgr.UpdateBalance(req.FromAccount, req.AmountPaise)
 		env.Logf("[erupeepayment] failed to record transaction: %v", err)
 		return PaymentResult{
 			PaymentID:     paymentID,
@@ -253,12 +275,15 @@ func (a *PaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiatio
 		}
 	}
 
-	// If CBDC Bridge is available, attempt ledger commitment (async, confirming state)
+	// If CBDC Bridge is available, commit to ledger and credit receiver.
+	// The sender balance is already reserved (deducted above). On ledger failure,
+	// we refund the sender. On success, we credit the receiver.
 	if a.cbdcBridge != nil {
 		go func() {
 			ledgerID, err := a.cbdcBridge.CommitLedger(context.Background(), req.FromAccount, req.ToAccount, req.AmountPaise, paymentID)
 			if err != nil {
-				// Record failure
+				// Ledger commit failed — refund the reserved amount to sender.
+				_ = a.accountMgr.UpdateBalance(req.FromAccount, req.AmountPaise)
 				failedTxn := &TransactionRecord{
 					PaymentID:   paymentID,
 					FromAccount: req.FromAccount,
@@ -269,7 +294,9 @@ func (a *PaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiatio
 				}
 				a.txnLog.Record(failedTxn)
 			} else {
-				// Record confirmation
+				// Ledger commit succeeded — credit the receiver.
+				// Sender was already debited at reservation; do NOT debit again.
+				_ = a.accountMgr.UpdateBalance(req.ToAccount, req.AmountPaise)
 				confirmedTxn := &TransactionRecord{
 					PaymentID:   paymentID,
 					FromAccount: req.FromAccount,
@@ -280,9 +307,6 @@ func (a *PaymentAgent) InitiatePayment(ctx context.Context, req PaymentInitiatio
 					LedgerID:    ledgerID,
 				}
 				a.txnLog.Record(confirmedTxn)
-				// Update balances
-				a.accountMgr.UpdateBalance(req.FromAccount, -req.AmountPaise)
-				a.accountMgr.UpdateBalance(req.ToAccount, req.AmountPaise)
 			}
 		}()
 	}

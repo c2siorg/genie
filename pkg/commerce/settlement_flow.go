@@ -9,6 +9,7 @@ package commerce
 import (
 	"context"
 	"fmt"
+	"math"
 )
 
 // SettlementBatchInput contains orders ready for settlement.
@@ -45,6 +46,15 @@ func ConsolidateSettlementBatch(ctx context.Context, input SettlementBatchInput)
 			continue
 		}
 
+		// Guard against int64 overflow before accumulation.
+		// A sufficiently large batch (e.g. many ₹10L orders) can wrap silently
+		// and produce a negative settlement amount, which the CBDC ledger would reject.
+		if math.MaxInt64-positions[order.MerchantID] < order.TotalPaise {
+			return nil, fmt.Errorf("settlement overflow: merchant %s batch exceeds int64 max", order.MerchantID)
+		}
+		if math.MaxInt64-totalBefore < order.TotalPaise {
+			return nil, fmt.Errorf("settlement overflow: total batch amount exceeds int64 max")
+		}
 		positions[order.MerchantID] += order.TotalPaise
 		totalBefore += order.TotalPaise
 	}

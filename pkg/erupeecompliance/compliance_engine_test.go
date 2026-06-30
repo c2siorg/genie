@@ -67,7 +67,23 @@ func TestComplianceEngine_BlockPaymentPEP(t *testing.T) {
 }
 
 func TestComplianceEngine_ReviewPaymentLargeAmount(t *testing.T) {
-	engine := NewComplianceEngine()
+	// Use a high-limit velocity monitor so only the AML dimension fires.
+	// A ₹60k payment exceeds the DEFAULT ₹50k/hour velocity limit, which would
+	// produce DecisionBlock instead of DecisionReview. This test isolates the AML
+	// path by removing the velocity constraint — the compliance engine should route
+	// to review when AML fires without a concurrent velocity block.
+	highLimitVelocity := NewInMemoryVelocityMonitorWithConfig(&VelocityConfig{
+		MaxTransactionsPerHour: 100,
+		MaxAmountPerHour:       10_00_00_000, // ₹10 crore — velocity never fires
+		MaxAmountPerDay:        50_00_00_000, // ₹50 crore
+	})
+	engine := NewComplianceEngineWithComponents(
+		NewAMLScreener(),
+		NewSanctionsChecker(),
+		highLimitVelocity,
+		NewInMemoryFraudDetector(),
+		DefaultFraudDetectionConfig(),
+	)
 	ctx := context.Background()
 
 	payment := PaymentRequest{
@@ -97,7 +113,21 @@ func TestComplianceEngine_ReviewPaymentLargeAmount(t *testing.T) {
 }
 
 func TestComplianceEngine_ReviewPaymentNewAccountHighValue(t *testing.T) {
-	engine := NewComplianceEngine()
+	// Use a high-limit velocity monitor so only the fraud/AML dimension fires.
+	// A ₹60k payment exceeds the DEFAULT ₹50k/hour velocity limit — that block
+	// would shadow the new-account high-value fraud pattern this test asserts on.
+	highLimitVelocity := NewInMemoryVelocityMonitorWithConfig(&VelocityConfig{
+		MaxTransactionsPerHour: 100,
+		MaxAmountPerHour:       10_00_00_000,
+		MaxAmountPerDay:        50_00_00_000,
+	})
+	engine := NewComplianceEngineWithComponents(
+		NewAMLScreener(),
+		NewSanctionsChecker(),
+		highLimitVelocity,
+		NewInMemoryFraudDetector(),
+		DefaultFraudDetectionConfig(),
+	)
 	ctx := context.Background()
 
 	payment := PaymentRequest{

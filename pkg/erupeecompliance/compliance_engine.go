@@ -74,11 +74,13 @@ func (e *ComplianceEngine) CheckPayment(ctx context.Context, payment PaymentRequ
 		}
 	}
 
-	// Step 3: Velocity Check
-	velocityAllowed, velocityReason := e.velocityMonitor.CheckVelocity(ctx, payment.FromAccountID)
+	// Step 3: Velocity Check — use atomic CheckAndRecord to close the TOCTOU window
+	// where two concurrent payments can both pass CheckVelocity before either is
+	// recorded. Only the winning goroutine records; the losing one is blocked.
+	velocityAllowed, velocityReason := e.velocityMonitor.CheckAndRecord(ctx, payment.FromAccountID, payment.Amount, payment.Timestamp)
 	if velocityAllowed {
 		check.VelocityResult = VelocityOK
-		check.VelocityReason = "Within velocity limits"
+		check.VelocityReason = velocityReason
 	} else {
 		check.VelocityResult = VelocityBlocked
 		check.VelocityReason = velocityReason
@@ -102,7 +104,8 @@ func (e *ComplianceEngine) CheckPayment(ctx context.Context, payment PaymentRequ
 		}
 	}
 
-	// Step 5: Record the transaction for future fraud analysis
+	// Step 5: Record the transaction for future fraud analysis.
+	// Velocity was already recorded atomically in Step 3 (CheckAndRecord).
 	txn := TransactionRecord{
 		TransactionID: payment.PaymentID,
 		FromAccountID: payment.FromAccountID,
@@ -110,10 +113,14 @@ func (e *ComplianceEngine) CheckPayment(ctx context.Context, payment PaymentRequ
 		Amount:        payment.Amount,
 		Timestamp:     payment.Timestamp,
 	}
-	_ = e.fraudDetector.RecordTransaction(ctx, txn)
+	if err := e.fraudDetector.RecordTransaction(ctx, txn); err != nil {
+		// A recording failure is a compliance integrity failure — return the error
+		// so the caller can decide whether to allow or block the payment. Silently
+		// swallowing this means future fraud checks run on incomplete history.
+		return nil, fmt.Errorf("fraud record failed: %w", err)
+	}
 
-	// Step 6: Record velocity metrics
-	_ = e.velocityMonitor.RecordTransaction(ctx, payment.FromAccountID, payment.Amount, payment.Timestamp)
+	// Step 6: Velocity metrics already recorded atomically in Step 3.
 
 	// Step 7: Make final decision
 	check.Decision = e.makeDecision(check)

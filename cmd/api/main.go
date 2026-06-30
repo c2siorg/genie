@@ -461,9 +461,9 @@ func run() error {
 	deps := web.Deps{
 		Issuer: issuer,
 		Logger: logger,
-		// CSRF stays report-only until the SPA sends X-CSRF-Token; flip with
-		// GENIE_CSRF_ENFORCE=true. No effect on Bearer-token API traffic.
-		CSRFEnforce: os.Getenv("GENIE_CSRF_ENFORCE") == "true",
+		// CSRF enforcement is ON by default. Set GENIE_CSRF_ENFORCE=false to
+		// disable (dev/test only). No effect on Bearer-token API traffic.
+		CSRFEnforce: os.Getenv("GENIE_CSRF_ENFORCE") != "false",
 		// Eval observability endpoints (/v1/eval/*), admin-only. Shares the
 		// in-memory eval store with the auditor; annotations are in-memory.
 		EvalReview: handlers.NewEvalReviewHandler(evalStore, eval.NewInMemoryAnnotationStore()),
@@ -493,6 +493,7 @@ func run() error {
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_CHATWS_TIMEOUT", 120)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
+			AllowedOrigins:     wsOrigins(),
 		},
 		Health: &handlers.Health{Ready: func() error {
 			if err := db.Pool.Ping(ctx); err != nil {
@@ -563,6 +564,9 @@ func run() error {
 		Addr:              addr,
 		Handler:           web.NewRouter(deps),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	errCh := make(chan error, 1)
@@ -607,6 +611,24 @@ func seedFreeAISutras(ctx context.Context, idx *rag.Index) {
 	for _, d := range docs {
 		_, _ = idx.IngestDocument(ctx, d.src, d.title, d.body, 600)
 	}
+}
+
+// wsOrigins parses GENIE_WS_ORIGINS (comma-separated list of allowed origins)
+// for the WebSocket upgrade. Returns nil when the env var is unset so ChatWS
+// applies its own dev-mode wildcard fallback.
+func wsOrigins() []string {
+	raw := os.Getenv("GENIE_WS_ORIGINS")
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func mustEnv(key string) string {

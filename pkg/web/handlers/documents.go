@@ -52,7 +52,7 @@ func (h *Documents) Upload(w http.ResponseWriter, r *http.Request) {
 
 	ep, err := h.Encryptor.Encrypt(body)
 	if err != nil {
-		http.Error(w, "encrypt failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "operation failed", http.StatusInternalServerError)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *Documents) Upload(w http.ResponseWriter, r *http.Request) {
 		Payload:        ep,
 	})
 	if err != nil {
-		http.Error(w, "persist failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "operation failed", http.StatusInternalServerError)
 		return
 	}
 

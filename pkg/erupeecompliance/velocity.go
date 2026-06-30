@@ -16,6 +16,12 @@ type VelocityMonitor interface {
 	// Returns (allowed bool, reason string).
 	CheckVelocity(ctx context.Context, accountID string) (bool, string)
 
+	// CheckAndRecord atomically checks velocity limits and, only if allowed,
+	// records the transaction. This is the TOCTOU-safe primitive that compliance
+	// gates must use — separate CheckVelocity + RecordTransaction calls have a
+	// window where two concurrent payments can both slip past a limit.
+	CheckAndRecord(ctx context.Context, accountID string, amount int64, now time.Time) (allowed bool, reason string)
+
 	// GetRecord returns the current velocity record for an account.
 	GetRecord(ctx context.Context, accountID string) (*VelocityRecord, error)
 

@@ -205,6 +205,18 @@ func (l *InMemoryLedger) FinalizeTransactions(blocksDelay uint64) (int, error) {
 		}
 	}
 
+	// Prune finalityLog entries older than 90 days to bound memory usage.
+	// The ledger's tamper-evidence guarantee comes from the immutable block chain,
+	// not from finalityLog — pruning old entries does not affect hash-chain integrity.
+	// A node needing to verify old finality can re-derive it from the block data.
+	const finalityRetention = 90 * 24 * time.Hour
+	pruneOlderThan := now.Add(-finalityRetention)
+	for paymentID, finalizedAt := range l.finalityLog {
+		if finalizedAt.Before(pruneOlderThan) {
+			delete(l.finalityLog, paymentID)
+		}
+	}
+
 	return count, nil
 }
 
