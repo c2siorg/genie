@@ -1,2 +1,11 @@
+# Compiled binaries from `make build`
+/bin/
+
 # OTEL trace dump produced by cmd/genie
 genie-traces.json
+
+# Separate sibling projects that live inside this folder but are their own Git
+# repos — the Python port and the Microsoft Agent Framework learning workspace.
+# Not part of this Go module; ignored so they don't clutter this repo's status.
+/geniepython/
+/microsoftagentframeworklearning/

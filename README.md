@@ -12,7 +12,7 @@
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
 ![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
 ![RBI FREE-AI](https://img.shields.io/badge/RBI-FREE--AI%20aligned-orange)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)
 
 Repository: <https://github.com/c2siorg/genie>
 
@@ -1674,7 +1674,13 @@ Good first issues:
 
 ## License
 
-MIT.
+**[PolyForm Noncommercial License 1.0.0](LICENSE)** — free for any noncommercial
+purpose (personal, research, education, non-profit and government use). Commercial use
+is not permitted. See [`LICENSE`](LICENSE) for the full terms.
+
+> Note: releases prior to v1.0.0 were made available under the MIT License; that grant
+> continues to apply to those earlier versions. Genie v1.0.0 onward is licensed under
+> PolyForm Noncommercial 1.0.0.
 
 ## References
 
