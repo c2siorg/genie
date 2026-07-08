@@ -16,7 +16,6 @@
 | Use a platform package | [packages/README.md](packages/README.md) |
 | Open the HTTP API | [api.md](api.md) |
 | Hit MCP/A2A protocols | [protocols.md](protocols.md) |
-| Read the LinkedIn-ready writeups | [linkedin-article-architecture.md](linkedin-article-architecture.md) · [linkedin-article-compliance.md](linkedin-article-compliance.md) |
 | See the ADK extension proposal | [adk-extension-proposal.md](adk-extension-proposal.md) |
 
 ---
@@ -34,10 +33,6 @@ docs/
 ├── openapi.yaml                               ← HTTP spec
 ├── asyncapi.yaml                              ← bus event spec
 ├── adk-extension-proposal.md                  ← the design doc behind the 13 new agents
-├── linkedin-article-architecture.md
-├── linkedin-article-compliance.md
-├── linkedin-article-rbi-freeai.md
-├── linkedin-post*.md                          ← short-post variants
 ├── agents/
 │   ├── README.md                              ← agent index + contract
 │   ├── kyc_orchestrator.md                    ← Tier 1.1
@@ -78,7 +73,7 @@ docs/
 ### "I'm a CRO / compliance officer evaluating Genie for FREE-AI alignment"
 
 1. [free-ai-mapping.md](free-ai-mapping.md) — table per recommendation
-2. [linkedin-article-compliance.md](linkedin-article-compliance.md) — the long-form
+2. [architecture.md](architecture.md) — how governance, tracing, and fallbacks are wired
 3. Spot-check: pick one Rec → open the linked file → run `go test ./<pkg>/...`
 
 ### "I'm a CISO reviewing the security posture"
