@@ -86,7 +86,7 @@ Regulator scope.
 |---|---|
 | Severity grading function | `pkg/incidents.Grade()` |
 | Auto-incident on policy deny | `pkg/orchestration/orchestrator.go` |
-| Annexure VI form generator | `pkg/incidents/annexure_vi.go` |
+| Annexure VI form generator | `pkg/incidents/incidents.go` |
 | High-grade examples | `agents/kyc_orchestrator` (sanctions → high), `agents/payment_orchestrator` (rejects → medium) |
 
 ### Rec 9 — Sectoral AI Code of Conduct ⚪
@@ -118,7 +118,7 @@ Regulator definition. Genie implements the reporting side via Rec 22.
 | Artefact | Where |
 |---|---|
 | Policy template (Annexure V shape) | `config/ai-policy.example.yaml` |
-| Loader | `pkg/policy/loader.go` |
+| Loader | `pkg/policy/policy.go` |
 | Hash-logged at boot | `cmd/api/main.go` |
 | `board_approved_on`, `owner` fields | inside the YAML |
 
