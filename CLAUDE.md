@@ -5,10 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Genie is an AI financial assistant in Go, built on Microsoft's Multi-Agent Reference
-Architecture (MARA) and aligned with the RBI FREE-AI report (Aug 2025). It ships 60+
-specialist finance agents behind a message bus, an HTTP/WebSocket API, and a full GenAI
-layer (RAG, reasoning, memory, eval, safety). Default LLM is on-prem Ollama; a `mock`
-provider makes everything run with no external dependencies.
+Architecture (MARA) and aligned with the RBI FREE-AI report (Aug 2025). It implements
+60+ specialist finance agents (61 packages under `agents/`), of which 32 — plus 2
+deterministic fallbacks — are currently wired into the running API; all sit behind a
+message bus, an HTTP/WebSocket API, and a full GenAI layer (RAG, reasoning, memory,
+eval, safety). Default LLM is on-prem Ollama; a `mock` provider makes everything run
+with no external dependencies.
 
 **Module path ≠ directory name.** The repo directory is `genie` but the Go module is
 `github.com/PratikDhanave/multi-agent-reference-architecture-go`. All imports use the
@@ -92,7 +94,7 @@ loop (`pkg/reasoning`) that runs away gets cut off by these wrappers, not by the
 ## Where things live
 
 - `cmd/` — `api` (the HTTP service edge), `genie` (CLI demo), `demo`, `scaffold`, `red-team`.
-- `agents/<id>/<id>.go` — one package per agent; `New()` constructor, exported `ID`/`Capability`/`Type*` constants, `HandleMessage`, optional `RiskLevel()`. All agents are wired into the registry in `cmd/api/main.go` (`run()`), which is the source of truth for what's live.
+- `agents/<id>/<id>.go` — one package per agent; `New()` constructor, exported `ID`/`Capability`/`Type*` constants, `HandleMessage`, optional `RiskLevel()`. Live agents are wired into the registry in `cmd/api/main.go` (`run()`), which is the source of truth for what's actually served — note that not every agent package under `agents/` is wired in (currently 32 specialists + 2 fallbacks of 61 packages).
 - `pkg/` — platform packages (see above) plus `llm`, `rag`, `graphrag`, `reasoning`, `memory`, `eval`, `safety`, `privacy`, `crypto`, `auth`, `identity`, `mcp`, `a2a`, `compliance`, `storage/postgres`, `web` (chi router + handlers + middleware in `web/mid`), etc.
 - `config/` — `ai-policy.example.yaml` (the board-approved governance policy) and `constitution.yaml` (LLM-as-judge rules).
 - `docs/` — deep reference: `architecture.md`, `operations.md`, `api.md`, `protocols.md`, `free-ai-mapping.md` (every FREE-AI recommendation → file path), `agents/<id>.md`, `packages/<name>.md`, plus `openapi.yaml` / `asyncapi.yaml`.

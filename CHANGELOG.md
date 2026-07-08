@@ -21,8 +21,8 @@ First tagged release.
   the MIT License; that grant continues to apply to those earlier versions.
 - **README:** rewritten into a professional landing page (~1,700 → ~310 lines).
   Deep how-to content now links into `docs/`. Corrected the repository URL to this
-  fork and stated the agent count accurately (34 wired into the running API,
-  60+ implemented across the codebase).
+  fork and stated the agent count accurately (32 specialist agents wired into
+  the running API plus 2 fallbacks; 60+ implemented across the codebase).
 - `.gitignore` now excludes the sibling projects and the `bin/` build output.
 
 ### Removed

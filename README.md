@@ -12,9 +12,10 @@
 ![RBI FREE-AI](https://img.shields.io/badge/RBI-FREE--AI%20aligned-orange)
 ![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)
 
-**60+ specialist finance agents** implemented across the codebase (62 packages under
-`agents/`), **34 of them wired into the running API** today — covering retail finance,
-SME lending, KYC, bancassurance, fraud, treasury, payments, and cyber.
+**60+ specialist finance agents** implemented across the codebase (61 agent packages
+under `agents/`), **32 of them wired into the running API** today — plus 2 deterministic
+fallback agents (34 registered in all) — covering retail finance, SME lending, KYC,
+bancassurance, fraud, treasury, payments, and cyber.
 
 ---
 
@@ -207,8 +208,9 @@ governance, and each agent. Full endpoint reference: **[docs/api.md](docs/api.md
 Each capability is a package with a dedicated design doc under
 [`docs/packages/`](docs/packages/README.md):
 
-- **Agents** — 34 live specialist agents behind the bus (ingestion, forecasting, anomaly,
-  KYC, claims, SME lending, tax, portfolio, payments, cyber) plus fallbacks. → [docs/agents](docs/agents/README.md)
+- **Agents** — 32 live specialist agents behind the bus (ingestion, forecasting, anomaly,
+  KYC, claims, SME lending, tax, portfolio, payments, cyber) plus 2 deterministic
+  fallbacks. → [docs/agents](docs/agents/README.md)
 - **LLM providers** — Mock · Ollama · Anthropic · OpenAI · Gemini, wrapped in
   Cache → Budget → Deadline → Circuit layers that bound autonomous reasoning.
 - **Retrieval** — hybrid RAG + GraphRAG over pgvector, with rerank, Self-RAG, and CRAG.
