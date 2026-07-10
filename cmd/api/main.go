@@ -23,54 +23,80 @@ import (
 	"time"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/aa_fetcher"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/advance_tax_planner"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/alm_agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/aml_monitor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/analyzer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/anomaly"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/asset_allocator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/auditor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/auto_insurance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/bulk_statement_analyzer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/carbon_estimator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/cashflow_underwriter"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/claim_adjudicator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/complaint_triage"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/currency"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/cyber_guardian"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/debt_optimizer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/deductions_optimizer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/deep_research"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/dividend_planner"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/educator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/emergency_fund"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/enricher"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/fallback"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/forecaster"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/fraud"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/goal_planner"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/google_trends"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/health_preauth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/ingestor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/invoice_discounter"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/invoice_processor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/kyc_orchestrator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/lcr_projector"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/loan"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/macro"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mf_screener"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mpc_research"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mule"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/normalizer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/options_explainer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/payment_orchestrator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/phishing_classifier"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/portfolio_advisor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/prepayment_advisor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/rates"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/recommender"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/reporter"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/sip_vs_lumpsum"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/sme_loan_workflow"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/subscription_detector"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supervisor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supply_chain_finance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/synthetic_identity"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_estimator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_harvester"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/var_calculator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/working_capital"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/incidents"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/sovereignty"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/synth"
@@ -206,6 +232,38 @@ func run() error {
 	// Tier 4 — infrastructure-flavoured.
 	register(cyber_guardian.New())
 	register(google_trends.New(nil)) // host wires a TrendFetcher; agent is inert without one
+
+	// Domain-expansion agents — deterministic specialists (no external deps).
+	// These declare RiskHigh via RiskLevel(), which surfaces in /v1/ai-inventory
+	// and the AIBOM. Role gating, where it applies, is enforced by RBACPolicy on the
+	// inbound message Type (config/ai-policy.example.yaml), not by a dispatch-time
+	// risk ceiling — the orchestrator does not gate on RiskClass. See docs/architecture.md §6.3, §10.
+	register(advance_tax_planner.New())
+	register(alm_agent.New())
+	register(aml_monitor.New())
+	register(asset_allocator.New())
+	register(carbon_estimator.New())
+	register(cashflow_underwriter.New())
+	register(complaint_triage.New())
+	register(debt_optimizer.New())
+	register(deductions_optimizer.New())
+	register(dividend_planner.New())
+	register(emergency_fund.New())
+	register(fraud.New())
+	register(goal_planner.New())
+	register(invoice_discounter.New())
+	register(lcr_projector.New())
+	register(mf_screener.New())
+	register(mule.New())
+	register(options_explainer.New())
+	register(phishing_classifier.New())
+	register(prepayment_advisor.New())
+	register(sip_vs_lumpsum.New())
+	register(subscription_detector.New())
+	register(synthetic_identity.New())
+	register(tax_harvester.New())
+	register(var_calculator.New())
+	register(working_capital.New())
 
 	// LLM + embedder stack — Mock by default, Ollama when GENIE_LLM=ollama.
 	llmStack := buildLLMStack(ctx, logger)

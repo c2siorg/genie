@@ -1,12 +1,12 @@
 # Agents — Detailed Reference
 
-Genie implements 60+ specialist agents (61 packages under `agents/`), organised in
-three layers. **32 of them are currently wired into the running API** (see
+Genie implements 60+ specialist agents (61 specialist packages under `agents/`), organised in
+three layers. **58 of them are currently wired into the running API** (see
 `cmd/api/main.go`, the source of truth for what's served); the rest are implemented and
 unit-tested but not yet registered.
 
 1. **Canonical MARA pipeline** (ingestor → normalizer → enricher → analyzer → forecaster → anomaly → recommender → reporter + supervisor)
-2. **Domain-expansion agents** (fraud, AML, VaR, ALM, LCR, tax-harvester, cashflow-underwriter, mule-detector, complaint-triage, carbon-estimator, etc. — 26 in total; several of these are implemented but not yet wired into the API)
+2. **Domain-expansion agents** (fraud, AML, VaR, ALM, LCR, tax-harvester, cashflow-underwriter, mule-detector, complaint-triage, carbon-estimator, etc. — 26 in total; all now wired into the API)
 3. **ADK-inspired extension agents** (the new cohort documented in detail here)
 
 This subtree of the docs covers the third layer. The other two are documented at the package level (see `agents/<name>/<name>.go` headers) and in the root README's tables.

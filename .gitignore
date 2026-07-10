@@ -9,3 +9,6 @@ genie-traces.json
 # Not part of this Go module; ignored so they don't clutter this repo's status.
 /geniepython/
 /microsoftagentframeworklearning/
+
+# stray build artifact (go build ./cmd/api output)
+/api

@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Genie is an AI financial assistant in Go, built on Microsoft's Multi-Agent Reference
 Architecture (MARA) and aligned with the RBI FREE-AI report (Aug 2025). It implements
-60+ specialist finance agents (61 packages under `agents/`), of which 32 — plus 2
-deterministic fallbacks — are currently wired into the running API; all sit behind a
+60+ specialist finance agents (61 specialist packages under `agents/`, plus a fallback
+package), of which 58 — plus 2 deterministic fallbacks — are currently wired into the
+running API; all sit behind a
 message bus, an HTTP/WebSocket API, and a full GenAI layer (RAG, reasoning, memory,
 eval, safety). Default LLM is on-prem Ollama; a `mock` provider makes everything run
 with no external dependencies.
@@ -62,39 +63,42 @@ seam each for governance, tracing, fallbacks, and the live capability inventory.
 ```
 HTTP POST /v1/ask + JWT
   → chi router + middleware (RequestID, Recovery, Log, OTel, JWT auth, RBAC, rate-limit)
-  → Orchestrator.dispatch(msg)
+  → Orchestrator (per-agent bus subscriber, set up in Start(ctx))
       → governance.Composite.Evaluate(msg)   ← THE GATE, deny-on-first-failure
-      → registry.Get(msg.To); enforce risk ceiling
       → agent.HandleMessage(ctx, msg, env) → returns 0..N follow-up messages
-      → bus.Publish each output → loops back to dispatch
-  → reporter emits final_report
-  → busio.Correlator wakes the waiting HTTP handler (matched by correlation_id)
+      → bus.Publish each output → delivered to the next agent's subscriber
+      → on agent error: record incident + route to a registered fallback
+  → reporter emits final_report → to "user"
+  → busio.Correlator wakes the waiting HTTP handler (matched by trace_id)
   → HTTP response
 ```
 
 Fan-out/fan-in: an agent (e.g. `analyzer`) emits parallel messages; the `supervisor`
-counts fan-ins by `trace_id`/`correlation_id` and fires the `reporter` when all arrive.
-Latency = max(stages), not sum.
+collects them into a per-`trace_id` session and fires the `reporter` once all the
+expected named fields are present (structural readiness, not a numeric count).
+Latency = max(stages), not sum. See `docs/architecture.md` for the verified deep dive.
 
 ### The seven load-bearing packages
-- `pkg/protocol` — `Message{ID, From, To, Role, Type, Content, CreatedAt, Metadata}`. `Type` carries routing semantics; `Metadata` carries `trace_id`/`traceparent`, `user_id`, `user_roles`, `classification` (public|internal|pii|secret), `region`, `correlation_id`, and domain payloads. `pkg/agent` re-exports these as type aliases to avoid import cycles.
+- `pkg/protocol` — `Message{ID, From, To, Role, Type, Content, CreatedAt, Metadata}`. `Type` carries routing semantics (a plain string; no `MessageType` constants); `Metadata` carries `trace_id`/`traceparent`, `user_id`, `user_roles`, `classification` (public|internal|pii|secret), `region`, and domain payloads. (There is no `correlation_id` — sync correlation is keyed on `trace_id`.) `pkg/agent` re-exports `Message`/`MessageRole` as type aliases to avoid import cycles.
 - `pkg/registry` — `NewInMemory()`; drives the live `GET /v1/ai-inventory`.
 - `pkg/comm` — `NewInMemoryBus()`; fire-and-forget pub/sub with OTel spans. Sync request/response is layered on top via `pkg/busio.Correlator`.
-- `pkg/orchestration` — the ~300-line dispatch loop: extract trace → evaluate policy → look up handler → enforce risk ceiling → invoke → publish outputs → record incidents → fire fallback on high-risk failure.
-- `pkg/governance` — composite policy chain (length, required-metadata, RBAC, classification ceiling, data-residency, consent, explainability, PII regex, prompt-injection, JSON-schema). Loaded from `config/ai-policy.example.yaml` — risk team edits YAML, system obeys.
-- `pkg/agent/risk.go` — `RiskClass` (low|medium|high). `RiskHigh` agents (AML, VaR, KYC, payments) can't run on a message lacking `advisor`/`admin` in `metadata.user_roles`.
-- `agents/fallback` — deterministic (no LLM/network) degraded answers when a primary times out, circuit-breaks, or panics.
+- `pkg/orchestration` — the orchestrator subscribes one handler per registered agent to the bus at `Start(ctx)`; each handler does: extract trace → evaluate policy → `HandleMessage` → publish outputs (on success) or record incident + route to a registered fallback (on returned error). Note: it does not call `registry.Get` per message, does not enforce a risk ceiling, and does not recover panics.
+- `pkg/governance` — composite policy chain, deny-on-first-failure (length, required-metadata, RBAC-by-message-Type, classification ceiling, data-residency, consent, explainability, PII regex, prompt-injection). A `SchemaPolicy` exists but is not wired by the YAML loader. Assembled by `pkg/policy` from `config/ai-policy.example.yaml` — risk team edits YAML, system obeys.
+- `pkg/agent/risk.go` — `RiskClass` (low|medium|high); `RiskOf` defaults to `low`. Risk class is read by reporting surfaces (`/v1/ai-inventory`, AIBOM, disclosures), **not** by the dispatcher. Role gating on sensitive actions is done by `RBACPolicy` keyed on message `Type` (the shipped YAML gates `finance_question`/`portfolio_request` to `user`/`advisor`/`admin`).
+- `agents/fallback` — deterministic (no LLM/network) "a human will follow up" notice, published when a primary agent returns an error (not on panic). Only `portfolio_advisor` and `recommender` have fallbacks wired.
 
 ### LLM provider wrapper chain
-`cmd/api/llmstack.go` wraps the base provider (Mock or Ollama) in layers that bound
-autonomous reasoning: `Cached` → `Budgeted` (daily per-principal token cap) →
-`Deadline` (per-call timeout) → `Circuit` (breaker after N errors). A ReAct/Reflexion
-loop (`pkg/reasoning`) that runs away gets cut off by these wrappers, not by the agent.
+`cmd/api/llmstack.go` wraps the base provider in layers that bound autonomous
+reasoning. On the **Ollama** path the real nesting (outermost→innermost, i.e. call
+order) is `Circuit → Deadline → Budget → Cache → Cost → Ollama`. The default `mock`
+provider is **unwrapped** (bare). A ReAct/Reflexion loop (`pkg/reasoning`, ReAct
+capped at `maxSteps`) that runs away is cut off by the Ollama-path wrappers, not by
+the agent. Embeddings use a separate `rag.Embedder` and bypass this chain.
 
 ## Where things live
 
 - `cmd/` — `api` (the HTTP service edge), `genie` (CLI demo), `demo`, `scaffold`, `red-team`.
-- `agents/<id>/<id>.go` — one package per agent; `New()` constructor, exported `ID`/`Capability`/`Type*` constants, `HandleMessage`, optional `RiskLevel()`. Live agents are wired into the registry in `cmd/api/main.go` (`run()`), which is the source of truth for what's actually served — note that not every agent package under `agents/` is wired in (currently 32 specialists + 2 fallbacks of 61 packages).
+- `agents/<id>/<id>.go` — one package per agent; `New()` constructor, exported `ID`/`Capability`/`Type*` constants, `HandleMessage`, optional `RiskLevel()`. Live agents are wired into the registry in `cmd/api/main.go` (`run()`), which is the source of truth for what's actually served — note that not every agent package under `agents/` is wired in (currently 58 specialists + 2 fallbacks of 61 specialist packages).
 - `pkg/` — platform packages (see above) plus `llm`, `rag`, `graphrag`, `reasoning`, `memory`, `eval`, `safety`, `privacy`, `crypto`, `auth`, `identity`, `mcp`, `a2a`, `compliance`, `storage/postgres`, `web` (chi router + handlers + middleware in `web/mid`), etc.
 - `config/` — `ai-policy.example.yaml` (the board-approved governance policy) and `constitution.yaml` (LLM-as-judge rules).
 - `docs/` — deep reference: `architecture.md`, `operations.md`, `api.md`, `protocols.md`, `free-ai-mapping.md` (every FREE-AI recommendation → file path), `agents/<id>.md`, `packages/<name>.md`, plus `openapi.yaml` / `asyncapi.yaml`.

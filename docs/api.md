@@ -43,7 +43,7 @@ curl -s http://localhost:8080/v1/disclosures | jq .
 
 ```json
 {
-  "agent_counts": { "high": 7, "low": 18, "medium": 9, "total": 34 },
+  "agent_counts": { "high": 14, "low": 22, "medium": 24, "total": 60 },
   "home_region": "in",
   "incident_reporting_url": "/v1/incidents",
   "policy_approved_on": "2025-08-13",
