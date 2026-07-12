@@ -314,19 +314,30 @@ policy allows/denies correctly; `go test -race ./...` passes. Deferred to later 
 needed to validate the seam): the front-door executor, the workflow edge, and the HTTP
 `/v1/ask` wiring.
 
-**Phase 2 — Orchestration backbone (1–2 wk).** Port the analyzer→(currency,macro,rates)→
-supervisor→reporter fan-out/fan-in as a `workflow` graph. Prove latency = max(stages).
+**Phase 2 — Orchestration backbone. ✅ DONE (2026-07-12).** `pkg/afg/orchestrate.go`
+`FanOut` runs governed specialists concurrently via
+`agentworkflow.NewConcurrentWorkflowBuilder(...).WithOutputFrom(...)` on
+`inproc.Default.Run`, collecting each `OutputEvent` (`*agent.ResponseUpdate`). Latency =
+max(stages); the gate still fires at every node. Tested (`TestFanOut_GovernedSpecialists`).
 
-**Phase 3 — Platform re-host (2–3 wk).** Registry+`/v1/ai-inventory`+AIBOM; fallback as
-conditional edges; RAG/GraphRAG wired via `ContextProviders`/tools; wrapper chain; auth/RBAC
-edge; UI re-pointed.
+**Phase 3 — Platform re-host: backbone ✅ DONE (2026-07-12).** `pkg/afg/registry.go`:
+`Registry`/`Inventory()` (framework port of `/v1/ai-inventory` + AIBOM source of truth) and
+`RunWithFallback` (Genie's BCP seam) — a governance `DeniedError` is a policy rejection and is
+**not** rescued by a fallback (only execution errors are). Tested (`TestRegistry_*`). Carried
+over from the legacy platform, not re-touched this phase: RAG/GraphRAG, the LLM wrapper chain,
+auth/RBAC HTTP edge, and the UI.
 
-**Phase 4 — Batch agent port (3–5 wk).** Remaining ~55 agents via the §5 template, in
-capability batches, each batch gated by the registry invariant test + paired
-`docs/agents/<id>.md`.
+**Phase 4 — Batch agent port: template proven 🟡 (2026-07-12).** `pkg/afg/specialists.go`
+ports `currency` (faithful), `fx_rates` (faithful), `tax_estimator` (representative
+new-regime slabs) and `macro` via a one-liner `det()` template, wired in `DefaultRegistry`.
+Tested (`TestDefaultRegistry_BatchPortedSpecialists`). **4 of ~58 specialists ported;** the
+remaining ~54 are mechanical (one `det()`/RunFunc + one registry line + paired doc each).
 
-**Phase 5 — Parity + cutover (1–2 wk).** Run `make smoke` / `make e2e` / `make red-team` /
-`make bcp-drill` against the new stack; diff behavior vs v1.0.0; cut over.
+**Phase 5 — Parity + cutover: partial 🟡 (2026-07-12).** `go test -race ./...` passes across
+the **whole repo** — legacy bus agents and the new `pkg/afg` port green together, and the
+legacy `currency` is byte-for-byte intact as the oracle. Still pending: full behavioural
+parity via `make smoke` / `make e2e` / `make red-team` / `make bcp-drill` against a running
+stack, and the actual HTTP-edge cutover from bus to workflow.
 
 ---
 

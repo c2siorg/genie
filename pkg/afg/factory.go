@@ -72,9 +72,22 @@ func (g GovMiddleware) Run(next agent.RunFunc, ctx context.Context, msgs []*mess
 		return errStream(fmt.Errorf("governance evaluation error: %w", err))
 	}
 	if res.Decision == governance.DecisionDeny {
-		return errStream(fmt.Errorf("governance denied (type=%q): %s", pm.Type, res.Reason))
+		return errStream(&DeniedError{Type: pm.Type, Reason: res.Reason})
 	}
 	return next(ctx, msgs, opts...)
+}
+
+// DeniedError is returned (via the response stream) when the governance gate denies
+// a message. It is distinct from an agent execution error so fallback routing can
+// refuse to rescue a policy rejection — a denied message must not be answered by a
+// fallback, only recorded as an incident.
+type DeniedError struct {
+	Type   string
+	Reason string
+}
+
+func (e *DeniedError) Error() string {
+	return fmt.Sprintf("governance denied (type=%q): %s", e.Type, e.Reason)
 }
 
 // NewGovernedDeterministic builds a no-LLM, no-network agent (currency, fallbacks,

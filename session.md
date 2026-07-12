@@ -179,10 +179,25 @@ First heavyweight in-place mutation, executed and verified:
   (5000 USD→415000 INR), deny (`classification exceeds recipient ceiling`), Ollama constructed.
 - **Gate:** `make vet` clean; `go test -race ./...` → **exit 0, no failures**.
 
-### Next: Phase 2 — orchestration backbone (awaiting go)
-Port analyzer→(currency,macro,rates)→supervisor→reporter as a `workflow.NewBuilder` graph
-(`AddFanOutEdge`/`AddFanInBarrierEdge`), agents bound via `agentworkflow.New`, executed via
-`inproc.Default.Run`. Prove latency = max(stages). (Scratchpad spike `afg_spike/` can be deleted.)
+### Phases 2–5 (in-place) — one-hour push, CI GREEN throughout
+- **Phase 2 (DONE):** `pkg/afg/orchestrate.go` `FanOut` — concurrent fan-out/fan-in via
+  `agentworkflow.NewConcurrentWorkflowBuilder` + `inproc.Default.Run`; each `OutputEvent.Output`
+  is `*agent.ResponseUpdate`. Governed specialists run concurrently (latency = max(stages)).
+  Test: `TestFanOut_GovernedSpecialists`.
+- **Phase 3 (backbone DONE):** `pkg/afg/registry.go` — `Registry`/`Inventory()` (port of
+  `/v1/ai-inventory`+AIBOM) + `RunWithFallback` (BCP seam). Typed `DeniedError` so governance
+  denials are NOT rescued by fallbacks (only execution errors are). Tests: `TestRegistry_*`.
+  RAG/wrapper-chain/auth/UI carried over from legacy, not re-touched.
+- **Phase 4 (template proven):** `pkg/afg/specialists.go` — `det()` one-liner template;
+  ported `currency`,`fx_rates` (faithful), `tax_estimator`,`macro` (representative) +
+  `DefaultRegistry`. 4 of ~58; rest mechanical. Test: `TestDefaultRegistry_BatchPortedSpecialists`.
+- **Phase 5 (partial):** `go test -race ./...` green across the WHOLE repo (legacy + port
+  together); legacy `currency` intact as oracle. Pending: full smoke/e2e/red-team parity +
+  HTTP-edge cutover.
+
+Verified workflow API via a scratchpad spike (`afg_spike/`, throwaway): concurrent builder,
+`inproc.Default.Run`, `OutputEvent.Output = *agent.ResponseUpdate`. Commits: 07823d7 (Phase 1),
+then Phases 2–4 (this push).
 
 Standing engineering notes carried into the rewrite:
 - Pin the framework by **commit SHA** in `go.mod` (no releases exist; `@latest` will break silently).
