@@ -16,8 +16,8 @@ func TestCatalog_RegistryComplete(t *testing.T) {
 	gate := governance.NewComposite(governance.MaxContentLengthPolicy{Max: 1 << 20})
 	reg := Registry(gate)
 	inv := reg.Inventory()
-	if len(inv) != 49 { // 45 catalog + 4 hand-ported (currency/rates/tax_estimator/macro)
-		t.Fatalf("want 49 total governed agents, got %d", len(inv))
+	if len(inv) != 58 { // 45 catalog + 4 hand-ported + 9 pipeline = full specialist set
+		t.Fatalf("want 58 total governed agents, got %d", len(inv))
 	}
 	seen := map[string]bool{}
 	for _, a := range inv {

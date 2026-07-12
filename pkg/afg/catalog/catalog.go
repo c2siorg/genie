@@ -61,5 +61,6 @@ func All() []afg.Spec {
 func Registry(gate governance.Policy) *afg.Registry {
 	reg := afg.DefaultRegistry(gate)
 	reg.RegisterSpecs(gate, All()...)
+	reg.RegisterSpecs(gate, afg.PipelineSpecs()...)
 	return reg
 }
