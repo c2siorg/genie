@@ -327,17 +327,28 @@ max(stages); the gate still fires at every node. Tested (`TestFanOut_GovernedSpe
 over from the legacy platform, not re-touched this phase: RAG/GraphRAG, the LLM wrapper chain,
 auth/RBAC HTTP edge, and the UI.
 
-**Phase 4 — Batch agent port: template proven 🟡 (2026-07-12).** `pkg/afg/specialists.go`
-ports `currency` (faithful), `fx_rates` (faithful), `tax_estimator` (representative
-new-regime slabs) and `macro` via a one-liner `det()` template, wired in `DefaultRegistry`.
-Tested (`TestDefaultRegistry_BatchPortedSpecialists`). **4 of ~58 specialists ported;** the
-remaining ~54 are mechanical (one `det()`/RunFunc + one registry line + paired doc each).
+**Phase 4 — Batch agent port: ✅ ALL 58 ported (2026-07-12).** `pkg/afg/spec.go` adds
+framework-free `Spec` authoring; a 45-way workflow generated `pkg/afg/catalog/` (39
+deterministic reproducing legacy logic + 6 advisory/LLM), compiled first try. Plus the 4
+hand-ported (`currency`/`fx_rates`/`tax_estimator`/`macro`) and the 9 pipeline agents
+(`pkg/afg/pipeline.go`). `catalog.Registry(gate)` = **58 unique governed agents**. Tested
+(registry completeness + no-panic invocation smoke + pipeline end-to-end). The 3 non-served
+extra packages (`h_supervisor`, `moa_recommender`, `receipt_ocr`) are out of scope — they are
+not in `cmd/api/main.go`'s register list.
 
-**Phase 5 — Parity + cutover: partial 🟡 (2026-07-12).** `go test -race ./...` passes across
-the **whole repo** — legacy bus agents and the new `pkg/afg` port green together, and the
-legacy `currency` is byte-for-byte intact as the oracle. Still pending: full behavioural
-parity via `make smoke` / `make e2e` / `make red-team` / `make bcp-drill` against a running
-stack, and the actual HTTP-edge cutover from bus to workflow.
+**HTTP edge — ✅ DONE (2026-07-12).** `pkg/afg/httpedge.go` + `cmd/af-serve`: `/v1/ask`
+routes to the governed registry (denial → HTTP 403), `/v1/ai-inventory` serves the live 58.
+Booted live with **no Postgres and no bus**; verified allow/deny/inventory + a
+workflow-ported agent (`advance_tax_planner`) returning a real schedule.
+
+**Phase 5 — Parity + cutover: partial 🟡 (2026-07-12).** `go test -race ./...` green across
+the whole repo (legacy + port together); legacy agents byte-for-byte intact as oracle; the
+new edge serves all 58 governed agents. Still pending for a full production cutover: wiring
+the framework edge behind the real JWT/RBAC middleware (`pkg/auth`) instead of request-carried
+context; re-hosting RAG/GraphRAG + the LLM wrapper chain + the UI; and running
+`make smoke`/`e2e`/`red-team`/`bcp-drill` against the new stack for behavioural diff vs
+`legacy/bus-architecture`. Deep-logic fidelity note: the 6 advisory agents and the 9 pipeline
+transforms are representative (governed + registered + core behaviour), not byte-faithful.
 
 ---
 

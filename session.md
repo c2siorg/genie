@@ -196,8 +196,22 @@ First heavyweight in-place mutation, executed and verified:
   HTTP-edge cutover.
 
 Verified workflow API via a scratchpad spike (`afg_spike/`, throwaway): concurrent builder,
-`inproc.Default.Run`, `OutputEvent.Output = *agent.ResponseUpdate`. Commits: 07823d7 (Phase 1),
-then Phases 2–4 (this push).
+`inproc.Default.Run`, `OutputEvent.Output = *agent.ResponseUpdate`.
+
+### 24-hour autonomous push — ALL 58 agents ported, edge live (pushed to origin/main)
+- **Infra:** `afg.Spec` + `RegisterSpecs` (framework-free authoring, gate injected at build).
+- **Batch port (workflow, 45-way):** `pkg/afg/catalog/` — 45 specialists generated (39
+  deterministic + 6 advisory/LLM), compiled first try. + 4 hand-ported + 9 pipeline
+  (`pkg/afg/pipeline.go`) = **58 unique governed agents** in `catalog.Registry`.
+- **HTTP edge:** `pkg/afg/httpedge.go` + `cmd/af-serve` — `/v1/ask` (denial→403) +
+  `/v1/ai-inventory`, no Postgres/bus. Booted live: "58 governed agents"; currency→200,
+  secret→403, `advance_tax_planner`→real schedule.
+- **Gate:** `go vet` + `go test -race ./...` green throughout; legacy agents intact as oracle.
+- **Commits:** 07823d7 (P1) → 09c1dd0 (P2-4) → a442cce (45 catalog) → 02805c2 (9 pipeline,
+  58/58) → a07a928 (HTTP edge). All on `origin/main`.
+- **Remaining (honest):** production JWT/RBAC wiring on the new edge; re-host RAG/wrapper/UI;
+  full smoke/e2e/red-team parity vs `legacy/bus-architecture`; byte-faithful logic for the 6
+  advisory + 9 pipeline agents (currently representative).
 
 Standing engineering notes carried into the rewrite:
 - Pin the framework by **commit SHA** in `go.mod` (no releases exist; `@latest` will break silently).
