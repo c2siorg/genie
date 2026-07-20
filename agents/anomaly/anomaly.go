@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	ID         = "anomaly_detector"
-	CapDetect  = "detect_anomaly"
-	TypeIn     = "analysis_result"
-	TypeOut    = "anomalies"
-	NextAgent  = "financial_supervisor"
+	ID        = "anomaly_detector"
+	CapDetect = "detect_anomaly"
+	TypeIn    = "analysis_result"
+	TypeOut   = "anomalies"
+	NextAgent = "financial_supervisor"
 
 	// Z-score above which a transaction is flagged.
 	DefaultZThreshold = 2.0

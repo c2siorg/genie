@@ -1,0 +1,14 @@
+# Code owners — requested for review on matching paths.
+# Docs: https://docs.github.com/articles/about-code-owners
+
+# Default owner for everything.
+*                       @PratikDhanave
+
+# Governance & policy are load-bearing — always review together.
+/pkg/governance/        @PratikDhanave
+/pkg/policy/            @PratikDhanave
+/config/                @PratikDhanave
+
+# The web edge + embedded console.
+/pkg/web/               @PratikDhanave
+/web-next/              @PratikDhanave

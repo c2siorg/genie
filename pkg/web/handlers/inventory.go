@@ -18,12 +18,12 @@ type Inventory struct {
 
 // InventoryItem is one row of the response.
 type InventoryItem struct {
-	ID           string           `json:"id"`
-	Name         string           `json:"name"`
-	Capabilities []string         `json:"capabilities"`
-	RiskClass    agent.RiskClass  `json:"risk_class"`
-	HasFallback  bool             `json:"has_fallback"`
-	FallbackID   string           `json:"fallback_id,omitempty"`
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	Capabilities []string        `json:"capabilities"`
+	RiskClass    agent.RiskClass `json:"risk_class"`
+	HasFallback  bool            `json:"has_fallback"`
+	FallbackID   string          `json:"fallback_id,omitempty"`
 }
 
 // List handles GET /v1/ai-inventory.

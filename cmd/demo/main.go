@@ -34,8 +34,8 @@ type planningAgent struct {
 	id string
 }
 
-func (p *planningAgent) ID() string            { return p.id }
-func (p *planningAgent) Name() string          { return "Planner" }
+func (p *planningAgent) ID() string             { return p.id }
+func (p *planningAgent) Name() string           { return "Planner" }
 func (p *planningAgent) Capabilities() []string { return []string{"plan_task"} }
 
 func (p *planningAgent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
@@ -57,8 +57,8 @@ type executorAgent struct {
 	id string
 }
 
-func (e *executorAgent) ID() string            { return e.id }
-func (e *executorAgent) Name() string          { return "Executor" }
+func (e *executorAgent) ID() string             { return e.id }
+func (e *executorAgent) Name() string           { return "Executor" }
 func (e *executorAgent) Capabilities() []string { return []string{"execute_plan"} }
 
 func (e *executorAgent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
@@ -83,8 +83,8 @@ type coordinatorAgent struct {
 	id string
 }
 
-func (c *coordinatorAgent) ID() string            { return c.id }
-func (c *coordinatorAgent) Name() string          { return "Coordinator" }
+func (c *coordinatorAgent) ID() string             { return c.id }
+func (c *coordinatorAgent) Name() string           { return "Coordinator" }
 func (c *coordinatorAgent) Capabilities() []string { return []string{"coordinate"} }
 
 func (c *coordinatorAgent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
@@ -182,4 +182,3 @@ func main() {
 	// - explicit "done" messages / state machines
 	time.Sleep(2 * time.Second)
 }
-

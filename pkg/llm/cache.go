@@ -17,8 +17,8 @@ import (
 // Production should add semantic caching (embedding-based lookup) and a
 // shared backend (Redis); the interface is the same.
 type CachedProvider struct {
-	Inner  Provider
-	TTL    time.Duration
+	Inner Provider
+	TTL   time.Duration
 
 	mu    sync.Mutex
 	store map[string]cachedEntry

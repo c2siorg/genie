@@ -20,7 +20,7 @@ import (
 // Verdict is a single classifier result.
 type Verdict struct {
 	Flagged bool    `json:"flagged"`
-	Score   float64 `json:"score"`   // 0..1 (where applicable)
+	Score   float64 `json:"score"` // 0..1 (where applicable)
 	Reason  string  `json:"reason,omitempty"`
 }
 

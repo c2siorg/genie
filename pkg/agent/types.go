@@ -10,11 +10,11 @@ import (
 // Re-export core protocol types for convenience.
 //
 // Architectural rationale:
-// - "Everyone" needs to refer to Message/Role.
-// - If comm/governance/orchestration imported pkg/agent just to use Message,
-//   we could easily create dependency cycles.
-// - Instead, the true definitions live in pkg/protocol, and pkg/agent re-exports
-//   them because agents work with messages constantly and the ergonomics matter.
+//   - "Everyone" needs to refer to Message/Role.
+//   - If comm/governance/orchestration imported pkg/agent just to use Message,
+//     we could easily create dependency cycles.
+//   - Instead, the true definitions live in pkg/protocol, and pkg/agent re-exports
+//     them because agents work with messages constantly and the ergonomics matter.
 type Message = protocol.Message
 type MessageRole = protocol.MessageRole
 
@@ -75,4 +75,3 @@ type Environment interface {
 	Logf(format string, args ...any)
 	// Additional services (memory, tools, policies, etc.) can be added here as needed.
 }
-

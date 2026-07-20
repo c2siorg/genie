@@ -4,11 +4,11 @@
 // text (the supervisor wires that on top — this package stays deterministic).
 //
 // Signals:
-//   * URL — punycode, IP literal, brand-impersonation lookalike, long
+//   - URL — punycode, IP literal, brand-impersonation lookalike, long
 //     subdomain chain, untrusted TLD, presence of @ or %
-//   * Text — urgency tokens, request-credential tokens, prize / lottery
+//   - Text — urgency tokens, request-credential tokens, prize / lottery
 //     tokens, KYC-update tokens, OTP-share tokens
-//   * UPI VPA — non-bank handle, lookalike merchant, contains "refund"
+//   - UPI VPA — non-bank handle, lookalike merchant, contains "refund"
 package phishing_classifier
 
 import (
@@ -38,10 +38,10 @@ type Request struct {
 
 // Verdict is the wire output.
 type Verdict struct {
-	Score       float64  `json:"score_0_1"`
-	Label       string   `json:"label"` // "safe" | "suspicious" | "phishing"
-	Reasons     []string `json:"reasons"`
-	Disclaimer  string   `json:"disclaimer"`
+	Score      float64  `json:"score_0_1"`
+	Label      string   `json:"label"` // "safe" | "suspicious" | "phishing"
+	Reasons    []string `json:"reasons"`
+	Disclaimer string   `json:"disclaimer"`
 }
 
 // Trusted Indian banking domains (illustrative).

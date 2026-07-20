@@ -3,7 +3,8 @@
 // Net Interest Income (NII) sensitivity to a parallel rate shock.
 //
 // Buckets follow RBI's ALM master direction:
-//   1-7d, 8-14d, 15-30d, 31-90d, 91-180d, 181-365d, 1-3y, 3-5y, >5y.
+//
+//	1-7d, 8-14d, 15-30d, 31-90d, 91-180d, 181-365d, 1-3y, 3-5y, >5y.
 //
 // Cumulative-gap > 15% of total assets in any bucket = breach.
 package alm_agent
@@ -28,15 +29,15 @@ const (
 // BucketAmounts is the assets/liabilities split per bucket (₹ in any
 // consistent unit — paise, lakhs, crores).
 type BucketAmounts struct {
-	Day1to7      float64 `json:"day_1_7"`
-	Day8to14     float64 `json:"day_8_14"`
-	Day15to30    float64 `json:"day_15_30"`
-	Day31to90    float64 `json:"day_31_90"`
-	Day91to180   float64 `json:"day_91_180"`
-	Day181to365  float64 `json:"day_181_365"`
-	Year1to3     float64 `json:"year_1_3"`
-	Year3to5     float64 `json:"year_3_5"`
-	Year5Plus    float64 `json:"year_5_plus"`
+	Day1to7     float64 `json:"day_1_7"`
+	Day8to14    float64 `json:"day_8_14"`
+	Day15to30   float64 `json:"day_15_30"`
+	Day31to90   float64 `json:"day_31_90"`
+	Day91to180  float64 `json:"day_91_180"`
+	Day181to365 float64 `json:"day_181_365"`
+	Year1to3    float64 `json:"year_1_3"`
+	Year3to5    float64 `json:"year_3_5"`
+	Year5Plus   float64 `json:"year_5_plus"`
 }
 
 // Request is the wire payload.
@@ -49,19 +50,19 @@ type Request struct {
 
 // Gap is one bucket's gap.
 type Gap struct {
-	Bucket         string  `json:"bucket"`
-	GapINR         float64 `json:"gap_rupees"`
-	CumulativeINR  float64 `json:"cumulative_rupees"`
-	CumulativePct  float64 `json:"cumulative_pct_of_assets"`
-	BreachFlag     bool    `json:"breach_flag"`
+	Bucket        string  `json:"bucket"`
+	GapINR        float64 `json:"gap_rupees"`
+	CumulativeINR float64 `json:"cumulative_rupees"`
+	CumulativePct float64 `json:"cumulative_pct_of_assets"`
+	BreachFlag    bool    `json:"breach_flag"`
 }
 
 // Result is the wire output.
 type Result struct {
-	Gaps                 []Gap   `json:"gaps"`
-	NIISensitivityINR    float64 `json:"nii_sensitivity_rupees"`
-	HasBreach            bool    `json:"has_breach"`
-	Note                 string  `json:"note"`
+	Gaps              []Gap   `json:"gaps"`
+	NIISensitivityINR float64 `json:"nii_sensitivity_rupees"`
+	HasBreach         bool    `json:"has_breach"`
+	Note              string  `json:"note"`
 }
 
 type Agent struct{}

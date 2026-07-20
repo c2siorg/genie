@@ -42,21 +42,21 @@ type Request struct {
 
 // Choice is one ranked recommendation.
 type Choice struct {
-	InvoiceID         string  `json:"invoice_id"`
-	NetCashINR        float64 `json:"net_cash_rupees"`
-	DiscountCostINR   float64 `json:"discount_cost_rupees"`
-	EffectiveAPR      float64 `json:"effective_apr_pct"`
-	DaysToMaturity    int     `json:"days_to_maturity"`
-	Rating            string  `json:"rating"`
+	InvoiceID       string  `json:"invoice_id"`
+	NetCashINR      float64 `json:"net_cash_rupees"`
+	DiscountCostINR float64 `json:"discount_cost_rupees"`
+	EffectiveAPR    float64 `json:"effective_apr_pct"`
+	DaysToMaturity  int     `json:"days_to_maturity"`
+	Rating          string  `json:"rating"`
 }
 
 // Plan is the wire output.
 type Plan struct {
-	Selected           []Choice `json:"selected"`
-	TotalNetCashINR    float64  `json:"total_net_cash_rupees"`
-	TotalDiscountINR   float64  `json:"total_discount_cost_rupees"`
-	UnfundedGapINR     float64  `json:"unfunded_gap_rupees"`
-	Note               string   `json:"note"`
+	Selected         []Choice `json:"selected"`
+	TotalNetCashINR  float64  `json:"total_net_cash_rupees"`
+	TotalDiscountINR float64  `json:"total_discount_cost_rupees"`
+	UnfundedGapINR   float64  `json:"unfunded_gap_rupees"`
+	Note             string   `json:"note"`
 }
 
 type Agent struct {

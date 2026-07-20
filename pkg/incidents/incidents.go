@@ -37,33 +37,33 @@ const (
 type FailureMode string
 
 const (
-	FailureBias                 FailureMode = "bias"
-	FailureHallucination        FailureMode = "hallucination"
-	FailureExplainability       FailureMode = "explainability_gap"
-	FailurePrivacyBreach        FailureMode = "privacy_breach"
-	FailureUnintendedAction     FailureMode = "unintended_action"
-	FailurePolicyDenied         FailureMode = "policy_denied"
-	FailureAgentError           FailureMode = "agent_error"
-	FailureUnknown              FailureMode = "unknown"
+	FailureBias             FailureMode = "bias"
+	FailureHallucination    FailureMode = "hallucination"
+	FailureExplainability   FailureMode = "explainability_gap"
+	FailurePrivacyBreach    FailureMode = "privacy_breach"
+	FailureUnintendedAction FailureMode = "unintended_action"
+	FailurePolicyDenied     FailureMode = "policy_denied"
+	FailureAgentError       FailureMode = "agent_error"
+	FailureUnknown          FailureMode = "unknown"
 )
 
 // Incident is the persistent record. Field names mirror the Annexure VI form.
 type Incident struct {
-	ID                string                 `json:"id"`
-	OccurredAt        time.Time              `json:"occurred_at"`
-	DetectedAt        time.Time              `json:"detected_at"`
-	UseCase           string                 `json:"use_case"`
-	Model             string                 `json:"model"`
-	ThirdPartyVendor  string                 `json:"third_party_vendor,omitempty"`
-	Description       string                 `json:"description"`
-	AffectedStakeholders string              `json:"affected_stakeholders"` // internal | external | both
-	Severity          Severity               `json:"severity"`
-	FailureMode       FailureMode            `json:"failure_mode"`
-	RootCause         string                 `json:"root_cause,omitempty"`
-	ResponseActions   string                 `json:"response_actions,omitempty"`
-	Status            Status                 `json:"status"`
-	ActorID           string                 `json:"actor_id,omitempty"` // who reported / detected
-	Metadata          map[string]any         `json:"metadata,omitempty"`
+	ID                   string         `json:"id"`
+	OccurredAt           time.Time      `json:"occurred_at"`
+	DetectedAt           time.Time      `json:"detected_at"`
+	UseCase              string         `json:"use_case"`
+	Model                string         `json:"model"`
+	ThirdPartyVendor     string         `json:"third_party_vendor,omitempty"`
+	Description          string         `json:"description"`
+	AffectedStakeholders string         `json:"affected_stakeholders"` // internal | external | both
+	Severity             Severity       `json:"severity"`
+	FailureMode          FailureMode    `json:"failure_mode"`
+	RootCause            string         `json:"root_cause,omitempty"`
+	ResponseActions      string         `json:"response_actions,omitempty"`
+	Status               Status         `json:"status"`
+	ActorID              string         `json:"actor_id,omitempty"` // who reported / detected
+	Metadata             map[string]any `json:"metadata,omitempty"`
 }
 
 // Validate returns an error if the incident is missing fields required by

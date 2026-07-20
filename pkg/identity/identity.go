@@ -50,7 +50,7 @@ type VerifiableCredential struct {
 	Context           []string       `json:"@context"`
 	ID                string         `json:"id,omitempty"`
 	Type              []string       `json:"type"`
-	Issuer            string         `json:"issuer"`            // DID
+	Issuer            string         `json:"issuer"` // DID
 	IssuanceDate      time.Time      `json:"issuanceDate"`
 	CredentialSubject map[string]any `json:"credentialSubject"` // free-form claims
 	Proof             *Proof         `json:"proof,omitempty"`

@@ -50,12 +50,12 @@ type PayoffPoint struct {
 
 // Result is the wire output.
 type Result struct {
-	TheoreticalPrice float64       `json:"theoretical_price_per_share"`
-	Greeks           Greeks        `json:"greeks_per_share"`
-	BreakevenAtExpiry float64      `json:"breakeven_at_expiry"`
-	PayoffCurve      []PayoffPoint `json:"payoff_curve"`
-	Narrative        string        `json:"narrative"`
-	Disclaimer       string        `json:"disclaimer"`
+	TheoreticalPrice  float64       `json:"theoretical_price_per_share"`
+	Greeks            Greeks        `json:"greeks_per_share"`
+	BreakevenAtExpiry float64       `json:"breakeven_at_expiry"`
+	PayoffCurve       []PayoffPoint `json:"payoff_curve"`
+	Narrative         string        `json:"narrative"`
+	Disclaimer        string        `json:"disclaimer"`
 }
 
 type Agent struct{}

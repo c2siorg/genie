@@ -89,22 +89,22 @@ var (
 
 	// severity escalators — presence of these tokens bumps severity.
 	severityEscalators = map[string]string{
-		"fraud":              "high",
-		"unauthorised":       "high",
-		"unauthorized":       "high",
-		"frozen":             "high",
-		"missing money":      "high",
-		"stolen":             "high",
-		"wrongly deducted":   "high",
-		"complaint ignored":  "high",
-		"discrimination":     "high",
-		"harass":             "high",
-		"deceived":           "high",
-		"didn't receive":     "medium",
-		"didnt receive":      "medium",
-		"refund not issued":  "medium",
-		"penal interest":     "medium",
-		"hidden charge":      "medium",
+		"fraud":             "high",
+		"unauthorised":      "high",
+		"unauthorized":      "high",
+		"frozen":            "high",
+		"missing money":     "high",
+		"stolen":            "high",
+		"wrongly deducted":  "high",
+		"complaint ignored": "high",
+		"discrimination":    "high",
+		"harass":            "high",
+		"deceived":          "high",
+		"didn't receive":    "medium",
+		"didnt receive":     "medium",
+		"refund not issued": "medium",
+		"penal interest":    "medium",
+		"hidden charge":     "medium",
 	}
 )
 
@@ -112,23 +112,23 @@ var (
 type Request struct {
 	UserID         string `json:"user_id"`
 	ComplaintText  string `json:"complaint_text"`
-	ProductHint    string `json:"product_hint,omitempty"`    // optional: "credit card", "loan", etc.
-	ChannelHint    string `json:"channel_hint,omitempty"`    // "branch" | "app" | "web" | "ivr"
-	OccurredOnDate string `json:"occurred_on_date,omitempty"`// YYYY-MM-DD
+	ProductHint    string `json:"product_hint,omitempty"`     // optional: "credit card", "loan", etc.
+	ChannelHint    string `json:"channel_hint,omitempty"`     // "branch" | "app" | "web" | "ivr"
+	OccurredOnDate string `json:"occurred_on_date,omitempty"` // YYYY-MM-DD
 }
 
 // IncidentDraft mirrors the shape pkg/incidents will persist if the
 // supervisor approves the routing. Annexure VI of the FREE-AI report.
 type IncidentDraft struct {
-	UserID           string    `json:"user_id"`
-	Category         string    `json:"category"`
-	Severity         string    `json:"severity"`
-	Channel          string    `json:"channel,omitempty"`
-	OccurredOn       string    `json:"occurred_on,omitempty"`
-	Summary          string    `json:"summary"`
-	SuggestedAction  string    `json:"suggested_action"`
-	OmbudsmanEligible bool     `json:"ombudsman_eligible"`
-	DraftedAt        time.Time `json:"drafted_at"`
+	UserID            string    `json:"user_id"`
+	Category          string    `json:"category"`
+	Severity          string    `json:"severity"`
+	Channel           string    `json:"channel,omitempty"`
+	OccurredOn        string    `json:"occurred_on,omitempty"`
+	Summary           string    `json:"summary"`
+	SuggestedAction   string    `json:"suggested_action"`
+	OmbudsmanEligible bool      `json:"ombudsman_eligible"`
+	DraftedAt         time.Time `json:"drafted_at"`
 }
 
 // Result is the wire output. NeedsHumanReview is true when the keyword

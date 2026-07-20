@@ -52,9 +52,11 @@ type NamedDetector struct {
 	D Detector
 }
 
-func (n NamedDetector) Name() string                                              { return n.N }
-func (n NamedDetector) Stage() Stage                                              { return n.S }
-func (n NamedDetector) Inspect(ctx context.Context, text string) (Verdict, error) { return n.D.Inspect(ctx, text) }
+func (n NamedDetector) Name() string { return n.N }
+func (n NamedDetector) Stage() Stage { return n.S }
+func (n NamedDetector) Inspect(ctx context.Context, text string) (Verdict, error) {
+	return n.D.Inspect(ctx, text)
+}
 
 // Registry holds plugins by name. Thread-safe; suitable for runtime updates
 // when the policy YAML is reloaded.
@@ -168,9 +170,9 @@ type HTTPShield struct {
 	Caller func(ctx context.Context, text string) (Verdict, error)
 }
 
-func (h HTTPShield) Name() string                                                { return h.N }
-func (h HTTPShield) Stage() Stage                                                { return h.S }
-func (h HTTPShield) Inspect(ctx context.Context, text string) (Verdict, error)   {
+func (h HTTPShield) Name() string { return h.N }
+func (h HTTPShield) Stage() Stage { return h.S }
+func (h HTTPShield) Inspect(ctx context.Context, text string) (Verdict, error) {
 	if h.Caller == nil {
 		return Verdict{}, errors.New("safety: HTTPShield Caller not configured")
 	}

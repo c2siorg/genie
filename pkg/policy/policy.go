@@ -47,9 +47,9 @@ type RiskAppetite struct {
 }
 
 type DataLifecycle struct {
-	RetentionDays         int  `yaml:"retention_days"`
-	BlockPII              bool `yaml:"block_pii"`
-	BlockPromptInjection  bool `yaml:"block_prompt_injection"`
+	RetentionDays        int  `yaml:"retention_days"`
+	BlockPII             bool `yaml:"block_pii"`
+	BlockPromptInjection bool `yaml:"block_prompt_injection"`
 }
 
 type Consumer struct {

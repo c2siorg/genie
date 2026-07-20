@@ -7,11 +7,11 @@ import "math"
 //
 // pA, pB are counts of positive outcomes; nA, nB are subgroup totals.
 type DemographicParity struct {
-	GapAbs    float64 `json:"gap_abs"`
-	GapRatio  float64 `json:"gap_ratio"` // min/max; closer to 1 = fairer
-	RateA     float64 `json:"rate_a"`
-	RateB     float64 `json:"rate_b"`
-	Acceptable bool   `json:"acceptable"`
+	GapAbs     float64 `json:"gap_abs"`
+	GapRatio   float64 `json:"gap_ratio"` // min/max; closer to 1 = fairer
+	RateA      float64 `json:"rate_a"`
+	RateB      float64 `json:"rate_b"`
+	Acceptable bool    `json:"acceptable"`
 }
 
 // ComputeDemographicParity returns the gap stats. Acceptable is true when

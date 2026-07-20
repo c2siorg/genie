@@ -61,8 +61,8 @@ type RealisedGain struct {
 type Request struct {
 	Holdings  []Holding    `json:"holdings"`
 	Realised  RealisedGain `json:"realised_gains"`
-	AsOfDate  string       `json:"as_of_date"`  // YYYY-MM-DD; defaults to today
-	HorizonFY string       `json:"horizon_fy"`  // e.g. "FY2024-25"; cosmetic
+	AsOfDate  string       `json:"as_of_date"` // YYYY-MM-DD; defaults to today
+	HorizonFY string       `json:"horizon_fy"` // e.g. "FY2024-25"; cosmetic
 }
 
 // Opportunity is one harvesting suggestion.
@@ -79,11 +79,11 @@ type Opportunity struct {
 
 // Plan is the message payload.
 type Plan struct {
-	TotalTaxSavedINR  float64       `json:"total_tax_saved_rupees"`
-	Opportunities     []Opportunity `json:"opportunities"`
-	UnusedSTCLBudget  float64       `json:"unused_stcl_offset_rupees"`
-	UnusedLTCLBudget  float64       `json:"unused_ltcl_offset_rupees"`
-	Disclaimer        string        `json:"disclaimer"`
+	TotalTaxSavedINR float64       `json:"total_tax_saved_rupees"`
+	Opportunities    []Opportunity `json:"opportunities"`
+	UnusedSTCLBudget float64       `json:"unused_stcl_offset_rupees"`
+	UnusedLTCLBudget float64       `json:"unused_ltcl_offset_rupees"`
+	Disclaimer       string        `json:"disclaimer"`
 }
 
 // Agent implements agent.Agent.

@@ -120,4 +120,3 @@ func (p MaxContentLengthPolicy) Evaluate(_ context.Context, msg protocol.Message
 		CheckedAt: time.Now().UTC(),
 	}, nil
 }
-

@@ -8,12 +8,12 @@ import "time"
 
 // CycloneDXBOM is the top-level CycloneDX 1.6 document.
 type CycloneDXBOM struct {
-	BomFormat   string                `json:"bomFormat"`
-	SpecVersion string                `json:"specVersion"`
+	BomFormat    string               `json:"bomFormat"`
+	SpecVersion  string               `json:"specVersion"`
 	SerialNumber string               `json:"serialNumber,omitempty"`
-	Version     int                   `json:"version"`
-	Metadata    CycloneDXMetadata     `json:"metadata"`
-	Components  []CycloneDXComponent  `json:"components"`
+	Version      int                  `json:"version"`
+	Metadata     CycloneDXMetadata    `json:"metadata"`
+	Components   []CycloneDXComponent `json:"components"`
 }
 
 // CycloneDXMetadata holds the timestamp + tool block.
@@ -27,11 +27,11 @@ type CycloneDXMetadata struct {
 // CycloneDXComponent is one entry in the BOM. type=machine-learning-model
 // is the CycloneDX 1.6 ML-extension shape.
 type CycloneDXComponent struct {
-	Type        string             `json:"type"` // "library" | "service" | "machine-learning-model"
-	Name        string             `json:"name"`
-	Version     string             `json:"version,omitempty"`
-	BomRef      string             `json:"bom-ref"`
-	Description string             `json:"description,omitempty"`
+	Type        string              `json:"type"` // "library" | "service" | "machine-learning-model"
+	Name        string              `json:"name"`
+	Version     string              `json:"version,omitempty"`
+	BomRef      string              `json:"bom-ref"`
+	Description string              `json:"description,omitempty"`
 	Properties  []CycloneDXProperty `json:"properties,omitempty"`
 }
 

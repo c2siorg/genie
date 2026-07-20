@@ -58,7 +58,7 @@ func corpus() []probe {
 				Metadata: map[string]any{protocol.MetaKeyClassification: string(protocol.ClassPII)},
 				Content:  "fine",
 			},
-			wantDeny: true,
+			wantDeny:   true,
 			wantReason: "classification",
 		},
 		{

@@ -5,6 +5,7 @@
 //	GENIE_AI_POLICY=config/ai-policy.example.yaml GENIE_HTTP_ADDR=:8081 go run ./cmd/af-serve
 //
 // Example:
+//
 //	curl -s localhost:8081/v1/ai-inventory | jq '. | length'   # 58
 //	curl -s localhost:8081/v1/ask -d '{"agent":"currency_converter",
 //	     "input":"{\"amount_minor\":10000,\"from\":\"USD\",\"to\":\"INR\"}","classification":"public"}'

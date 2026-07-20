@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	ID            = "financial_supervisor"
-	CapSupervise  = "supervise_finance"
+	ID           = "financial_supervisor"
+	CapSupervise = "supervise_finance"
 
 	TypeQuestion        = "finance_question"
 	TypeForecast        = "forecast_result"

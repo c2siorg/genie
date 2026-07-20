@@ -82,8 +82,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.writeResult(w, req.ID, map[string]any{"tools": tools})
 	case "tools/call":
 		var params struct {
-			Name      string                 `json:"name"`
-			Arguments map[string]any         `json:"arguments"`
+			Name      string         `json:"name"`
+			Arguments map[string]any `json:"arguments"`
 		}
 		raw, _ := json.Marshal(req.Params)
 		_ = json.Unmarshal(raw, &params)

@@ -21,12 +21,12 @@ import (
 )
 
 const (
-	ID            = "portfolio_advisor"
-	CapPortfolio  = "fetch_portfolio"
-	TypeQuestion  = "portfolio_request"
-	TypeSnapshot  = "portfolio_snapshot"
-	NextAgent     = "financial_supervisor"
-	ProviderKite  = "zerodha-kite"
+	ID           = "portfolio_advisor"
+	CapPortfolio = "fetch_portfolio"
+	TypeQuestion = "portfolio_request"
+	TypeSnapshot = "portfolio_snapshot"
+	NextAgent    = "financial_supervisor"
+	ProviderKite = "zerodha-kite"
 )
 
 // ErrNoToken is returned when the user has not yet linked their Kite session.
@@ -46,10 +46,10 @@ type Agent struct {
 
 // Snapshot is the shape we publish back to the supervisor.
 type Snapshot struct {
-	Provider     string `json:"provider"`
-	Holdings     string `json:"holdings"`      // raw tool text — keep verbatim for the report
-	Positions    string `json:"positions"`
-	FetchedFor   string `json:"fetched_for"`   // user id
+	Provider       string                  `json:"provider"`
+	Holdings       string                  `json:"holdings"` // raw tool text — keep verbatim for the report
+	Positions      string                  `json:"positions"`
+	FetchedFor     string                  `json:"fetched_for"` // user id
 	Classification protocol.Classification `json:"classification"`
 }
 

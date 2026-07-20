@@ -34,24 +34,24 @@ const (
 // Event is one warehouse row. Designed to flatten into a BigQuery
 // schema with the same field names.
 type Event struct {
-	Kind          Kind      `json:"kind"`
-	OccurredAt    time.Time `json:"occurred_at"`
-	ServiceName   string    `json:"service_name"`
-	TraceID       string    `json:"trace_id,omitempty"`
-	SpanID        string    `json:"span_id,omitempty"`
-	AgentID       string    `json:"agent_id,omitempty"`
-	MessageType   string    `json:"message_type,omitempty"`
-	Classification string   `json:"classification,omitempty"`
-	DurationMs    int64     `json:"duration_ms"`
-	Success       bool      `json:"success"`
-	Error         string    `json:"error,omitempty"`
-	LLMProvider   string    `json:"llm_provider,omitempty"`
-	LLMModel      string    `json:"llm_model,omitempty"`
-	PromptTokens  int       `json:"prompt_tokens,omitempty"`
-	CompletionTokens int    `json:"completion_tokens,omitempty"`
-	CostMicros    int64     `json:"cost_micros,omitempty"`
-	PolicyName    string    `json:"policy_name,omitempty"`
-	PolicyDecision string   `json:"policy_decision,omitempty"`
+	Kind             Kind      `json:"kind"`
+	OccurredAt       time.Time `json:"occurred_at"`
+	ServiceName      string    `json:"service_name"`
+	TraceID          string    `json:"trace_id,omitempty"`
+	SpanID           string    `json:"span_id,omitempty"`
+	AgentID          string    `json:"agent_id,omitempty"`
+	MessageType      string    `json:"message_type,omitempty"`
+	Classification   string    `json:"classification,omitempty"`
+	DurationMs       int64     `json:"duration_ms"`
+	Success          bool      `json:"success"`
+	Error            string    `json:"error,omitempty"`
+	LLMProvider      string    `json:"llm_provider,omitempty"`
+	LLMModel         string    `json:"llm_model,omitempty"`
+	PromptTokens     int       `json:"prompt_tokens,omitempty"`
+	CompletionTokens int       `json:"completion_tokens,omitempty"`
+	CostMicros       int64     `json:"cost_micros,omitempty"`
+	PolicyName       string    `json:"policy_name,omitempty"`
+	PolicyDecision   string    `json:"policy_decision,omitempty"`
 }
 
 // Sink writes batches of events to the warehouse. Implementations:

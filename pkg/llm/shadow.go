@@ -55,9 +55,9 @@ type MemoryShadowSink struct {
 
 // ShadowEntry stores one observed (primary, shadow) pair.
 type ShadowEntry struct {
-	Req      CompletionRequest
-	Primary  CompletionResponse
-	Shadow   CompletionResponse
+	Req       CompletionRequest
+	Primary   CompletionResponse
+	Shadow    CompletionResponse
 	ShadowErr error
 }
 

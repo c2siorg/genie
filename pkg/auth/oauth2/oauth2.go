@@ -64,9 +64,9 @@ type TokenResponse struct {
 
 // Errors are returned with OAuth 2.1 error codes so clients can branch.
 var (
-	ErrInvalidRequest        = errors.New("invalid_request")
-	ErrInvalidGrant          = errors.New("invalid_grant")
-	ErrUnsupportedChallenge  = errors.New("unsupported_code_challenge_method")
+	ErrInvalidRequest       = errors.New("invalid_request")
+	ErrInvalidGrant         = errors.New("invalid_grant")
+	ErrUnsupportedChallenge = errors.New("unsupported_code_challenge_method")
 )
 
 // Server is the in-memory issuer. Production stores codes in Redis with TTL.

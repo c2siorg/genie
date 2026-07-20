@@ -8,8 +8,8 @@
 // This file adds:
 //   - StreamingVoiceProvider — the chunked adapter contract (ASR + TTS).
 //   - StreamingAgent          — a bus-side adapter that consumes audio chunks
-//                               and emits partial-transcript / partial-audio
-//                               messages.
+//     and emits partial-transcript / partial-audio
+//     messages.
 //
 // Inspired by Google ADK samples → realtime-conversational-agent.
 package voice
@@ -25,11 +25,11 @@ import (
 const (
 	StreamingID                = "voice_streaming"
 	CapVoiceStreaming          = "voice_streaming"
-	TypeASRStreamChunkIn       = "voice_asr_chunk"     // one audio chunk from client
-	TypeASRStreamPartialOut    = "voice_asr_partial"   // rolling transcript
-	TypeASRStreamFinalOut      = "voice_asr_final"     // turn-end transcript
-	TypeTTSStreamRequestIn     = "voice_tts_stream"    // text → stream audio
-	TypeTTSStreamAudioChunkOut = "voice_tts_chunk"     // one audio chunk back
+	TypeASRStreamChunkIn       = "voice_asr_chunk"   // one audio chunk from client
+	TypeASRStreamPartialOut    = "voice_asr_partial" // rolling transcript
+	TypeASRStreamFinalOut      = "voice_asr_final"   // turn-end transcript
+	TypeTTSStreamRequestIn     = "voice_tts_stream"  // text → stream audio
+	TypeTTSStreamAudioChunkOut = "voice_tts_chunk"   // one audio chunk back
 )
 
 // Partial is one rolling transcript update from the ASR.
@@ -41,9 +41,9 @@ type Partial struct {
 
 // AudioChunk is one TTS chunk to play.
 type AudioChunk struct {
-	Index     int    `json:"index"`
-	AudioB64  string `json:"audio_b64"`
-	IsLast    bool   `json:"is_last"`
+	Index    int    `json:"index"`
+	AudioB64 string `json:"audio_b64"`
+	IsLast   bool   `json:"is_last"`
 }
 
 // StreamingVoiceProvider is the streaming adapter contract.
@@ -78,10 +78,10 @@ func (a *StreamingAgent) Capabilities() []string     { return []string{CapVoiceS
 func (a *StreamingAgent) RiskLevel() agent.RiskClass { return agent.RiskMedium }
 
 type asrChunkMsg struct {
-	Lang     string `json:"lang"`
-	AudioB64 string `json:"audio_b64"`
+	Lang      string `json:"lang"`
+	AudioB64  string `json:"audio_b64"`
 	SessionID string `json:"session_id"`
-	IsLast   bool   `json:"is_last"`
+	IsLast    bool   `json:"is_last"`
 }
 
 type ttsStreamReq struct {

@@ -29,25 +29,25 @@ const (
 
 // Policy is the insurer-supplied rulebook for one product.
 type Policy struct {
-	ProductCode         string   `json:"product_code"`
-	WaitingPeriodDays   int      `json:"waiting_period_days"`
-	SumInsured          float64  `json:"sum_insured"`
-	DeductibleRupees    float64  `json:"deductible_rupees"`
-	CoPayPct            float64  `json:"copay_pct"`           // 0..1
-	Exclusions          []string `json:"exclusions"`          // lowercased keywords
-	SubLimits           map[string]float64 `json:"sub_limits"` // peril -> max payout
-	NetworkOnlyPerils   []string `json:"network_only_perils"`
+	ProductCode       string             `json:"product_code"`
+	WaitingPeriodDays int                `json:"waiting_period_days"`
+	SumInsured        float64            `json:"sum_insured"`
+	DeductibleRupees  float64            `json:"deductible_rupees"`
+	CoPayPct          float64            `json:"copay_pct"`  // 0..1
+	Exclusions        []string           `json:"exclusions"` // lowercased keywords
+	SubLimits         map[string]float64 `json:"sub_limits"` // peril -> max payout
+	NetworkOnlyPerils []string           `json:"network_only_perils"`
 }
 
 // Claim is the inbound packet.
 type Claim struct {
-	ClaimID         string  `json:"claim_id"`
-	PolicyCode      string  `json:"policy_code"`
-	IncurredRupees  float64 `json:"incurred_rupees"`
-	Peril           string  `json:"peril"`           // e.g. "hospitalization", "theft"
-	Diagnosis       string  `json:"diagnosis"`
-	DaysSinceIssue  int     `json:"days_since_issue"`
-	HospitalInNetwork bool  `json:"hospital_in_network"`
+	ClaimID           string  `json:"claim_id"`
+	PolicyCode        string  `json:"policy_code"`
+	IncurredRupees    float64 `json:"incurred_rupees"`
+	Peril             string  `json:"peril"` // e.g. "hospitalization", "theft"
+	Diagnosis         string  `json:"diagnosis"`
+	DaysSinceIssue    int     `json:"days_since_issue"`
+	HospitalInNetwork bool    `json:"hospital_in_network"`
 }
 
 // Request bundles claim + policy.
@@ -59,7 +59,7 @@ type Request struct {
 // Decision is the structured output.
 type Decision struct {
 	ClaimID      string   `json:"claim_id"`
-	Action       string   `json:"action"`  // "approve" | "approve_partial" | "deny" | "hitl"
+	Action       string   `json:"action"` // "approve" | "approve_partial" | "deny" | "hitl"
 	PayoutRupees float64  `json:"payout_rupees"`
 	Reasons      []string `json:"reasons"`
 	Disclaimer   string   `json:"disclaimer"`

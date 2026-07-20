@@ -184,7 +184,9 @@ func TestUserJourney(t *testing.T) {
 			"name": "Salary", "currency": "INR",
 		})
 		assertStatus(t, status, http.StatusCreated, body)
-		var got struct{ ID string `json:"id"` }
+		var got struct {
+			ID string `json:"id"`
+		}
 		if err := json.Unmarshal(body, &got); err != nil {
 			t.Fatalf("decode account: %v", err)
 		}

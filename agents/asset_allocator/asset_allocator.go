@@ -53,9 +53,9 @@ type Allocation struct {
 
 // Rebalance is one Buy/Sell instruction.
 type Rebalance struct {
-	Asset     string  `json:"asset"`
-	DeltaINR  float64 `json:"delta_rupees"` // +ve = buy, -ve = sell
-	Action    string  `json:"action"`
+	Asset    string  `json:"asset"`
+	DeltaINR float64 `json:"delta_rupees"` // +ve = buy, -ve = sell
+	Action   string  `json:"action"`
 }
 
 // Plan is the wire output.

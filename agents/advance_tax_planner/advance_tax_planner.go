@@ -37,12 +37,12 @@ type Request struct {
 
 // Instalment is one scheduled advance-tax due.
 type Instalment struct {
-	DueDate         string  `json:"due_date"`
-	CumulativePct   int     `json:"cumulative_pct"`
-	CumulativeINR   float64 `json:"cumulative_required_rupees"`
-	StillDueINR     float64 `json:"still_due_rupees"`
-	DaysRemaining   int     `json:"days_remaining"`
-	ShortfallNote   string  `json:"shortfall_note,omitempty"`
+	DueDate       string  `json:"due_date"`
+	CumulativePct int     `json:"cumulative_pct"`
+	CumulativeINR float64 `json:"cumulative_required_rupees"`
+	StillDueINR   float64 `json:"still_due_rupees"`
+	DaysRemaining int     `json:"days_remaining"`
+	ShortfallNote string  `json:"shortfall_note,omitempty"`
 }
 
 // Plan is the wire output.

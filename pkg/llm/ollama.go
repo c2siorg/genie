@@ -18,9 +18,9 @@ import (
 //
 // Wire format follows Ollama's /api/chat endpoint.
 type OllamaProvider struct {
-	URL    string        // e.g. "http://localhost:11434"
-	Model  string        // e.g. "llama3.1"
-	Client *http.Client  // optional; default 30s timeout
+	URL    string       // e.g. "http://localhost:11434"
+	Model  string       // e.g. "llama3.1"
+	Client *http.Client // optional; default 30s timeout
 }
 
 // NewOllamaProvider builds a provider; URL defaults to localhost:11434.
@@ -60,11 +60,11 @@ type ollamaResponse struct {
 		Role    string `json:"role"`
 		Content string `json:"content"`
 	} `json:"message"`
-	Done             bool   `json:"done"`
-	TotalDuration    int64  `json:"total_duration"`
-	PromptEvalCount  int    `json:"prompt_eval_count"`
-	EvalCount        int    `json:"eval_count"`
-	DoneReason       string `json:"done_reason"`
+	Done            bool   `json:"done"`
+	TotalDuration   int64  `json:"total_duration"`
+	PromptEvalCount int    `json:"prompt_eval_count"`
+	EvalCount       int    `json:"eval_count"`
+	DoneReason      string `json:"done_reason"`
 }
 
 func (p *OllamaProvider) Complete(ctx context.Context, req CompletionRequest) (CompletionResponse, error) {
@@ -78,9 +78,9 @@ func (p *OllamaProvider) Complete(ctx context.Context, req CompletionRequest) (C
 	}
 
 	body := ollamaRequest{
-		Model: nonEmpty(req.Model, p.Model),
+		Model:    nonEmpty(req.Model, p.Model),
 		Messages: make([]ollamaMessage, 0, len(req.Messages)),
-		Stream: false,
+		Stream:   false,
 	}
 	for _, m := range req.Messages {
 		om := ollamaMessage{Role: string(m.Role), Content: m.Content}

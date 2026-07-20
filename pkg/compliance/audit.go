@@ -18,14 +18,14 @@ import (
 // with without detection." A hash chain is the cheapest way to give that
 // guarantee without needing a write-once medium.
 type AuditEntry struct {
-	Seq        int64                  `json:"seq"`
-	OccurredAt time.Time              `json:"occurred_at"`
-	Actor      string                 `json:"actor"`   // user id, agent id, "system"
-	Action     string                 `json:"action"`  // e.g. "consent.grant"
-	Target     string                 `json:"target"`
-	Details    map[string]any         `json:"details,omitempty"`
-	PrevHash   string                 `json:"prev_hash"` // hex
-	RowHash    string                 `json:"row_hash"`  // hex
+	Seq        int64          `json:"seq"`
+	OccurredAt time.Time      `json:"occurred_at"`
+	Actor      string         `json:"actor"`  // user id, agent id, "system"
+	Action     string         `json:"action"` // e.g. "consent.grant"
+	Target     string         `json:"target"`
+	Details    map[string]any `json:"details,omitempty"`
+	PrevHash   string         `json:"prev_hash"` // hex
+	RowHash    string         `json:"row_hash"`  // hex
 }
 
 // AuditLog is an append-only writer with hash chaining.

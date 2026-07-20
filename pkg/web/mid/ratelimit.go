@@ -13,8 +13,8 @@ import (
 // In-memory only — fine for a single instance. Behind a load balancer you'd
 // swap this for Redis or move it to the gateway.
 type RateLimit struct {
-	Capacity   int           // bucket size
-	RefillRate float64       // tokens per second
+	Capacity   int     // bucket size
+	RefillRate float64 // tokens per second
 
 	mu      sync.Mutex
 	buckets map[string]*bucket

@@ -9,7 +9,7 @@ import (
 func TestEmergencyFund_StableProfile3Months(t *testing.T) {
 	a := New()
 	plan := a.Compute(Request{
-		Transactions: mkMonthlyExpense(40_000, 6),
+		Transactions:      mkMonthlyExpense(40_000, 6),
 		LiquidReservesINR: 0,
 		IncomeProfile:     "stable",
 	})

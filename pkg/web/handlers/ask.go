@@ -8,10 +8,10 @@ import (
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supervisor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
@@ -37,9 +37,9 @@ type askRequest struct {
 }
 
 type askResponse struct {
-	TraceID         string `json:"trace_id"`
-	Report          string `json:"report"`
-	AIDisclosure    string `json:"ai_disclosure,omitempty"`
+	TraceID      string `json:"trace_id"`
+	Report       string `json:"report"`
+	AIDisclosure string `json:"ai_disclosure,omitempty"`
 }
 
 func (h *Ask) Post(w http.ResponseWriter, r *http.Request) {
@@ -87,12 +87,12 @@ func (h *Ask) Post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	question := agent.NewMessage("user", supervisor.ID, agent.RoleUser, supervisor.TypeQuestion, req.Question, map[string]any{
-		"trace_id":                       traceID,
-		"account_id":                     claims.Subject,
-		"csv":                            string(plain),
-		protocol.MetaKeyUserID:           claims.Subject,
-		protocol.MetaKeyUserRoles:        roleStrings,
-		protocol.MetaKeyClassification:   string(doc.Classification),
+		"trace_id":                     traceID,
+		"account_id":                   claims.Subject,
+		"csv":                          string(plain),
+		protocol.MetaKeyUserID:         claims.Subject,
+		protocol.MetaKeyUserRoles:      roleStrings,
+		protocol.MetaKeyClassification: string(doc.Classification),
 	})
 	h.Bus.Publish(r.Context(), question)
 

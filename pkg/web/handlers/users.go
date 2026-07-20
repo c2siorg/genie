@@ -30,9 +30,9 @@ type loginRequest struct {
 }
 
 type tokenResponse struct {
-	Token     string      `json:"token"`
-	ExpiresAt int64       `json:"expires_at"`
-	User      publicUser  `json:"user"`
+	Token     string     `json:"token"`
+	ExpiresAt int64      `json:"expires_at"`
+	User      publicUser `json:"user"`
 }
 
 type publicUser struct {

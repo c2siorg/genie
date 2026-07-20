@@ -14,7 +14,7 @@
 // - The bus routes those messages to subscribers
 // - Orchestration wires subscriptions (pkg/orchestration)
 //
-// In this repo
+// # In this repo
 //
 // The InMemoryBus is intentionally minimal and "good enough" for a demo:
 // - It supports targeted delivery via Message.To (agent ID)
@@ -31,4 +31,3 @@
 // - Persistent logs (event sourcing)
 // - Distributed transport (NATS, Kafka, RabbitMQ, etc.)
 package comm
-

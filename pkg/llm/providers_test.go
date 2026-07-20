@@ -68,7 +68,7 @@ func TestOpenAI_HappyPath(t *testing.T) {
 	p := NewOpenAI("test-key", "gpt-x")
 	p.BaseURL = srv.URL
 	r, err := p.Complete(context.Background(), CompletionRequest{
-		Messages: []Message{{Role: RoleUser, Content: "hi"}},
+		Messages:  []Message{{Role: RoleUser, Content: "hi"}},
 		Residency: Residency{AllowCrossBorder: true},
 	})
 	if err != nil {
@@ -98,7 +98,7 @@ func TestGemini_HappyPath(t *testing.T) {
 	p := NewGemini("test-key", "gemini-x")
 	p.BaseURL = srv.URL
 	r, err := p.Complete(context.Background(), CompletionRequest{
-		Messages: []Message{{Role: RoleUser, Content: "hi"}},
+		Messages:  []Message{{Role: RoleUser, Content: "hi"}},
 		Residency: Residency{AllowCrossBorder: true},
 	})
 	if err != nil {

@@ -37,26 +37,26 @@ type Loan struct {
 
 // Request is the wire payload.
 type Request struct {
-	Loans              []Loan  `json:"loans"`
-	PrepaymentAmount   float64 `json:"prepayment_amount_rupees"`
-	BorrowerSlabPct    float64 `json:"borrower_slab_pct"` // optional, 0..100
+	Loans            []Loan  `json:"loans"`
+	PrepaymentAmount float64 `json:"prepayment_amount_rupees"`
+	BorrowerSlabPct  float64 `json:"borrower_slab_pct"` // optional, 0..100
 }
 
 // Suggestion is one ranked recommendation.
 type Suggestion struct {
-	LoanName          string  `json:"loan_name"`
-	ApplyAmountRupees float64 `json:"apply_amount_rupees"`
-	EffectiveRate     float64 `json:"effective_rate_pct"`
-	InterestSavedINR  float64 `json:"interest_saved_rupees"`
-	MonthsShortened   int     `json:"months_shortened"`
+	LoanName          string   `json:"loan_name"`
+	ApplyAmountRupees float64  `json:"apply_amount_rupees"`
+	EffectiveRate     float64  `json:"effective_rate_pct"`
+	InterestSavedINR  float64  `json:"interest_saved_rupees"`
+	MonthsShortened   int      `json:"months_shortened"`
 	Flags             []string `json:"flags,omitempty"`
 }
 
 // Plan is the wire output.
 type Plan struct {
-	Suggestions     []Suggestion `json:"suggestions"`
-	TotalSavingINR  float64      `json:"total_saving_rupees"`
-	Disclaimer      string       `json:"disclaimer"`
+	Suggestions    []Suggestion `json:"suggestions"`
+	TotalSavingINR float64      `json:"total_saving_rupees"`
+	Disclaimer     string       `json:"disclaimer"`
 }
 
 type Agent struct{}

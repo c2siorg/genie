@@ -33,9 +33,9 @@ const (
 	NextAgent  = "financial_supervisor"
 
 	// NPCI per-rail limits (post-2023 revisions).
-	upiPerTxnLimit   = 1_00_000.0  // ₹1 lakh default; some categories ₹5L (IPO, AMC).
+	upiPerTxnLimit   = 1_00_000.0 // ₹1 lakh default; some categories ₹5L (IPO, AMC).
 	impsLimit        = 5_00_000.0
-	rtgsMinThreshold = 2_00_000.0  // ₹2L floor for RTGS
+	rtgsMinThreshold = 2_00_000.0 // ₹2L floor for RTGS
 
 	// HITL gate.
 	hitlThresholdRupees = 50_000.0
@@ -43,30 +43,30 @@ const (
 
 // Request is the inbound payment ask.
 type Request struct {
-	IdempotencyKey   string  `json:"idempotency_key"`
-	PayerID          string  `json:"payer_id"`
-	PayerAccount     string  `json:"payer_account"`
-	BeneficiaryName  string  `json:"beneficiary_name"`
-	BeneficiaryVPA   string  `json:"beneficiary_vpa,omitempty"`     // for UPI
-	BeneficiaryIFSC  string  `json:"beneficiary_ifsc,omitempty"`    // for IMPS/NEFT/RTGS
-	BeneficiaryAcct  string  `json:"beneficiary_account,omitempty"`
-	AmountRupees     float64 `json:"amount_rupees"`
-	Currency         string  `json:"currency"`                       // INR only for now
-	Purpose          string  `json:"purpose"`                        // memo
-	Urgency          string  `json:"urgency"`                        // "now" | "today" | "any"
-	IsTrustedBeneficiary bool `json:"is_trusted_beneficiary"`         // cooling-off cleared
+	IdempotencyKey       string  `json:"idempotency_key"`
+	PayerID              string  `json:"payer_id"`
+	PayerAccount         string  `json:"payer_account"`
+	BeneficiaryName      string  `json:"beneficiary_name"`
+	BeneficiaryVPA       string  `json:"beneficiary_vpa,omitempty"`  // for UPI
+	BeneficiaryIFSC      string  `json:"beneficiary_ifsc,omitempty"` // for IMPS/NEFT/RTGS
+	BeneficiaryAcct      string  `json:"beneficiary_account,omitempty"`
+	AmountRupees         float64 `json:"amount_rupees"`
+	Currency             string  `json:"currency"`               // INR only for now
+	Purpose              string  `json:"purpose"`                // memo
+	Urgency              string  `json:"urgency"`                // "now" | "today" | "any"
+	IsTrustedBeneficiary bool    `json:"is_trusted_beneficiary"` // cooling-off cleared
 }
 
 // Instruction is what the orchestrator emits to the bus. The host PSP
 // adapter picks it up and submits to the rail.
 type Instruction struct {
-	IdempotencyKey string   `json:"idempotency_key"`
-	Action         string   `json:"action"`        // "submit" | "hold_hitl" | "reject"
-	Rail           string   `json:"rail"`          // "upi" | "imps" | "neft" | "rtgs" | ""
-	AmountRupees   float64  `json:"amount_rupees"`
-	Reasons        []string `json:"reasons"`
-	IncidentPayload string  `json:"incident_payload,omitempty"`
-	Disclaimer     string   `json:"disclaimer"`
+	IdempotencyKey  string   `json:"idempotency_key"`
+	Action          string   `json:"action"` // "submit" | "hold_hitl" | "reject"
+	Rail            string   `json:"rail"`   // "upi" | "imps" | "neft" | "rtgs" | ""
+	AmountRupees    float64  `json:"amount_rupees"`
+	Reasons         []string `json:"reasons"`
+	IncidentPayload string   `json:"incident_payload,omitempty"`
+	Disclaimer      string   `json:"disclaimer"`
 }
 
 type Agent struct {

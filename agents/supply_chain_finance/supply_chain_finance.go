@@ -32,12 +32,12 @@ const (
 
 // Invoice is one outstanding receivable.
 type Invoice struct {
-	InvoiceID    string  `json:"invoice_id"`
-	BuyerID      string  `json:"buyer_id"`
-	BuyerRating  string  `json:"buyer_rating"` // AAA..D (CRISIL / ICRA scale)
-	AmountRupees float64 `json:"amount_rupees"`
-	DaysOutstanding int  `json:"days_outstanding"`
-	GSTeInvoiced bool    `json:"gst_e_invoiced"` // required for TReDS
+	InvoiceID       string  `json:"invoice_id"`
+	BuyerID         string  `json:"buyer_id"`
+	BuyerRating     string  `json:"buyer_rating"` // AAA..D (CRISIL / ICRA scale)
+	AmountRupees    float64 `json:"amount_rupees"`
+	DaysOutstanding int     `json:"days_outstanding"`
+	GSTeInvoiced    bool    `json:"gst_e_invoiced"` // required for TReDS
 }
 
 // Request is the SCF view request.
@@ -48,11 +48,11 @@ type Request struct {
 
 // BuyerSlice is the per-buyer aggregate the recommender uses.
 type BuyerSlice struct {
-	BuyerID      string  `json:"buyer_id"`
-	TotalRupees  float64 `json:"total_rupees"`
-	SharePct     float64 `json:"share_pct"`
-	WorstDays    int     `json:"worst_days_outstanding"`
-	BuyerRating  string  `json:"buyer_rating"`
+	BuyerID     string  `json:"buyer_id"`
+	TotalRupees float64 `json:"total_rupees"`
+	SharePct    float64 `json:"share_pct"`
+	WorstDays   int     `json:"worst_days_outstanding"`
+	BuyerRating string  `json:"buyer_rating"`
 }
 
 // Recommendation is the structured output.

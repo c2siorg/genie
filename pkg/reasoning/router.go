@@ -18,8 +18,8 @@ type SemanticRouter struct {
 }
 
 type routeEntry struct {
-	ID         string
-	Exemplars  [][]float32
+	ID        string
+	Exemplars [][]float32
 }
 
 // NewSemanticRouter builds a router around an Embedder.
