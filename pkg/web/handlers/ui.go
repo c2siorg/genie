@@ -9,6 +9,7 @@ import (
 
 // all: is required because the Next.js static export puts assets under _next/,
 // and the default embed pattern skips names beginning with "_" or ".".
+//
 //go:embed all:ui
 var uiFS embed.FS
 
