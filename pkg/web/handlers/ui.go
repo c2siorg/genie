@@ -7,14 +7,18 @@ import (
 	"strings"
 )
 
-//go:embed ui/*
+// all: is required because the Next.js static export puts assets under _next/,
+// and the default embed pattern skips names beginning with "_" or ".".
+//go:embed all:ui
 var uiFS embed.FS
 
-// UI serves the embedded single-page UI (ui/index.html + ui/styles.css +
-// ui/app.js). Mount it at /ui/* and Genie ships the front-end inside the
-// binary — no Node, no build step, no separate static-file hosting.
+// UI serves the embedded single-page console — a Next.js app statically exported
+// into ui/ (ui/index.html + ui/_next/static/…). Mount it at /ui/* and Genie ships
+// the front-end inside the binary. The export is regenerated with `make ui` (which
+// runs the Node build in web-next/); the committed ui/ files are what the binary
+// embeds, so `go build` itself needs no Node.
 //
-// The UI dialogs with the same JSON API the curl examples in the README
+// The console dialogs with the same JSON API the curl examples in the README
 // use; SSE streaming is read manually with fetch + ReadableStream so the
 // browser doesn't need EventSource (which forbids Authorization headers).
 type UI struct {

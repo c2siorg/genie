@@ -1,0 +1,24 @@
+{
+  "name": "genie-web-next",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Genie console — Next.js UI, static-exported and embedded into the Go binary at pkg/web/handlers/ui.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "export": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.7",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "typescript": "5.7.3"
+  }
+}

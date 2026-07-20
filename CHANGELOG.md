@@ -4,6 +4,27 @@ All notable changes to Genie are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **AFG framework-native edge** — a port of Genie's orchestration + provider
+  layers onto Microsoft's Agent Framework for Go (`pkg/afg`, `cmd/af-serve`,
+  `cmd/af-hello`). Serves `POST /v1/ask` + `GET /v1/ai-inventory` for the full
+  58-agent governed catalog with no Postgres and no message bus, preserving the
+  governance single-door invariant as agent-framework middleware.
+- **Next.js browser console** — the embedded UI is now a Next.js app
+  (`web-next/`), statically exported and committed into `pkg/web/handlers/ui/`
+  (embedded via `//go:embed all:ui`). `go build` still needs no Node; regenerate
+  with `make ui`. Clean, white, professional theme.
+- **Concept glossaries** — `docs/glossary.md` (every load-bearing concept in the
+  repo, grounded in real package paths) and `docs/langgraph-to-genie.md` (every
+  LangGraph concept mapped to its Genie equivalent).
+
+### Changed
+- The UI↔handler contract tests now assert against the compiled console bundle
+  (API paths, auth fields, classification, SSE events, storage keys) instead of
+  the retired hand-written `app.js`/`styles.css`.
+
 ## [1.0.0] - 2026-07-08
 
 First tagged release.

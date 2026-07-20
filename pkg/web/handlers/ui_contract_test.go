@@ -3,14 +3,19 @@ package handlers
 import (
 	"io/fs"
 	"regexp"
-	"sort"
 	"strings"
 	"testing"
 )
 
+// The console is a Next.js app statically exported into ui/. Its logic is compiled
+// into ui/_next/static/chunks/*.js, so the UI<->handler contract is asserted against
+// the compiled bundle (the hand-written app.js/styles.css no longer exist). These
+// tests keep the same guarantee the old DOM tests gave: if a backend route, auth
+// field, classification, SSE event, or storage key changes, a test fails until the
+// UI is rebuilt (`make ui`).
+
 // readUIFile pulls a file out of the embedded UI FS via the same root the
-// production handler uses. Keeps the test honest: if NewUI's embed.FS path
-// ever drifts, this test starts failing.
+// production handler uses. If NewUI's embed path drifts, this starts failing.
 func readUIFile(t *testing.T, name string) string {
 	t.Helper()
 	ui, err := NewUI()
@@ -24,122 +29,125 @@ func readUIFile(t *testing.T, name string) string {
 	return string(b)
 }
 
-// TestUI_JSReferencesExistInHTML asserts every #id the JS reaches for
-// actually exists in index.html. The vanilla JS in app.js silently no-ops
-// against a missing element — without this test a stray HTML rename would
-// only surface as a runtime click that does nothing.
-func TestUI_JSReferencesExistInHTML(t *testing.T) {
-	html := readUIFile(t, "index.html")
-	js := readUIFile(t, "app.js")
-
-	// Pull every '#some-id' from JS strings.
-	// $('#foo'), $$('#bar'), getElementById('baz'), querySelector('#qux .x')
-	idRE := regexp.MustCompile(`['"]#([a-zA-Z][a-zA-Z0-9_-]*)`)
-	idGetRE := regexp.MustCompile(`getElementById\(['"]([a-zA-Z][a-zA-Z0-9_-]*)['"]`)
-
-	seen := map[string]bool{}
-	for _, m := range idRE.FindAllStringSubmatch(js, -1) {
-		seen[m[1]] = true
-	}
-	for _, m := range idGetRE.FindAllStringSubmatch(js, -1) {
-		seen[m[1]] = true
-	}
-	if len(seen) == 0 {
-		t.Fatal("regex pulled zero selectors — pattern probably broke")
-	}
-
-	ids := make([]string, 0, len(seen))
-	for id := range seen {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-
-	for _, id := range ids {
-		t.Run(id, func(t *testing.T) {
-			needle := `id="` + id + `"`
-			if !strings.Contains(html, needle) {
-				t.Errorf("app.js references #%s but index.html has no element with id=%q", id, id)
-			}
-		})
-	}
-}
-
-// TestUI_FormFieldsMatchHandlers asserts the auth form fields use exactly the
-// names the Users handler decodes (signupRequest / loginRequest). If someone
-// renames the JSON field in users.go we want the UI test to fail too — not
-// for the user to discover at runtime that "name" went missing.
-func TestUI_FormFieldsMatchHandlers(t *testing.T) {
-	html := readUIFile(t, "index.html")
-
-	signupBlock := sliceBetween(t, html, `id="form-signup"`, `</form>`)
-	for _, want := range []string{`name="name"`, `name="email"`, `name="password"`} {
-		if !strings.Contains(signupBlock, want) {
-			t.Errorf("signup form missing %s — handler expects this JSON key", want)
-		}
-	}
-
-	loginBlock := sliceBetween(t, html, `id="form-login"`, `</form>`)
-	for _, want := range []string{`name="email"`, `name="password"`} {
-		if !strings.Contains(loginBlock, want) {
-			t.Errorf("login form missing %s — handler expects this JSON key", want)
-		}
-	}
-}
-
-// TestUI_ClassificationOptionsCoverHandlerEnum makes sure the upload form's
-// classification dropdown lists every value the documents handler accepts.
-// If protocol.Classification grows a new label, this test points at the UI
-// gap before the new label silently becomes unreachable.
-func TestUI_ClassificationOptionsCoverHandlerEnum(t *testing.T) {
-	html := readUIFile(t, "index.html")
-	uploadBlock := sliceBetween(t, html, `id="upload-class"`, `</select>`)
-
-	// These mirror the constants in pkg/protocol/classification.go that the
-	// upload handler accepts on the wire. "secret" is intentionally not in
-	// the UI — uploading secret-classified data through a browser is a
-	// policy violation, so we don't expose it.
-	wantUserSelectable := []string{"pii", "internal", "public"}
-	for _, v := range wantUserSelectable {
-		if !strings.Contains(uploadBlock, `value="`+v+`"`) {
-			t.Errorf("upload-class dropdown missing option value=%q", v)
-		}
-	}
-}
-
-// TestUI_ScriptAndStyleLinksResolve verifies index.html points at filenames
-// that actually exist in the embedded FS. Catches a typo like src="app-v2.js"
-// before deploy.
-func TestUI_ScriptAndStyleLinksResolve(t *testing.T) {
-	html := readUIFile(t, "index.html")
-	linkRE := regexp.MustCompile(`(?:src|href)="([^"/][^"]*\.(?:js|css))"`)
-
+// bundleJS concatenates every emitted JS chunk of the export.
+func bundleJS(t *testing.T) string {
+	t.Helper()
 	ui, err := NewUI()
 	if err != nil {
 		t.Fatalf("NewUI: %v", err)
 	}
-	for _, m := range linkRE.FindAllStringSubmatch(html, -1) {
-		path := m[1]
-		t.Run(path, func(t *testing.T) {
-			if _, err := fs.Stat(ui.root, path); err != nil {
-				t.Errorf("index.html references %s but file missing from embedded FS: %v", path, err)
+	var b strings.Builder
+	err = fs.WalkDir(ui.root, "_next", func(p string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !d.IsDir() && strings.HasSuffix(p, ".js") {
+			data, readErr := fs.ReadFile(ui.root, p)
+			if readErr != nil {
+				return readErr
+			}
+			b.Write(data)
+			b.WriteByte('\n')
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk _next: %v", err)
+	}
+	if b.Len() == 0 {
+		t.Fatal("no JS chunks in export — the ui/ copy from web-next/out is broken")
+	}
+	return b.String()
+}
+
+// TestUI_IndexIsPrerendered: the exported index.html is the SSG shell and must
+// carry the brand + hero, so a bare load shows content before hydration.
+func TestUI_IndexIsPrerendered(t *testing.T) {
+	html := readUIFile(t, "index.html")
+	for _, want := range []string{"Genie", "governed control room for money"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("index.html missing %q", want)
+		}
+	}
+}
+
+// TestUI_IndexReferencesBundlesThatExist: every /ui/_next/*.js|css the shell
+// references must exist in the embedded FS — catches a half-copied export.
+func TestUI_IndexReferencesBundlesThatExist(t *testing.T) {
+	html := readUIFile(t, "index.html")
+	ui, err := NewUI()
+	if err != nil {
+		t.Fatalf("NewUI: %v", err)
+	}
+	linkRE := regexp.MustCompile(`/ui/(_next/[^"]+?\.(?:js|css))`)
+	ms := linkRE.FindAllStringSubmatch(html, -1)
+	if len(ms) == 0 {
+		t.Fatal("index.html references no _next bundles — export layout changed")
+	}
+	for _, m := range ms {
+		p := m[1]
+		t.Run(p, func(t *testing.T) {
+			if _, err := fs.Stat(ui.root, p); err != nil {
+				t.Errorf("index.html references %s but it's missing from the embedded FS: %v", p, err)
 			}
 		})
 	}
 }
 
-// sliceBetween returns the substring of s starting at the first occurrence of
-// start and ending at the first occurrence of end after that. Used to bound
-// per-element assertions to one form/select.
-func sliceBetween(t *testing.T, s, start, end string) string {
-	t.Helper()
-	i := strings.Index(s, start)
-	if i < 0 {
-		t.Fatalf("anchor %q not found", start)
+// TestUI_BundleMatchesAPIContract: the compiled console must still call the exact
+// API paths the Go handlers serve. Rename a route in the backend and this fails
+// until the UI is rebuilt — the guarantee the old app.js test gave.
+func TestUI_BundleMatchesAPIContract(t *testing.T) {
+	js := bundleJS(t)
+	for _, path := range []string{
+		"/users/login", "/users", "/ask/stream", "/ask", "/documents",
+		"/disclosures", "/ai-inventory", "/aibom", "/incidents", "/readyz",
+	} {
+		if !strings.Contains(js, path) {
+			t.Errorf("compiled console never references %q — UI/handler contract drift", path)
+		}
 	}
-	rest := s[i:]
-	j := strings.Index(rest, end)
-	if j < 0 {
-		t.Fatalf("closing %q after %q not found", end, start)
+}
+
+// TestUI_BundleCoversAuthAndClassification: the auth field names the Users handler
+// decodes and the classification labels the documents handler accepts. "secret" is
+// intentionally absent — uploading secret-classified data via a browser is a policy
+// violation, so it is not user-selectable.
+func TestUI_BundleCoversAuthAndClassification(t *testing.T) {
+	js := bundleJS(t)
+	for _, want := range []string{"email", "password", "name"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("auth field %q missing from compiled console — handler expects this JSON key", want)
+		}
 	}
-	return rest[:j]
+	for _, v := range []string{"pii", "internal", "public"} {
+		if !strings.Contains(js, v) {
+			t.Errorf("classification %q missing from compiled console", v)
+		}
+	}
+	if strings.Contains(js, `"secret"`) {
+		t.Error("classification \"secret\" must not be user-selectable in the browser UI")
+	}
+}
+
+// TestUI_BundleHandlesSSEContract: the streaming reader must understand the SSE
+// event names /ask/stream emits.
+func TestUI_BundleHandlesSSEContract(t *testing.T) {
+	js := bundleJS(t)
+	for _, want := range []string{"text/event-stream", "ai_disclosure", "agent.handle"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("SSE contract token %q missing from compiled console", want)
+		}
+	}
+}
+
+// TestUI_LocalStorageKeysStable pins the persisted keys so a rename that would
+// silently log every user out is caught.
+func TestUI_LocalStorageKeysStable(t *testing.T) {
+	js := bundleJS(t)
+	for _, k := range []string{"genie.session.v1", "genie.apibase.v1"} {
+		if !strings.Contains(js, k) {
+			t.Errorf("localStorage key %q missing — a rename would drop every session", k)
+		}
+	}
 }

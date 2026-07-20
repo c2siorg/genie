@@ -49,6 +49,7 @@ make e2e            # go test -tags=e2e ./tests/sim/... against a running stack
 make scaffold name=<id> cap=<capability> in=<intype> out=<outtype> next=<agent>  # generate a new agent + test
 make red-team       # run adversarial probe corpus against config/ai-policy.example.yaml (FREE-AI Rec 20)
 make bcp-drill      # force portfolio_advisor failure to verify fallback fires (FREE-AI Rec 21)
+make ui             # rebuild the Next.js console (web-next/) and refresh the embedded export (needs Node)
 ```
 
 CI (`.circleci/config.yml`) runs `go vet ./...` then `go test -race ./...` on Go 1.25,
@@ -100,6 +101,7 @@ the agent. Embeddings use a separate `rag.Embedder` and bypass this chain.
 - `cmd/` — `api` (the HTTP service edge), `genie` (CLI demo), `demo`, `scaffold`, `red-team`.
 - `agents/<id>/<id>.go` — one package per agent; `New()` constructor, exported `ID`/`Capability`/`Type*` constants, `HandleMessage`, optional `RiskLevel()`. Live agents are wired into the registry in `cmd/api/main.go` (`run()`), which is the source of truth for what's actually served — note that not every agent package under `agents/` is wired in (currently 58 specialists + 2 fallbacks of 61 specialist packages).
 - `pkg/` — platform packages (see above) plus `llm`, `rag`, `graphrag`, `reasoning`, `memory`, `eval`, `safety`, `privacy`, `crypto`, `auth`, `identity`, `mcp`, `a2a`, `compliance`, `storage/postgres`, `web` (chi router + handlers + middleware in `web/mid`), etc.
+- **`web-next/`** — the browser console: a **Next.js** app (App Router, TypeScript) that is **statically exported** and committed into `pkg/web/handlers/ui/`, which `ui.go` embeds via `//go:embed all:ui` (the `all:` is required — the export's `_next/` dir would otherwise be skipped). `go build` needs **no Node** (it embeds the committed export); regenerate the export with `make ui` after changing the UI, then commit `pkg/web/handlers/ui/`. The console is asserted against the Go handlers by the bundle-contract tests in `pkg/web/handlers/ui_contract_test.go` (API paths / auth fields / classification / SSE events / storage keys must survive in the compiled bundle).
 - `config/` — `ai-policy.example.yaml` (the board-approved governance policy) and `constitution.yaml` (LLM-as-judge rules).
 - `docs/` — deep reference: `architecture.md`, `operations.md`, `api.md`, `protocols.md`, `free-ai-mapping.md` (every FREE-AI recommendation → file path), `agents/<id>.md`, `packages/<name>.md`, plus `openapi.yaml` / `asyncapi.yaml`.
 - `tests/` — `agents_registry/` (enforces agent ID uniqueness), `sim/` (e2e user simulation, `-tags=e2e`), `integration_test.go`.

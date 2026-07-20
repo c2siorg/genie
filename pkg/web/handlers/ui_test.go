@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -26,9 +27,21 @@ func TestUI_ServesIndexAtRoot(t *testing.T) {
 	}
 }
 
-func TestUI_ServesNamedAssets(t *testing.T) {
-	h, _ := NewUI()
-	for _, name := range []string{"styles.css", "app.js"} {
+func TestUI_ServesReferencedAssets(t *testing.T) {
+	h, err := NewUI()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The Next.js export uses hashed asset names, so serve exactly what the shell
+	// references rather than fixed filenames.
+	html := readUIFile(t, "index.html")
+	re := regexp.MustCompile(`/ui/(_next/[^"]+?\.(?:js|css))`)
+	ms := re.FindAllStringSubmatch(html, -1)
+	if len(ms) == 0 {
+		t.Fatal("index.html references no _next assets")
+	}
+	for _, m := range ms {
+		name := m[1]
 		req := httptest.NewRequest(http.MethodGet, "/"+name, nil)
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, req)

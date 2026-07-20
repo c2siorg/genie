@@ -9,6 +9,8 @@
 | You want to… | Read |
 |---|---|
 | Get the 30-second pitch | [Root README](../README.md) |
+| Look up any term used in the repo | [glossary.md](glossary.md) |
+| Map a LangGraph concept to Genie | [langgraph-to-genie.md](langgraph-to-genie.md) |
 | Understand the architecture pattern | [architecture.md](architecture.md) |
 | Map FREE-AI recommendations to code | [free-ai-mapping.md](free-ai-mapping.md) |
 | Run the stack locally | [operations.md](operations.md) |
