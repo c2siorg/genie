@@ -12,3 +12,7 @@ genie-traces.json
 
 # stray build artifact (go build ./cmd/api output)
 /api
+
+# Playwright browser-E2E scratch (installed deps + run output; no committed specs yet)
+/tests/e2e-playwright/node_modules/
+/tests/e2e-playwright/test-results/

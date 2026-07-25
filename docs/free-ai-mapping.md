@@ -20,7 +20,7 @@ Source report: [RBI Framework for Responsible and Ethical Enablement of AI (Aug 
 
 ### Rec 1 — Establish a National Centre of Excellence ⚪
 
-Regulator scope. Genie contributes by being open-source and citation-friendly.
+Regulator scope. Genie contributes by being source-available (noncommercial) and citation-friendly.
 
 ### Rec 2 — AI Innovation Sandbox ✅
 

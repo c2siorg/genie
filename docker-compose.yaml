@@ -92,7 +92,8 @@ services:
     environment:
       GENIE_HTTP_ADDR: ":8080"
       GENIE_JWT_SECRET: "dev-only-jwt-secret-change-me"
-      # 32-byte key, base64 encoded. Generate with: openssl rand -base64 32
+      # dev-only throwaway KEK — DO NOT use in production. 32-byte key, base64
+      # encoded. Generate your own with: openssl rand -base64 32
       GENIE_KEK_BASE64: "K7m9OQM63z7ZK3xQ2lG0qV9hC5Yf+e0sQ+kXcM3GqQE="
       GENIE_DB_DSN: "postgres://genie:genie@postgres:5432/genie?sslmode=disable"
       OTEL_EXPORTER_OTLP_ENDPOINT: "otel-collector:4317"

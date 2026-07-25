@@ -49,6 +49,7 @@ make e2e            # go test -tags=e2e ./tests/sim/... against a running stack
 make scaffold name=<id> cap=<capability> in=<intype> out=<outtype> next=<agent>  # generate a new agent + test
 make red-team       # run adversarial probe corpus against config/ai-policy.example.yaml (FREE-AI Rec 20)
 make bcp-drill      # force portfolio_advisor failure to verify fallback fires (FREE-AI Rec 21)
+make openapi-validate  # validate docs/openapi.yaml against the OpenAPI schema (needs npx swagger-cli)
 make ui             # rebuild the Next.js console (web-next/) and refresh the embedded export (needs Node)
 ```
 
