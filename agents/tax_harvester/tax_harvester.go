@@ -164,11 +164,19 @@ func (a *Agent) Compute(req Request) Plan {
 			stOffset := minF(used, req.Realised.ShortTermRupees)
 			req.Realised.ShortTermRupees -= stOffset
 			ltOffset := used - stOffset
+			// stclBudget and ltclBudget share the same taxableLTCG pool, so the
+			// LTCG this STCL consumed must also be removed from ltclBudget,
+			// otherwise a later LTCL would offset the same LTCG a second time.
+			ltclBudget = max0(ltclBudget - ltOffset)
 			saved = stOffset*STCGRate + ltOffset*LTCGRate
 			c.Rationale = "Short-term loss; offsets STCG @20% before LTCG @12.5%."
 		case "LTCL":
 			used = minF(c.UnrealisedLossINR, ltclBudget)
 			ltclBudget -= used
+			// The LTCG this LTCL consumed is also part of stclBudget (STCG +
+			// taxableLTCG), so remove it there too to keep the shared pool
+			// consistent and prevent a later STCL from reusing it.
+			stclBudget = max0(stclBudget - used)
 			saved = used * LTCGRate
 			c.Rationale = "Long-term loss; offsets LTCG above ₹1.25L exemption @12.5%."
 		}
