@@ -115,8 +115,12 @@ func NewGovernedOllama(gate governance.Policy, name, instructions, model string)
 	)
 	return openaiprovider.NewChatCompletionsAgent(client, openaiprovider.AgentConfig{
 		Config: agent.Config{
-			Name:                name,
-			Middlewares:         []agent.Middleware{GovMiddleware{Gate: gate}},
+			Name: name,
+			// Gov gate OUTERMOST (denials short-circuit before any spend), then the
+			// bounded-execution guard (circuit/deadline/budget/cache) just inside it,
+			// re-hosting the legacy Circuit→Deadline→Budget→Cache→Cost chain onto the
+			// framework path. Deterministic agents get no guard (no LLM to bound).
+			Middlewares:         []agent.Middleware{GovMiddleware{Gate: gate}, NewGuardMiddleware(name, DefaultGuardConfig())},
 			DisableFuncAutoCall: true,
 		},
 		Instructions: instructions,

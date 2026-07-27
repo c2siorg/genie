@@ -97,11 +97,77 @@ provider is **unwrapped** (bare). A ReAct/Reflexion loop (`pkg/reasoning`, ReAct
 capped at `maxSteps`) that runs away is cut off by the Ollama-path wrappers, not by
 the agent. Embeddings use a separate `rag.Embedder` and bypass this chain.
 
+## The Microsoft Agent Framework port (`pkg/afg`)
+
+Genie now runs on `pkg/afg/`, built on `github.com/microsoft/agent-framework-go`
+(pinned to a pseudo-version in `go.mod` — the framework is public-preview with no
+releases; do not `go get -u` it). **The message bus is gone from the production edge:**
+`cmd/api` no longer constructs `comm.Bus` / `orchestration` / `busio` (Correlator /
+EventTap); `/v1/ask`, `/ask/stream`, and `/chat/ws` run the governed agent-framework
+pipeline (`afg.QAService`) inline. The `registry.NewInMemory()` there survives only as
+the AI-inventory / AIBOM / disclosures source (a static list, not a runtime). Full
+design + phase log: `docs/migration-agent-framework.md`, `docs/phase5-cutover-goal.md`,
+`session.md`. The pre-cutover bus architecture is preserved as the behavioural oracle on
+branch `legacy/bus-architecture` (`ec27f6b`) — not in `main`.
+
+**The flagship pipeline reuses, not reimplements, the legacy domain logic.** `afg.QAService`
+(`pkg/afg/qa_service.go`) reproduces the supervisor question-flow (ingestor→normalizer→
+enricher→analyzer→forecaster/anomaly/recommender→reporter) by driving the **real
+`agents/<id>.HandleMessage`** inside governed framework stages. So the report is
+**byte-identical** to the legacy pipeline (oracle parity test drives the actual legacy
+agents — `pkg/afg/qa_service_test.go`), and the `agents/` packages remain live
+dependencies (as libraries), not dead code. What was deleted is the bus/orchestrator
+*runtime*, not the domain logic.
+
+**Why it exists / the core shift.** Genie's governance is a *single bus chokepoint*;
+the framework only offers *per-agent middleware* (`agent.Middleware` attached via
+`Config.Middlewares`). A per-agent seam is bypassable by construction, so the port's
+whole difficulty is re-proving the single-gate property. It does so three ways, and
+these are the load-bearing invariants — preserve them in any afg change:
+1. **One construction door.** Every agent is built by a `NewGoverned*` factory
+   (`pkg/afg/factory.go`) that injects the governance middleware. No agent is built
+   from a raw provider constructor.
+2. **A front-door / node-level gate.** The governance `Composite.Evaluate` (from the
+   same `pkg/policy` YAML loader — governance stays *data*, not code) runs before the
+   provider. A governance `DeniedError` is a policy rejection and is **not** rescued by
+   a fallback; only execution errors route to `RunWithFallback`.
+3. **A registry-invariant test** (`pkg/afg/singledoor_test.go`) asserts every
+   registered agent's middleware chain contains the gate — CI fails if any agent was
+   constructed by another path. This is the afg analogue of `tests/agents_registry/`.
+
+**Phase status** (all ✅ rows compile + `go test -race ./pkg/afg/...` passes):
+
+| Phase | Status | Where |
+|---|---|---|
+| 0 — framework spike, go/no-go | ✅ GO | pinned deps in `go.mod` |
+| 1 — vertical slice + single-door gate | ✅ | `factory.go`, `currency.go`, `singledoor_test.go`, `cmd/af-hello` |
+| 2 — concurrent orchestration (fan-out) | ✅ | `orchestrate.go` (`NewConcurrentWorkflowBuilder`) |
+| 3 — registry / inventory / fallback | ✅ | `registry.go` (`Inventory()`, `RunWithFallback`) |
+| 4 — all **58** agents ported | ✅ | `pkg/afg/catalog/` (39 deterministic + 6 advisory) + 4 hand-ported + 9 pipeline (`pipeline.go`) |
+| HTTP edge (`/v1/ask`, `/v1/ai-inventory`) | ✅ | `httpedge.go` + `cmd/af-serve` — **no Postgres, no bus** |
+| 5 — parity + **cutover** | ✅ | bus removed from `cmd/api`; `/v1/ask` on `QAService`; full repo `go test -race ./...` green |
+| auth | ✅ | `httpedge.go` + `cmd/af-serve` behind real `mid.Auth` JWT/RBAC; identity from claims |
+| LLM wrapper chain | ✅ | `llmguard.go` `GuardMiddleware` (Circuit/Deadline/Budget/Cache), wired into `NewGovernedOllama` inside the gate |
+| RAG grounding | 🟡 component | `rag_context.go` `NewGovernedAdvisory` + `RetrievalMiddleware` (grounds *inside* the gate); built & tested, per-agent corpus wiring pending |
+
+**Deferred with the bus removal** (documented in `cmd/api/main.go`, tracked — not silently dropped):
+- **Incident-on-deny / on-agent-error hooks** and the **auditor's eval-on-every-message**
+  subscription (were the orchestrator's / bus's job).
+- **MCP bus-tools** (`explain_finance`/`macro_context`/`rate_outlook`).
+- **Per-hop SSE streaming**: `/ask/stream` + `/chat/ws` now emit one `pipeline_running`
+  progress event then the final `report`, not per-agent events (cosmetic for a
+  deterministic pipeline; event vocabulary preserved for the console).
+- **BCP fallback for the QA pipeline**: `afg.Registry.RunWithFallback` + fallbacks exist,
+  but the `QAService` stages don't yet route to fallbacks. (`make bcp-drill` still tests
+  `cmd/genie`, which is untouched; note it fails pre-existing on an OTel schema conflict
+  unrelated to this work.)
+- **Not yet run against the new stack:** `make smoke`/`e2e` (need a live Postgres + stack).
+
 ## Where things live
 
-- `cmd/` — `api` (the HTTP service edge), `genie` (CLI demo), `demo`, `scaffold`, `red-team`.
+- `cmd/` — `api` (the production HTTP service edge — now afg-backed: bus removed, `/v1/ask` runs `afg.QAService`), `genie` (CLI demo — still the legacy bus wiring), `demo`, `scaffold`, `red-team`; plus `af-hello`/`af-serve` (Postgres-free agent-framework demos; `af-serve` shares the same governed `afg.NewHandler` edge as `cmd/api`).
 - `agents/<id>/<id>.go` — one package per agent; `New()` constructor, exported `ID`/`Capability`/`Type*` constants, `HandleMessage`, optional `RiskLevel()`. Live agents are wired into the registry in `cmd/api/main.go` (`run()`), which is the source of truth for what's actually served — note that not every agent package under `agents/` is wired in (currently 58 specialists + 2 fallbacks of 61 specialist packages).
-- `pkg/` — platform packages (see above) plus `llm`, `rag`, `graphrag`, `reasoning`, `memory`, `eval`, `safety`, `privacy`, `crypto`, `auth`, `identity`, `mcp`, `a2a`, `compliance`, `storage/postgres`, `web` (chi router + handlers + middleware in `web/mid`), etc.
+- `pkg/` — platform packages (see above) plus `llm`, `rag`, `graphrag`, `reasoning`, `memory`, `eval`, `safety`, `privacy`, `crypto`, `auth`, `identity`, `mcp`, `a2a`, `compliance`, `storage/postgres`, `web` (chi router + handlers + middleware in `web/mid`), etc. `pkg/afg` is the separate agent-framework port (see its section above), not part of the bus architecture.
 - **`web-next/`** — the browser console: a **Next.js** app (App Router, TypeScript) that is **statically exported** and committed into `pkg/web/handlers/ui/`, which `ui.go` embeds via `//go:embed all:ui` (the `all:` is required — the export's `_next/` dir would otherwise be skipped). `go build` needs **no Node** (it embeds the committed export); regenerate the export with `make ui` after changing the UI, then commit `pkg/web/handlers/ui/`. The console is asserted against the Go handlers by the bundle-contract tests in `pkg/web/handlers/ui_contract_test.go` (API paths / auth fields / classification / SSE events / storage keys must survive in the compiled bundle).
 - `config/` — `ai-policy.example.yaml` (the board-approved governance policy) and `constitution.yaml` (LLM-as-judge rules).
 - `docs/` — deep reference: `architecture.md`, `operations.md`, `api.md`, `protocols.md`, `free-ai-mapping.md` (every FREE-AI recommendation → file path), `agents/<id>.md`, `packages/<name>.md`, plus `openapi.yaml` / `asyncapi.yaml`.
