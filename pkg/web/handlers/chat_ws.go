@@ -3,15 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/reporter"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supervisor"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/afg"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
@@ -20,12 +17,16 @@ import (
 )
 
 // ChatWS implements a bidirectional WebSocket chat. The client sends one or
-// more `{"question":..., "document_id":...}` frames; the server streams
-// `{"event":"agent.handle", ...}` and finally `{"event":"report", ...}` per
-// request. The connection stays open for multiple turns.
+// more `{"question":..., "document_id":...}` frames; the server runs the
+// governed agent-framework question pipeline (afg.QAService) per request and
+// replies with a `report` frame. The connection stays open for multiple turns.
+//
+// Honest limitation (same as AskStream): the legacy bus edge emitted one
+// `agent.handle` frame per agent hop; the afg pipeline runs as one governed
+// call, so a single `pipeline_running` progress frame stands in. The event
+// vocabulary is preserved for the console.
 type ChatWS struct {
-	Bus       comm.Bus
-	Tap       *busio.EventTap
+	QA        *afg.QAService
 	Documents postgres.DocumentRepo
 	Encryptor *crypto.Encryptor
 	Timeout   time.Duration
@@ -70,8 +71,8 @@ func (h *ChatWS) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	roleStrings := make([]string, len(claims.Roles))
-	for i, r := range claims.Roles {
-		roleStrings[i] = string(r)
+	for i, role := range claims.Roles {
+		roleStrings[i] = string(role)
 	}
 
 	for {
@@ -104,42 +105,38 @@ func (h *ChatWS) runTurn(ctx context.Context, conn *websocket.Conn, userID strin
 	}
 
 	traceID := fmt.Sprintf("tr-%d", time.Now().UnixNano())
-	events := h.Tap.Subscribe(traceID)
-	defer h.Tap.Unsubscribe(traceID)
 	_ = writeJSON(ctx, conn, chatEvent{Event: "trace", TraceID: traceID})
 
-	h.Bus.Publish(ctx, agent.NewMessage("user", supervisor.ID, agent.RoleUser, supervisor.TypeQuestion, in.Question, map[string]any{
-		"trace_id":                     traceID,
-		"account_id":                   userID,
-		"csv":                          string(plain),
-		protocol.MetaKeyUserID:         userID,
-		protocol.MetaKeyUserRoles:      roles,
-		protocol.MetaKeyClassification: string(doc.Classification),
-	}))
-
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-deadline.C:
-			_ = writeJSON(ctx, conn, chatEvent{Event: "error", Data: jsonString("timeout")})
-			return nil
-		case ev, ok := <-events:
-			if !ok {
-				return nil
-			}
-			if ev.To == "user" && ev.Type == reporter.TypeOut {
-				_ = writeJSON(ctx, conn, chatEvent{Event: "report", TraceID: traceID, Data: jsonString(ev.Content)})
-				return nil
-			}
-			summary, _ := json.Marshal(map[string]any{
-				"from": ev.From, "to": ev.To, "type": ev.Type, "msg_id": ev.ID,
-			})
-			_ = writeJSON(ctx, conn, chatEvent{Event: "agent.handle", TraceID: traceID, Data: summary})
-		}
+	gov := protocol.Message{
+		From: "user", Role: protocol.RoleUser, Type: financeQuestionType,
+		Metadata: map[string]any{
+			"trace_id":                     traceID,
+			protocol.MetaKeyUserID:         userID,
+			protocol.MetaKeyUserRoles:      roles,
+			protocol.MetaKeyClassification: string(doc.Classification),
+		},
 	}
+	runCtx, cancel := context.WithTimeout(afg.WithGovMessage(ctx, gov), timeout)
+	defer cancel()
+
+	progress, _ := json.Marshal(map[string]any{"from": "financial_supervisor", "type": "pipeline_running", "trace_id": traceID})
+	_ = writeJSON(ctx, conn, chatEvent{Event: "agent.handle", TraceID: traceID, Data: progress})
+
+	report, err := h.QA.Answer(runCtx, string(plain), in.Question)
+	if err != nil {
+		var denied *afg.DeniedError
+		switch {
+		case errors.As(err, &denied):
+			_ = writeJSON(ctx, conn, chatEvent{Event: "error", Data: jsonString("denied by governance policy")})
+		case errors.Is(err, context.DeadlineExceeded):
+			_ = writeJSON(ctx, conn, chatEvent{Event: "error", Data: jsonString("timeout")})
+		default:
+			_ = writeJSON(ctx, conn, chatEvent{Event: "error", Data: jsonString(err.Error())})
+		}
+		return nil
+	}
+	_ = writeJSON(ctx, conn, chatEvent{Event: "report", TraceID: traceID, Data: jsonString(report)})
+	return nil
 }
 
 func writeJSON(ctx context.Context, conn *websocket.Conn, v any) error {

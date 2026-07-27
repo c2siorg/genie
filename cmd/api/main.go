@@ -81,19 +81,15 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/var_calculator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/working_capital"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/afg"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/incidents"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
@@ -157,10 +153,10 @@ func run() error {
 	secret := []byte(mustEnv("GENIE_JWT_SECRET"))
 	issuer := auth.NewIssuer(secret, "genie-api", []string{"genie-api"}, 60*time.Minute)
 
-	// Bus + agents
-	env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
+	// Agent inventory. The message bus and orchestrator are gone (replaced by the
+	// governed agent-framework pipeline, afg.QAService); this registry now serves
+	// only as the static AI inventory / AIBOM / disclosures source of truth.
 	reg := registry.NewInMemory()
-	bus := comm.NewInMemoryBus()
 	evalStore := eval.NewInMemoryStore() // swap for postgres eval repo when added
 
 	consents := compliance.NewInMemoryLedger()
@@ -281,55 +277,23 @@ func run() error {
 
 	incidentStore := postgres.NewIncidentStore(db)
 
-	orch := orchestration.NewOrchestrator(reg, bus, composite, env)
-	orch.SetFallback("portfolio_advisor", "portfolio_advisor_fallback")
-	orch.SetFallback("recommender", "recommender_fallback")
-	orch.WithHooks(orchestration.Hooks{
-		OnPolicyDeny: func(ctx context.Context, msg agent.Message, reason string) {
-			_, _ = incidentStore.Create(ctx, incidents.Incident{
-				UseCase:     msg.Type,
-				Description: "policy denied message: " + reason,
-				FailureMode: incidents.FailurePolicyDenied,
-				Severity:    incidents.SeverityLow,
-				Metadata:    map[string]any{"msg_id": msg.ID, "from": msg.From, "to": msg.To},
-			})
-		},
-		OnAgentError: func(ctx context.Context, agentID string, msg agent.Message, err error) {
-			_, _ = incidentStore.Create(ctx, incidents.Incident{
-				UseCase:     agentID,
-				Description: "agent error: " + err.Error(),
-				FailureMode: incidents.FailureAgentError,
-				Severity:    incidents.SeverityModerate,
-				Metadata:    map[string]any{"msg_id": msg.ID, "type": msg.Type},
-			})
-		},
-	})
-	orch.Start(ctx)
-
-	bus.Subscribe("", auditor.NewHandler(evalStore))
-
-	corr := busio.NewCorrelator(bus, "user")
-	// Replies from agents invoked via MCP BusTool are addressed back to "mcp".
-	mcpCorr := busio.NewCorrelator(bus, "mcp")
-	// EventTap broadcasts every message tagged with a trace_id to SSE consumers.
-	eventTap := busio.NewEventTap(bus)
+	// The governed agent-framework question pipeline replaces the bus supervisor
+	// flow: it runs ingestor→normalizer→enricher→analyzer→(forecaster|anomaly|
+	// recommender)→reporter as governed framework stages and returns the final
+	// report inline. The governance gate fires at every stage (single-door
+	// construction), so policy still applies to every hop.
+	//
+	// Deferred with the bus removal (tracked follow-ups, not silently dropped):
+	//   - incident-on-policy-deny / on-agent-error hooks (the orchestrator's job);
+	//   - the auditor's eval-on-every-message subscription;
+	//   - MCP BusTool tools (explain_finance/macro_context/rate_outlook).
+	// The auditor and MCP-backed agents remain in the inventory below.
+	qa := afg.NewQAService(composite)
 
 	// HTTP wiring
 	userRepo := postgres.NewUserRepo(db)
 	acctRepo := postgres.NewAccountRepo(db)
 	docRepo := postgres.NewDocumentRepo(db)
-
-	mcpServer := mcp.NewServer(
-		mcp.BusTool("explain_finance", "Explain a finance concept",
-			map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}},
-			bus, mcpCorr, "financial_educator", "explain_finance"),
-		mcp.BusTool("macro_context", "Return a one-line macro outlook for a region",
-			map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}},
-			bus, mcpCorr, "macro_research", "macro_context"),
-		mcp.BusTool("rate_outlook", "Return a central-bank rate outlook",
-			map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}},
-			bus, mcpCorr, "rate_watcher", "rate_outlook"),
-	)
 
 	fallbacks := map[string]string{
 		"portfolio_advisor": "portfolio_advisor_fallback",
@@ -343,24 +307,21 @@ func run() error {
 		Accounts:  &handlers.Accounts{Repo: acctRepo},
 		Documents: &handlers.Documents{Repo: docRepo, Encryptor: enc},
 		Ask: &handlers.Ask{
-			Bus:                bus,
-			Correlator:         corr,
+			QA:                 qa,
 			Documents:          docRepo,
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_ASK_TIMEOUT", 60)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		AskStream: &handlers.AskStream{
-			Bus:                bus,
-			Tap:                eventTap,
+			QA:                 qa,
 			Documents:          docRepo,
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_STREAM_TIMEOUT", 90)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		ChatWS: &handlers.ChatWS{
-			Bus:                bus,
-			Tap:                eventTap,
+			QA:                 qa,
 			Documents:          docRepo,
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_CHATWS_TIMEOUT", 120)) * time.Second,
@@ -380,7 +341,6 @@ func run() error {
 			return nil
 		}},
 		MCPTokens: &handlers.MCPTokens{Repo: mcpTokenRepo, Encryptor: enc},
-		MCPServer: mcpServer,
 		Incidents: &handlers.Incidents{Store: incidentStore},
 		Inventory: &handlers.Inventory{Reg: reg, Fallbacks: fallbacks},
 		Disclosures: &handlers.Disclosures{
