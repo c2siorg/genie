@@ -16,3 +16,10 @@ genie-traces.json
 # Playwright browser-E2E scratch (installed deps + run output; no committed specs yet)
 /tests/e2e-playwright/node_modules/
 /tests/e2e-playwright/test-results/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+
+# Playwright e2e scratch (no committed specs yet)
+/tests/e2e-playwright/

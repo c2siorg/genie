@@ -9,8 +9,7 @@
 
 - Base URL: `http://localhost:8080/v1` for local dev.
 - Auth: `Authorization: Bearer <jwt>` on all `/v1/*` endpoints except
-  `/v1/users`, `/v1/users/login`, `/v1/disclosures`, the WebAuthn /
-  OAuth endpoints, and `/v1/oauth/device/*`.
+  `/v1/users`, `/v1/users/login`, and `/v1/disclosures`.
 - Content type: `application/json` unless noted (CSV upload, audio
   upload).
 - IDs: UUIDv4 strings.
@@ -94,11 +93,16 @@ must re-login.
 curl -s http://localhost:8080/v1/users/me -H "Authorization: Bearer $TOKEN"
 ```
 
-### `POST /v1/oauth/device/*` (RFC 8628)
+> **Not mounted in the default `cmd/api` router.** The OAuth 2.1 device flow and WebAuthn
+> passkey flows below ship as `pkg/auth` libraries (`pkg/auth/oauth_device`,
+> `pkg/auth/webauthn`) with tests, but `pkg/web/router.go` does not currently wire them.
+> Treat the endpoints below as a library reference, not live routes on the default binary.
+
+### `POST /v1/oauth/device/*` (RFC 8628) — library, not wired
 
 Replaces the manual paste-your-MCP-token-here flow. See [protocols.md](protocols.md).
 
-### `POST /v1/webauthn/register/begin|finish` and `/v1/webauthn/login/begin|finish`
+### `POST /v1/webauthn/register/begin|finish` and `/v1/webauthn/login/begin|finish` — library, not wired
 
 Passwordless passkey flow (Ed25519). See [protocols.md](protocols.md).
 
@@ -155,9 +159,12 @@ Response:
 }
 ```
 
-Behind the scenes: governance evaluates → bus publishes the question
-to `financial_supervisor` → 8-stage pipeline runs → reporter emits the
-final report → busio.Correlator wakes this HTTP handler.
+Behind the scenes: the handler decrypts the document's CSV, then calls
+`afg.QAService.Answer`, which runs a 9-stage governed agent-framework pipeline
+(ingestor → normalizer → enricher → analyzer → forecaster · anomaly · recommender →
+supervisor → reporter) inline and returns the reporter's report. The governance policy
+gate runs at every stage; a denial aborts with HTTP 403. No message bus is involved —
+that in-process bus is the `cmd/genie` CLI / `legacy/bus-architecture` design.
 
 ### `POST /v1/ask/stream` — Server-Sent Events
 
@@ -225,9 +232,14 @@ Returns the hash-chained audit log (newest first, paginated).
 
 ## MCP
 
-### `POST /mcp` — Genie as MCP server
+### `POST /mcp` — Genie as MCP server — currently disabled
 
-JSON-RPC streamable HTTP. Genie exposes a curated set of read-only
+> **Not wired in `cmd/api` after the agent-framework cutover.** The MCP server tools
+> (`explain_finance`, `macro_context`, `rate_outlook`) were implemented as message-bus
+> tools; removing the bus took them out of the default binary. The `pkg/mcp` package
+> remains, and re-hosting these as agent-framework tools is a tracked follow-up.
+
+JSON-RPC streamable HTTP. When enabled, Genie exposes a curated set of read-only
 agents (`financial_educator`, `macro_research`, `rate_watcher`) as MCP
 tools. Compatible with Claude Desktop, Cursor, and any MCP client.
 

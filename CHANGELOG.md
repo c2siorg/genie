@@ -21,9 +21,30 @@ aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   LangGraph concept mapped to its Genie equivalent).
 
 ### Changed
+- **`cmd/api` cut over to the agent framework — the message bus is removed from the
+  production edge.** `POST /v1/ask` (and `/ask/stream`, `/chat/ws`) now run the governed
+  `afg.QAService` pipeline inline instead of `comm.Bus` + `orchestration` +
+  `busio.Correlator`. The pipeline drives the real `agents/*` logic, so its report is
+  byte-identical to the old bus pipeline (oracle parity test in `pkg/afg/qa_service_test.go`).
+  The in-process bus remains the `cmd/genie` CLI design and is preserved on the
+  `legacy/bus-architecture` branch (`ec27f6b`). The `pkg/registry` in `cmd/api` now serves
+  only as the AI-inventory / AIBOM / disclosures source.
+- Wired the additional specialist agents into the inventory: the `[1.0.0]` release had
+  **32** specialists wired; the running API now registers **58** specialists + 2 fallbacks
+  (matching `README.md` / `CLAUDE.md`).
 - The UI↔handler contract tests now assert against the compiled console bundle
   (API paths, auth fields, classification, SSE events, storage keys) instead of
   the retired hand-written `app.js`/`styles.css`.
+
+### Deferred with the bus removal (tracked, documented in `cmd/api/main.go`)
+- Incident-on-policy-deny / on-agent-error hooks and the auditor's eval-on-every-message
+  subscription (were the orchestrator's / bus's job).
+- MCP server bus-tools (`explain_finance` / `macro_context` / `rate_outlook`) and the
+  `POST /mcp` route; `pkg/mcp` remains for a future agent-framework re-host.
+- Per-hop SSE streaming (`/ask/stream`, `/chat/ws` now emit one progress event then the
+  final report; a deterministic pipeline has no per-token stream to forward).
+- BCP fallback routing for the `QAService` stages (`afg.Registry.RunWithFallback` exists
+  but the pipeline does not yet route to it).
 
 ## [1.0.0] - 2026-07-08
 

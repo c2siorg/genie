@@ -6,6 +6,7 @@
 > runs **Ollama on-prem** by default, and bundles a full **GenAI engineering** layer
 > (RAG, reasoning, memory, eval, safety, privacy).
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/PratikDhanave/genie/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/PratikDhanave/genie/tree/main)
 ![Go](https://img.shields.io/badge/Go-1.25+-00ADD8)
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
 ![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
@@ -32,10 +33,13 @@ bancassurance, fraud, treasury, payments, and cyber.
 
 Genie answers *"What should I do with my money?"* by combining deterministic finance
 logic with specialist agents: ingestion → normalisation → analysis → forecasting →
-anomaly detection → recommendations. **Every step is a message on a bus, every message
-passes through governance, every hop is traced.**
+anomaly detection → recommendations. **Every step is a governed stage, every stage
+passes through the same policy gate, every hop is traced.** The production API
+(`cmd/api`) runs this pipeline on the [Microsoft Agent Framework](https://github.com/microsoft/agent-framework-go)
+(`afg.QAService`); the CLI demo (`cmd/genie`) runs the original in-process message-bus
+implementation, preserved as the reference design.
 
-That shape — orchestrator + registry + bus + governance + memory + observability +
+That shape — orchestration + registry + governance + memory + observability +
 evaluation — is what MARA prescribes for production multi-agent systems, and what the
 RBI FREE-AI report maps to its 7 Sutras, 6 Pillars, and 26 Recommendations. Money is
 never computed by a model: rupee figures come from deterministic, tested integer-paise
@@ -52,38 +56,28 @@ flowchart TB
         BR[Browser / Passkey]
     end
 
-    subgraph Edge["pkg/web — HTTP + WebSocket"]
+    subgraph Edge["pkg/web — HTTP + WebSocket (cmd/api)"]
         direction TB
         MW[chi router + middleware<br/>RequestID · Recovery · Log<br/>OTel · JWT Auth · RBAC · RateLimit]
-        SSE[/v1/ask/stream SSE/]
-        WS[/v1/chat/ws WebSocket/]
-        OAUTH[/v1/oauth · /v1/webauthn/]
-        MCPEP[/mcp JSON-RPC/]
+        ASK[/v1/ask/]
+        SSE[/v1/ask/stream · /v1/chat/ws/]
+        INV[/v1/ai-inventory · /v1/aibom<br/>/v1/disclosures/]
     end
 
-    subgraph Platform["MARA platform"]
-        ORCH[pkg/orchestration]
-        BUS[pkg/comm Bus]
-        REG[pkg/registry]
-        POL[pkg/governance Composite Policy]
-        AGENTS[(specialist agents)]
-        FB[Fallback agents]
-        ORCH --> BUS
-        ORCH --> POL
-        REG --> ORCH
-        BUS --> AGENTS
-        AGENTS --> FB
+    subgraph Runtime["Governed pipeline — pkg/afg (Microsoft Agent Framework)"]
+        QA[afg.QAService.Answer]
+        GATE{{GovMiddleware — policy gate<br/>at every stage · single door}}
+        STAGES[ingestor → normalizer → enricher → analyzer<br/>→ forecaster · anomaly · recommender<br/>→ supervisor → reporter<br/><i>deterministic; drives agents/* logic</i>]
+        REG[pkg/registry<br/>AI-inventory / AIBOM source]
+        QA --> GATE --> STAGES
     end
 
-    subgraph AI["GenAI layer"]
-        LLM[pkg/llm<br/>Mock · Ollama · Anthropic<br/>OpenAI · Gemini]
-        RAG[pkg/rag<br/>hybrid · pgvector · rerank<br/>Self-RAG · CRAG]
-        GRAG[pkg/graphrag<br/>entity graph]
-        REAS[pkg/reasoning<br/>CoT · ReAct · Reflexion<br/>CoV · Step-Back]
-        MEM[pkg/memory<br/>semantic + episodic]
-        CONST[pkg/constitution<br/>7 Sutras]
-        TOOL[pkg/toolkit · pkg/eval]
-        SAFE[pkg/safety]
+    subgraph AI["GenAI layer — libraries used by LLM-backed agents"]
+        LLM[pkg/llm<br/>Mock · Ollama · Anthropic · OpenAI · Gemini<br/>Circuit · Deadline · Budget · Cache guard]
+        RAG[pkg/rag · pkg/graphrag<br/>hybrid · pgvector · rerank]
+        REAS[pkg/reasoning<br/>CoT · ReAct · Reflexion]
+        MEM[pkg/memory]
+        SAFE[pkg/safety · pkg/eval · pkg/constitution]
     end
 
     subgraph Data
@@ -92,55 +86,41 @@ flowchart TB
     end
 
     subgraph Observability
-        OTLP[OTel Collector]
-        TEMPO[(Tempo)]
-        GRAF[Grafana]
-        OTLP --> TEMPO --> GRAF
+        OTLP[OTel Collector] --> TEMPO[(Tempo)] --> GRAF[Grafana]
     end
 
-    subgraph External
-        KITE[Zerodha Kite MCP]
-        AA[Sahamati AA]
-        OLLAMA[Ollama runtime]
-    end
+    OLLAMA[Ollama runtime]
 
     UA -->|REST + Bearer JWT| MW
-    BR -->|Passkey| OAUTH
-    MW --> SSE
-    MW --> WS
-    MW -->|Publish| BUS
-    AGENTS --> LLM
-    AGENTS --> RAG
-    AGENTS --> GRAG
-    AGENTS --> MEM
-    LLM --> OLLAMA
-    AGENTS --> KITE
-    AGENTS --> AA
-    AGENTS --> PG
+    BR -->|REST + Bearer JWT| MW
+    MW --> ASK --> QA
+    MW --> SSE --> QA
+    MW --> INV --> REG
+    STAGES --> PG
     PG --> VAULT
-    AGENTS --> OTLP
+    QA --> OTLP
     MW --> OTLP
+    LLM --> OLLAMA
     LLM --> OTLP
-    POL -.audit.-> AGENTS
-    REAS -.via.-> LLM
-    SAFE -.via.-> POL
-    TOOL -.via.-> POL
-    CONST -.via.-> POL
 ```
 
-A request becomes a **message**, not a function call — agents never call each other
-directly. Everything flows through the bus, which gives one seam each for governance,
-tracing, fallbacks, and the live capability inventory. The load-bearing packages:
+For the production API (`cmd/api`), a `/v1/ask` request runs the **`afg.QAService`
+pipeline** — nine governed [Microsoft Agent Framework](https://github.com/microsoft/agent-framework-go)
+stages, each wrapped by the same policy gate (`GovMiddleware`, the *single construction
+door*), producing a report byte-identical to the original bus pipeline (there is an oracle
+parity test). The stages are deterministic and drive the real `agents/*` logic, so rupee
+figures still come from tested integer-paise math, not a model. The in-process message
+**bus** (`pkg/comm` + `pkg/orchestration` + `busio`) is the design used by the `cmd/genie`
+CLI demo and preserved on the `legacy/bus-architecture` branch. The load-bearing packages:
 
 | Package | Role |
 | --- | --- |
+| `pkg/afg` | Governed agent-framework pipeline (`QAService`) + single-door construction, `GovMiddleware`, `GuardMiddleware` — the `cmd/api` runtime |
 | `pkg/protocol` | Wire format: `Message`, `Classification`, metadata keys |
-| `pkg/registry` | Capability discovery; drives `GET /v1/ai-inventory` |
-| `pkg/comm` | Pub/sub bus (in-mem; swap for Kafka/NATS) |
-| `pkg/orchestration` | Dispatch loop: policy → lookup → risk ceiling → invoke → fallback |
 | `pkg/governance` | Composite policy: RBAC, classification, residency, consent, PII, injection, schema |
+| `pkg/registry` | AI-inventory / AIBOM source (drives `GET /v1/ai-inventory`) |
 | `pkg/agent` | `Agent` + `Environment` + `RiskClass` |
-| `agents/fallback` | Deterministic degraded answers when a primary fails |
+| `pkg/comm` · `pkg/orchestration` | In-process message bus — the `cmd/genie` CLI / legacy design |
 
 Full layer-by-layer map in **[docs/architecture.md](docs/architecture.md)**.
 
@@ -196,9 +176,9 @@ curl -s -X POST localhost:8080/v1/ask \
 ```
 
 `/v1/ask/stream` streams the same run as Server-Sent Events (AI disclosure → trace →
-per-agent handoffs → final report); `/v1/chat/ws` is a bidirectional WebSocket. Every
-`/v1/ask` appears in Grafana as one distributed trace across the HTTP server, the bus,
-governance, and each agent. Full endpoint reference: **[docs/api.md](docs/api.md)** ·
+progress → final report); `/v1/chat/ws` is a bidirectional WebSocket. Every `/v1/ask`
+appears in Grafana as one distributed trace across the HTTP server, the governed
+pipeline, and each stage. Full endpoint reference: **[docs/api.md](docs/api.md)** ·
 [`docs/openapi.yaml`](docs/openapi.yaml).
 
 ---
@@ -208,16 +188,18 @@ governance, and each agent. Full endpoint reference: **[docs/api.md](docs/api.md
 Each capability is a package with a dedicated design doc under
 [`docs/packages/`](docs/packages/README.md):
 
-- **Agents** — 58 live specialist agents behind the bus (ingestion, forecasting, anomaly,
-  KYC, claims, SME lending, tax, portfolio, payments, cyber) plus 2 deterministic
-  fallbacks. → [docs/agents](docs/agents/README.md)
+- **Agents** — 58 governed specialist agents in the AI inventory (ingestion, forecasting,
+  anomaly, KYC, claims, SME lending, tax, portfolio, payments, cyber) plus 2 deterministic
+  fallbacks. The `/v1/ask` money pipeline runs 9 of them as governed stages; `cmd/af-serve`
+  exposes the full governed catalog. → [docs/agents](docs/agents/README.md)
 - **LLM providers** — Mock · Ollama · Anthropic · OpenAI · Gemini, wrapped in
   Cache → Budget → Deadline → Circuit layers that bound autonomous reasoning.
 - **Retrieval** — hybrid RAG + GraphRAG over pgvector, with rerank, Self-RAG, and CRAG.
 - **Reasoning** — CoT, ReAct, Reflexion, Chain-of-Verification, Step-Back, semantic router.
 - **Memory** — semantic + episodic + LLM summarisation + append-only long-term facts.
 - **Safety & eval** — jailbreak/topic/toxicity/bias filters; RAGAS, drift, hallucination, Elo.
-- **Auth** — JWT + bcrypt, OAuth 2.1, RFC 8628 device flow, WebAuthn passwordless.
+- **Auth** — JWT + bcrypt RBAC (wired into the API). OAuth 2.1, RFC 8628 device flow, and
+  WebAuthn passwordless ship as `pkg/auth` libraries, not mounted in the default router.
 - **Privacy & crypto** — AES-256-GCM envelope encryption, HMAC tokenisation, DP noise.
 - **Protocols** — MCP (Zerodha Kite), A2A, CloudEvents, AsyncAPI, OpenInference. → [docs/protocols.md](docs/protocols.md)
 - **Sovereignty & supply chain** — data-residency tags, on-prem inference, federated

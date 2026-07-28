@@ -118,7 +118,7 @@ func run() error {
 	// Telemetry — OTLP if endpoint set, else stdout.
 	telCfg := observability.TelemetryConfig{
 		ServiceName:    "genie-api",
-		ServiceVersion: "0.1.0",
+		ServiceVersion: "1.0.0",
 		Exporter:       observability.ExporterStdout,
 	}
 	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
@@ -262,7 +262,7 @@ func run() error {
 	register(working_capital.New())
 
 	// LLM + embedder stack — Mock by default, Ollama when GENIE_LLM=ollama.
-	llmStack := buildLLMStack(ctx, logger)
+	llmStack := buildLLMStack(logger)
 
 	// RAG knowledge — seed the FREE-AI report's Sutras so the educator can
 	// cite them at runtime. Production loads richer corpora.
