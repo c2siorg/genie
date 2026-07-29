@@ -7,16 +7,19 @@
 > (RAG, reasoning, memory, eval, safety, privacy).
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/PratikDhanave/genie/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/PratikDhanave/genie/tree/main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/PratikDhanave/genie)](https://goreportcard.com/report/github.com/PratikDhanave/genie)
 ![Go](https://img.shields.io/badge/Go-1.25+-00ADD8)
+![Release](https://img.shields.io/github/v/tag/PratikDhanave/genie?label=release&sort=semver&color=blue)
 ![Architecture](https://img.shields.io/badge/Architecture-MARA-blue)
 ![OTel](https://img.shields.io/badge/observability-OpenTelemetry-success)
 ![RBI FREE-AI](https://img.shields.io/badge/RBI-FREE--AI%20aligned-orange)
-![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)
+[![License: PolyForm NC 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-lightgrey)](LICENSE)
 
-**60+ specialist finance agents** implemented across the codebase (61 specialist packages
-under `agents/`), **58 of them wired into the running API** today — plus 2 deterministic
-fallback agents (60 registered in all) — covering retail finance, SME lending, KYC,
-bancassurance, fraud, treasury, payments, and cyber.
+**60+ specialist finance agents** across the codebase (61 specialist packages under
+`agents/`), **58 registered in the running API's governed inventory** plus 2 deterministic
+fallbacks — covering retail finance, SME lending, KYC, bancassurance, fraud, treasury,
+payments, and cyber. The `/v1/ask` money pipeline runs nine of them as governed stages;
+`cmd/af-serve` serves the full governed catalog.
 
 ---
 
@@ -25,7 +28,8 @@ bancassurance, fraud, treasury, payments, and cyber.
 - [Why Genie](#why-genie) · [Architecture](#architecture) · [Quick start](#quick-start) ·
   [Using the API](#using-the-api) · [Capabilities](#capabilities) ·
   [Governance & FREE-AI](#governance--free-ai) · [Documentation](#documentation) ·
-  [Development](#development) · [Roadmap](#roadmap) · [License](#license)
+  [Development](#development) · [Roadmap](#roadmap) · [Contributing](#contributing) ·
+  [License](#license) · [References](#references)
 
 ---
 
@@ -232,7 +236,7 @@ Deep reference lives in **[`docs/`](docs/README.md)** — start there.
 
 | Doc | Contents |
 | --- | --- |
-| [architecture.md](docs/architecture.md) | The core loop, packages, dispatch, fan-out/fan-in |
+| [architecture.md](docs/architecture.md) | The governed `QAService` pipeline, packages, request lifecycle, and the legacy bus design |
 | [operations.md](docs/operations.md) | Env vars, deployment, docker stack, runbooks |
 | [api.md](docs/api.md) · [openapi.yaml](docs/openapi.yaml) | HTTP/WebSocket endpoints |
 | [protocols.md](docs/protocols.md) · [asyncapi.yaml](docs/asyncapi.yaml) | MCP, A2A, CloudEvents |
@@ -246,13 +250,18 @@ Deep reference lives in **[`docs/`](docs/README.md)** — start there.
 ```bash
 make build          # compile every binary under cmd/ into bin/
 make test           # go test -race ./...   (the CI gate; also runs go vet)
+make lint           # golangci-lint (strict; matches CI)
 make run-cli        # CLI demo — no HTTP, Postgres, or LLM needed
 make run-api-mock   # HTTP API with the mock LLM (needs Postgres + JWT/KEK env)
 make scaffold name=<id> cap=<capability> in=<intype> out=<outtype> next=<agent>
 ```
 
-CI runs `go vet` then `go test -race` on Go 1.25, then a docker build on `main`. Adding
-an agent, running a single test, and the full env reference are covered in
+> **Module path ≠ repo name.** The directory is `genie`, but the Go module is
+> `github.com/PratikDhanave/multi-agent-reference-architecture-go` — import packages by the
+> module path (e.g. `.../multi-agent-reference-architecture-go/pkg/afg`), never `genie`.
+
+CI runs `go vet`, `golangci-lint`, and `go test -race` on Go 1.25, then a docker build on
+`main`. Adding an agent, running a single test, and the full env reference are covered in
 [`CLAUDE.md`](CLAUDE.md) and [docs/operations.md](docs/operations.md).
 
 ---
