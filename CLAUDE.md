@@ -17,20 +17,23 @@ with no external dependencies.
 `github.com/PratikDhanave/multi-agent-reference-architecture-go`. All imports use the
 module path, never "genie".
 
-**This file governs the Go project only.** Two untracked sibling subprojects live beside
-it and are NOT part of this Go module — each has its own CLAUDE.md, Makefile, and toolchain.
-Don't run their commands here (or these here): `geniepython/` is the Python port of the same
-product (uv / ruff / pytest, FastAPI, Azure AI Foundry-only — no mock provider; `make check`,
-`make run`), and `microsoftagentframeworklearning/` is a standalone 74-lesson learning
-workspace unrelated to the product. When a request is about the Python port or the lessons,
-`cd` into that directory and follow its CLAUDE.md; otherwise stay at the repo root.
+**This file governs the Go project only.** One untracked sibling subproject lives inside
+this folder but is NOT part of this Go module — it has its own CLAUDE.md, Makefile, and
+toolchain: `geniepython/` is the Python port of the same product (uv / ruff / pytest,
+FastAPI, Azure AI Foundry-only — no mock provider; `make check`, `make run`). It is
+`.gitignore`d so it doesn't clutter this repo's status; don't run its commands here (or
+these there). A separate 74-lesson `microsoftagentframeworklearning/` learning workspace
+(unrelated to the product) lives at the workspace root beside `genie/`, not inside it.
+When a request is about the Python port, `cd` into `geniepython/` and follow its CLAUDE.md;
+otherwise stay at the repo root.
 
 ## Commands
 
 ```bash
 make build          # compile every binary under cmd/ into bin/
-make test           # go test -race ./...   (the CI gate; also runs go vet)
+make test           # go test -race ./...   (part of the CI gate)
 make vet            # go vet ./...
+make lint           # golangci-lint run (strict, v2 config; part of the CI gate — needs golangci-lint installed)
 make tidy           # go mod tidy
 
 # run a single test / package
@@ -53,8 +56,10 @@ make openapi-validate  # validate docs/openapi.yaml against the OpenAPI schema (
 make ui             # rebuild the Next.js console (web-next/) and refresh the embedded export (needs Node)
 ```
 
-CI (`.circleci/config.yml`) runs `go vet ./...` then `go test -race ./...` on Go 1.25,
-then a docker build on `main`. Match that locally with `make vet && make test`.
+CI (`.circleci/config.yml`) runs two parallel jobs on Go 1.25 — `lint`
+(`golangci-lint run`, strict v2 config in `.golangci.yml`) and `test` (`go vet ./...`
+then `go test -race ./...`) — then a docker build on `main` gated on both. Match that
+locally with `make vet && make lint && make test`.
 
 ## Architecture — the core loop
 

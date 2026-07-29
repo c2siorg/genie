@@ -102,7 +102,7 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 // Analyse fetches series + classifies each.
 func (a *Agent) Analyse(ctx context.Context, req Request) (Response, error) {
 	if a.Fetcher == nil {
-		return Response{}, &noFetcherErr{}
+		return Response{}, &noFetcherError{}
 	}
 	series, err := a.Fetcher.Fetch(ctx, req.Geo, req.Keywords)
 	if err != nil {
@@ -191,6 +191,6 @@ func meanInt(xs []int) float64 {
 
 func round2(x float64) float64 { return float64(int64(x*100+0.5)) / 100 }
 
-type noFetcherErr struct{}
+type noFetcherError struct{}
 
-func (noFetcherErr) Error() string { return "google_trends: no fetcher configured" }
+func (noFetcherError) Error() string { return "google_trends: no fetcher configured" }

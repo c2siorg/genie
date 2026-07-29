@@ -61,7 +61,7 @@ func SipVsLumpsumSpec() afg.Spec {
 			if seed == 0 {
 				seed = 42
 			}
-			r := rand.New(rand.NewSource(seed))
+			r := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: Monte Carlo return simulation; math/rand is intended, not security-sensitive
 			monthlyMu := req.ExpectedAnnualReturn / 12
 			monthlySigma := req.AnnualVolatility / math.Sqrt(12)
 			monthlySIP := req.Amount / 12.0
@@ -76,8 +76,8 @@ func SipVsLumpsumSpec() afg.Spec {
 				for m := 0; m < req.HorizonMonths; m++ {
 					z := r.NormFloat64()
 					ret := monthlyMu + monthlySigma*z
-					L = L * (1 + ret)
-					S = S * (1 + ret)
+					L *= (1 + ret)
+					S *= (1 + ret)
 					if m < sipMonths {
 						S += monthlySIP
 					}

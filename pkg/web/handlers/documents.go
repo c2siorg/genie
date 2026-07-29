@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 
@@ -91,9 +90,4 @@ func (h *Documents) Get(w http.ResponseWriter, r *http.Request) {
 		Description    string                  `json:"description"`
 		KEKID          string                  `json:"kek_id"`
 	}{ID: d.ID, Classification: d.Classification, Description: d.Description, KEKID: d.Payload.KEKID})
-}
-
-// jsonDecoder is exported so handler tests can reuse it.
-func jsonDecode(r *http.Request, out any) error {
-	return json.NewDecoder(r.Body).Decode(out)
 }

@@ -8,12 +8,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/coder/websocket"
+
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/afg"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
-	"github.com/coder/websocket"
 )
 
 // ChatWS implements a bidirectional WebSocket chat. The client sends one or

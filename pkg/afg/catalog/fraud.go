@@ -71,6 +71,7 @@ func FraudSpec() afg.Spec {
 			// parseTxnTime tries a Description "TIME:YYYY-MM-DDTHH:MM" style suffix
 			// first (enricher attaches it when minute-resolution is available),
 			// then falls back to the date at midnight UTC.
+			//nolint:unparam // the ok result is consumed by several callers below (velocity, impossible-travel, after-hours)
 			parseTxnTime := func(t txn) (time.Time, bool) {
 				if i := strings.Index(t.Description, "TIME:"); i >= 0 {
 					tail := t.Description[i+len("TIME:"):]

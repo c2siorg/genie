@@ -59,29 +59,29 @@ func MfScreenerSpec() afg.Spec {
 			const riskFreeRate = 0.07
 
 			round2 := func(x float64) float64 { return float64(int64(x*100+0.5)) / 100 }
-			normCap := func(x, cap float64) float64 {
-				if cap <= 0 {
+			normCap := func(x, capVal float64) float64 {
+				if capVal <= 0 {
 					return 0
 				}
 				if x <= 0 {
 					return 0
 				}
-				if x >= cap {
+				if x >= capVal {
 					return 1
 				}
-				return x / cap
+				return x / capVal
 			}
-			normInverse := func(x, cap float64) float64 {
-				if cap <= 0 {
+			normInverse := func(x, capVal float64) float64 {
+				if capVal <= 0 {
 					return 0
 				}
 				if x <= 0 {
 					return 1
 				}
-				if x >= cap {
+				if x >= capVal {
 					return 0
 				}
-				return 1 - x/cap
+				return 1 - x/capVal
 			}
 			passesFilter := func(f fund, fi filter) bool {
 				if fi.Category != "" && f.Category != fi.Category {

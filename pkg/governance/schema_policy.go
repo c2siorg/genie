@@ -21,6 +21,7 @@ func (p SchemaPolicy) Evaluate(_ context.Context, msg protocol.Message) (PolicyR
 		return PolicyResult{Decision: DecisionAllow, Reason: "no schema registered", CheckedAt: time.Now().UTC()}, nil
 	}
 	if err := s.ValidateJSON([]byte(msg.Content)); err != nil {
+		//nolint:nilerr // a schema-validation failure is a policy Deny result, not an execution error
 		return PolicyResult{
 			Decision:  DecisionDeny,
 			Reason:    "schema validation failed: " + err.Error(),

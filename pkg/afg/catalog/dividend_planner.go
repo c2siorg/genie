@@ -59,7 +59,7 @@ func DividendPlannerSpec() afg.Spec {
 				net := grossDividend * (1 - req.TDSAndSlabPct/100)
 				totalNet += net
 				// Apply price appreciation across the year first.
-				price = price * (1 + req.PriceAppreciationAnn)
+				price *= (1 + req.PriceAppreciationAnn)
 				if req.Reinvest && price > 0 {
 					shares += net / price
 				}
@@ -71,7 +71,7 @@ func DividendPlannerSpec() afg.Spec {
 					PriceEOY:     round2(price),
 					HoldingValue: round2(shares * price),
 				})
-				dps = dps * (1 + req.DividendGrowthAnnual)
+				dps *= (1 + req.DividendGrowthAnnual)
 			}
 			terminal := shares * price
 			yoc := 0.0

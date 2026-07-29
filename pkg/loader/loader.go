@@ -60,6 +60,7 @@ func (PDFLoader) Load(ctx context.Context, path string) (Document, error) {
 	if _, err := exec.LookPath("pdftotext"); err != nil {
 		return Document{}, fmt.Errorf("loader: pdftotext not on PATH (install poppler-utils): %w", err)
 	}
+	//nolint:gosec // G204: fixed binary (pdftotext); path is a server-managed document/temp file, not shell-interpolated user input
 	cmd := exec.CommandContext(ctx, "pdftotext", "-layout", path, "-")
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -82,7 +83,7 @@ var (
 )
 
 func (HTMLLoader) Load(_ context.Context, path string) (Document, error) {
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: path is a server-managed document path, not user-supplied
 	if err != nil {
 		return Document{}, err
 	}
@@ -98,7 +99,7 @@ func (HTMLLoader) Load(_ context.Context, path string) (Document, error) {
 type TextLoader struct{}
 
 func (TextLoader) Load(_ context.Context, path string) (Document, error) {
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: path is a server-managed document path, not user-supplied
 	if err != nil {
 		return Document{}, err
 	}
@@ -133,7 +134,7 @@ func (DOCXLoader) Load(_ context.Context, path string) (Document, error) {
 				return Document{}, err
 			}
 			docXML, err = io.ReadAll(rc)
-			rc.Close()
+			_ = rc.Close()
 			if err != nil {
 				return Document{}, err
 			}

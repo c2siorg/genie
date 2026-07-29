@@ -29,7 +29,7 @@ func NewBandit(seed int64) *Bandit {
 	if seed == 0 {
 		src = rand.NewSource(int64(1)) // deterministic by default for tests
 	}
-	return &Bandit{arms: map[string]*armStats{}, rng: rand.New(src)}
+	return &Bandit{arms: map[string]*armStats{}, rng: rand.New(src)} //nolint:gosec // G404: exploration sampling for the prompt bandit; math/rand is intended, not security-sensitive
 }
 
 // Register adds an arm with a Beta(1,1) prior (uniform). Idempotent.

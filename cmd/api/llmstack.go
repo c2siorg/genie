@@ -37,7 +37,7 @@ type LLMStack struct {
 //	GENIE_LLM_CACHE_TTL    cache TTL in seconds, default 600
 //	GENIE_LLM_TIMEOUT      per-call timeout seconds, default 30
 //	GENIE_LLM_CIRCUIT      consecutive-error threshold, default 5
-func buildLLMStack(ctx context.Context, logger interface {
+func buildLLMStack(logger interface {
 	Info(msg string, args ...any)
 }) LLMStack {
 	kind := strings.ToLower(os.Getenv("GENIE_LLM"))
@@ -47,7 +47,7 @@ func buildLLMStack(ctx context.Context, logger interface {
 
 	switch kind {
 	case "ollama":
-		return ollamaStack(ctx, logger)
+		return ollamaStack(logger)
 	default:
 		return mockStack(logger)
 	}
@@ -68,7 +68,7 @@ func mockStack(logger interface{ Info(msg string, args ...any) }) LLMStack {
 	}
 }
 
-func ollamaStack(ctx context.Context, logger interface{ Info(msg string, args ...any) }) LLMStack {
+func ollamaStack(logger interface{ Info(msg string, args ...any) }) LLMStack {
 	url := envDefault("GENIE_OLLAMA_URL", "http://localhost:11434")
 	chatModel := envDefault("GENIE_OLLAMA_CHAT", "llama3.2:1b")
 	embedModel := envDefault("GENIE_OLLAMA_EMBED", "nomic-embed-text")

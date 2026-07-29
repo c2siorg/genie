@@ -53,6 +53,7 @@ func (s ScannedPDFLoader) Load(ctx context.Context, path string) (Document, erro
 	defer os.RemoveAll(tmp)
 
 	prefix := filepath.Join(tmp, "page")
+	//nolint:gosec // G204: fixed binary (pdftoppm); path is a server-managed document/temp file, not shell-interpolated user input
 	cmd := exec.CommandContext(ctx, "pdftoppm", "-r", itoa(dpi), "-png", path, prefix)
 	if err := cmd.Run(); err != nil {
 		return Document{}, fmt.Errorf("loader: pdftoppm %s: %w", path, err)
@@ -68,6 +69,7 @@ func (s ScannedPDFLoader) Load(ctx context.Context, path string) (Document, erro
 
 	var allText bytes.Buffer
 	for _, page := range pages {
+		//nolint:gosec // G204: fixed binary (tesseract); page path is a temp file we just generated, not user input
 		ocr := exec.CommandContext(ctx, "tesseract", page, "stdout", "-l", "eng")
 		var out bytes.Buffer
 		ocr.Stdout = &out

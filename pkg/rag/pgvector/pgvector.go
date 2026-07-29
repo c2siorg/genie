@@ -13,8 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 )
 
 // Store implements rag.VectorStore against pgvector.

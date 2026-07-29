@@ -3,10 +3,11 @@ package web
 import (
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/handlers"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
-	"github.com/go-chi/chi/v5"
 )
 
 // Deps bundles the dependencies needed to assemble the HTTP router.

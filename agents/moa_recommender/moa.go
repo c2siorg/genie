@@ -74,7 +74,6 @@ func (a *Agent) HandleMessage(ctx context.Context, msg agent.Message, env agent.
 	}
 	out := make(chan result, len(a.Panel))
 	for i, p := range a.Panel {
-		i, p := i, p
 		go func() {
 			resp, err := p.Provider.Complete(ctx, llm.CompletionRequest{
 				Model: p.Model,

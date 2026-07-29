@@ -91,7 +91,7 @@ func KycOrchestratorSpec() afg.Spec {
 				if surname == "" {
 					return true // can't check; don't penalise on missing name
 				}
-				return strings.ToUpper(string(pan[4])) == strings.ToUpper(string(surname[0]))
+				return strings.EqualFold(string(pan[4]), string(surname[0]))
 			}
 			round2 := func(x float64) float64 { return float64(int64(x*100+0.5)) / 100 }
 

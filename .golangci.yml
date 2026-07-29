@@ -1,0 +1,64 @@
+# golangci-lint configuration (schema v2).
+# Strict, curated linter set. Run locally with: golangci-lint run
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  # "standard" = errcheck, govet, ineffassign, staticcheck, unused.
+  default: standard
+  enable:
+    - bodyclose            # HTTP response bodies are closed
+    - copyloopvar          # flag now-redundant loop-var copies (Go 1.22+ semantics)
+    - durationcheck        # catch time.Duration multiplication mistakes
+    - errname              # error vars are Err*, error types *Error
+    - errorlint            # correct errors.Is/As wrapping
+    - gocheckcompilerdirectives # //go: directives are well-formed
+    - gocritic             # opinionated correctness/style/perf checks
+    - gosec                # security-focused static analysis
+    - misspell             # common English misspellings in comments/strings
+    - nakedret             # no naked returns in longer funcs
+    - nilerr               # don't return nil when err is non-nil (and vice versa)
+    - predeclared          # don't shadow predeclared identifiers
+    - reassign             # don't reassign top-level package variables
+    - revive               # broad golint-style rule set
+    - rowserrcheck         # sql.Rows.Err() is checked
+    - sqlclosecheck        # sql.Rows/Stmt are closed
+    - unconvert            # remove redundant type conversions
+    - unparam              # unused function parameters/results
+    - usestdlibvars        # use stdlib constants (http.MethodGet, etc.)
+    - wastedassign         # assignments that are never used
+
+  settings:
+    gosec:
+      excludes:
+        - G115 # integer overflow on conversion — pervasive false positives on size/len casts
+    revive:
+      rules:
+        - name: exported
+          disabled: true # doc-comment style is enforced by review, not CI noise
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+    rules:
+      # Tests may take shortcuts the production code may not.
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+          - unparam
+          - bodyclose
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/PratikDhanave/multi-agent-reference-architecture-go

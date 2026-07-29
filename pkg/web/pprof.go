@@ -3,10 +3,12 @@ package web
 import (
 	"net/http"
 	"net/http/pprof"
+	"time"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
-	"github.com/go-chi/chi/v5"
 )
 
 // MountPprof attaches the standard library pprof handlers under /debug/pprof.
@@ -52,7 +54,7 @@ func StartLocalPprof(addr string) *http.Server {
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	srv := &http.Server{Addr: addr, Handler: mux}
+	srv := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 10 * time.Second}
 	go func() { _ = srv.ListenAndServe() }()
 	return srv
 }

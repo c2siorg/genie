@@ -140,17 +140,17 @@ func CashflowUnderwriterSpec() afg.Spec {
 			}
 
 			// normInverse maps "lower is better" onto 0..100. Above cap → 0; at 0 → 100.
-			normInverse := func(x, cap float64) float64 {
-				if cap <= 0 {
+			normInverse := func(x, capVal float64) float64 {
+				if capVal <= 0 {
 					return 0
 				}
 				if x <= 0 {
 					return 100
 				}
-				if x >= cap {
+				if x >= capVal {
 					return 0
 				}
-				return (1 - x/cap) * 100
+				return (1 - x/capVal) * 100
 			}
 
 			// normClamp01 maps a 0..1 input onto 0..100, clamped.

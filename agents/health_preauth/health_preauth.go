@@ -142,10 +142,10 @@ func (a *Agent) Decide(r Request, p Plan) Decision {
 	}
 
 	// 6. Procedure package cap.
-	if cap, ok := p.ProcedurePackageRupees[procLower]; ok && cap > 0 {
+	if capRupees, ok := p.ProcedurePackageRupees[procLower]; ok && capRupees > 0 {
 		gross := r.EstimatedBillRupees - deductions
-		if gross > cap {
-			deductions += gross - cap
+		if gross > capRupees {
+			deductions += gross - capRupees
 			reasons = append(reasons, "Procedure package cap applied")
 		}
 	}

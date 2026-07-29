@@ -6,9 +6,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 )
 
 // ErrTokenNotFound is returned when an MCP token lookup misses.

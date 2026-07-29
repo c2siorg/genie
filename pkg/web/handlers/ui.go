@@ -58,7 +58,7 @@ func (h *UI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Short cache so an `index.html` edit shows up after one refresh, but
 	// hashed assets can be cached aggressively if you ever add them.
 	w.Header().Set("Cache-Control", "no-cache, max-age=60")
-	_, _ = w.Write(data)
+	_, _ = w.Write(data) //nolint:gosec // G705: data is an embedded static asset (go:embed), not user-controlled input
 }
 
 // IndexHTML returns the entry point — used by the root redirect handler so

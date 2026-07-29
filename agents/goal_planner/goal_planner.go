@@ -86,7 +86,7 @@ func (a *Agent) Simulate(req Request) Plan {
 	if seed == 0 {
 		seed = DefaultSeed
 	}
-	r := rand.New(rand.NewSource(seed))
+	r := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: Monte Carlo goal simulation; math/rand is intended, not security-sensitive
 	monthlyMu := req.ExpectedAnnualReturn / 12
 	monthlySigma := req.AnnualVolatility / math.Sqrt(12)
 

@@ -45,6 +45,10 @@ e2e: ## Run the user-simulation test against a running stack (signup → ask →
 vet: ## go vet
 	$(GO) vet $(PKG)
 
+.PHONY: lint
+lint: ## golangci-lint (strict; matches CI). Install: https://golangci-lint.run/welcome/install/
+	golangci-lint run --timeout 5m ./...
+
 .PHONY: tidy
 tidy: ## go mod tidy
 	$(GO) mod tidy

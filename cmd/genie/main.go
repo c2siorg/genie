@@ -80,7 +80,8 @@ func main() {
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "telemetry:", err)
-		os.Exit(1)
+		_ = traceFile.Close()
+		os.Exit(1) //nolint:gocritic // demo CLI: fatal init error, trace file closed explicitly above
 	}
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

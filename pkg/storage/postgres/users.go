@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 )
 
 // ErrUserNotFound is returned when a user lookup fails.

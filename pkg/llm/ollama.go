@@ -68,14 +68,9 @@ type ollamaResponse struct {
 }
 
 func (p *OllamaProvider) Complete(ctx context.Context, req CompletionRequest) (CompletionResponse, error) {
-	// Residency: Ollama is on-prem so PII is fine; refuse if the caller marks
-	// the request as cross-border disallowed AND the home region isn't on-prem.
-	if !req.Residency.AllowCrossBorder && req.Residency.Region != "" &&
-		req.Residency.Region != "on-prem" {
-		// On-prem can serve any home region — only refuse if the caller
-		// explicitly named a region we don't satisfy. We satisfy any region
-		// because we run locally; this branch is here as a placeholder.
-	}
+	// Residency: Ollama is on-prem so PII is fine. On-prem can serve any home
+	// region, so we never refuse here on residency grounds. If a future non-local
+	// Ollama deployment needs a real region check, add it here.
 
 	body := ollamaRequest{
 		Model:    nonEmpty(req.Model, p.Model),

@@ -6,10 +6,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 )
 
 // ErrDocumentNotFound is returned when a document lookup fails.

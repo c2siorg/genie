@@ -131,7 +131,7 @@ func AutoInsuranceSpec() afg.Spec {
 				}
 			case "renewal_quote":
 				// NCB ratchet: clean year bumps NCB to next tier; any claim resets to 0.
-				newNCB := req.NCBPct
+				var newNCB float64
 				if req.ClaimedThisYear {
 					newNCB = 0
 				} else {

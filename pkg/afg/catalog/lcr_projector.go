@@ -105,7 +105,7 @@ func LcrProjectorSpec() afg.Spec {
 				cappedIn = 0.75 * out
 			}
 			netOut := out - cappedIn
-			lcr := 0.0
+			var lcr float64
 			if netOut > 0 {
 				lcr = hqlaTotal / netOut * 100
 			} else {

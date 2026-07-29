@@ -35,6 +35,7 @@ func (s *ShadowProvider) Complete(ctx context.Context, req CompletionRequest) (C
 		return resp, err
 	}
 	// Fire shadow async; never block the user response.
+	//nolint:gosec // G118: shadow eval is intentionally detached from the request context so it outlives the response
 	go func() {
 		// Detach from request context so the shadow call survives the response.
 		bg, cancel := context.WithTimeout(context.Background(), s.Timeout)

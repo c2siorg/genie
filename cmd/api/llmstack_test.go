@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"strings"
 	"testing"
 )
@@ -22,7 +21,7 @@ func (r *recordLogger) Info(msg string, args ...any) {
 func TestBuildLLMStack_MockByDefault(t *testing.T) {
 	t.Setenv("GENIE_LLM", "")
 	rl := &recordLogger{}
-	s := buildLLMStack(context.Background(), rl)
+	s := buildLLMStack(rl)
 	if s.Provider == nil || s.Embedder == nil {
 		t.Fatal("expected provider and embedder to be set")
 	}
@@ -38,7 +37,7 @@ func TestBuildLLMStack_OllamaWrapped(t *testing.T) {
 	t.Setenv("GENIE_LLM", "ollama")
 	t.Setenv("GENIE_OLLAMA_URL", "http://unreachable:0")
 	rl := &recordLogger{}
-	s := buildLLMStack(context.Background(), rl)
+	s := buildLLMStack(rl)
 	if s.Provider == nil || s.Embedder == nil {
 		t.Fatal("expected provider and embedder to be set")
 	}

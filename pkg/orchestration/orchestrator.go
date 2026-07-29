@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/governance"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/governance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
 )
 
 // Orchestrator coordinates multiple agents, applying governance and routing messages via a bus.

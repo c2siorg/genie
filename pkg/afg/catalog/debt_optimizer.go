@@ -62,8 +62,8 @@ func DebtOptimizerSpec() afg.Spec {
 				}
 				return false
 			}
-			sortByStrategy := func(d []Debt, strat string) {
-				switch strat {
+			sortByStrategy := func(d []Debt, strategy string) {
+				switch strategy {
 				case strategySnowball:
 					sort.SliceStable(d, func(i, j int) bool { return d[i].BalanceRupees < d[j].BalanceRupees })
 				default: // avalanche

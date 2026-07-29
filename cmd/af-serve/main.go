@@ -45,9 +45,15 @@ func main() {
 	if addr == "" {
 		addr = ":8081"
 	}
+	//nolint:gosec // G706: args are startup config (policy version, agent count, bind addr), not user input
 	log.Printf("af-serve: board policy %s, %d governed agents, listening on %s",
 		p.Version, len(reg.Inventory()), addr)
-	if err := http.ListenAndServe(addr, afg.NewHandler(reg, issuer)); err != nil {
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           afg.NewHandler(reg, issuer),
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

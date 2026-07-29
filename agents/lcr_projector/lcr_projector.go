@@ -132,7 +132,7 @@ func (a *Agent) Compute(req Request) Result {
 		cappedIn = 0.75 * out
 	}
 	netOut := out - cappedIn
-	lcr := 0.0
+	var lcr float64
 	if netOut > 0 {
 		lcr = hqla / netOut * 100
 	} else {
@@ -147,13 +147,6 @@ func (a *Agent) Compute(req Request) Result {
 		Compliant:      lcr >= 100,
 		Note:           "Applies RBI LCR master direction run-off factors. Live LCR must reconcile against bank's NSF group.",
 	}
-}
-
-func min(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 func round2(x float64) float64 { return float64(int64(x*100+0.5)) / 100 }

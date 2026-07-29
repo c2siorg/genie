@@ -11,11 +11,12 @@ import (
 	"fmt"
 	"os"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/governance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/sovereignty"
-	"gopkg.in/yaml.v3"
 )
 
 // AIPolicy mirrors Annexure V — Suggested Outline of Board Policy on AI.
@@ -76,7 +77,7 @@ type Limits struct {
 
 // Load parses a YAML file from disk.
 func Load(path string) (*AIPolicy, error) {
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: policy path is operator-supplied at startup (config), not user input
 	if err != nil {
 		return nil, fmt.Errorf("read ai-policy: %w", err)
 	}

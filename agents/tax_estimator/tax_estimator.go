@@ -102,7 +102,6 @@ func newRegime(income float64) (float64, string) {
 			prev = b.upper
 		} else {
 			tax += (income - prev) * b.rate
-			prev = income
 			break
 		}
 	}
@@ -131,7 +130,6 @@ func oldRegime(income float64) (float64, string) {
 			prev = b.upper
 		} else {
 			tax += (income - prev) * b.rate
-			prev = income
 			break
 		}
 	}
