@@ -7,6 +7,14 @@ aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Typed document uploads + Aadhaar-aware KYC** — `POST /v1/documents` now takes a
+  `type` (`csv`/`aadhaar_offline_kyc`/`pan`/`bank_statement`/`passport`/`other`) that sets a
+  classification floor (Aadhaar/passport → `secret`). New `pkg/kyc`: Aadhaar Verhoeff
+  validation, masking (last-4 only), PAN validation, and UIDAI offline e-KYC XML validation
+  that extracts *only* the Aadhaar last-4 — the full number is never stored, logged, or
+  returned. Governance PII policy also flags 4-4-4 grouped Aadhaar. Migration
+  `0005_document_types.sql` adds `doc_type` + `masked_meta`. Also closed an IDOR: document
+  metadata (`GET /v1/documents`) is now readable only by its owner.
 - **AFG framework-native edge** — a port of Genie's orchestration + provider
   layers onto Microsoft's Agent Framework for Go (`pkg/afg`, `cmd/af-serve`,
   `cmd/af-hello`). Serves `POST /v1/ask` + `GET /v1/ai-inventory` for the full

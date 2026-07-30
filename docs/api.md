@@ -113,7 +113,7 @@ Passwordless passkey flow (Ed25519). See [protocols.md](protocols.md).
 ### `POST /v1/documents` — upload
 
 ```bash
-curl -s -X POST 'http://localhost:8080/v1/documents?description=Jan%20statement&classification=pii' \
+curl -s -X POST 'http://localhost:8080/v1/documents?type=csv&description=Jan%20statement&classification=pii' \
   -H "Authorization: Bearer $TOKEN" \
   --data-binary @data/sample.csv
 ```
@@ -122,7 +122,23 @@ The body is encrypted with a fresh DEK, the DEK wrapped by the active
 KEK, and the envelope stored in `documents.payload` JSONB. Response:
 
 ```json
-{"id":"uuid","classification":"pii","kek_id":"...","expires_at":"..."}
+{"id":"uuid","type":"csv","classification":"pii","kek_id":"..."}
+```
+
+**`type`** (optional, default `csv`) — one of `csv`, `aadhaar_offline_kyc`, `pan`,
+`bank_statement`, `passport`, `other`. It sets a **classification floor** that a
+lower `classification` cannot undercut: `aadhaar_offline_kyc` and `passport` are
+forced to `secret`; the rest to at least `pii`.
+
+**Aadhaar (`type=aadhaar_offline_kyc`)** — the body must be a UIDAI *offline
+e-KYC* XML. The edge validates the XML shape and extracts **only the Aadhaar
+last-4** (from `referenceId`) into `masked.aadhaar_last4`; a full Aadhaar number
+is never present, stored, logged, or returned. Malformed offline e-KYC → `400`.
+Aadhaar structural validity (12 digits + Verhoeff checksum) and masking live in
+`pkg/kyc`.
+
+```json
+{"id":"uuid","type":"aadhaar_offline_kyc","classification":"secret","kek_id":"...","masked":{"aadhaar_last4":"2346"}}
 ```
 
 Classification options: `public`, `internal`, `pii`, `secret`.
