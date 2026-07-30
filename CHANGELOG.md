@@ -7,6 +7,13 @@ aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Coordination-of-Benefits agent** (`coordination_of_benefits`) — a deterministic COB
+  engine in the governed catalog (`pkg/afg/catalog/cob.go`): for a patient/family insured
+  under two overlapping health plans it decides primary/secondary, applies the secondary
+  non-duplication rule, per-plan deductible/OOP-max accumulation, and a bounded
+  minimum-out-of-pocket primary-ordering search. Integer-paise, standard COB domain rules,
+  unit-tested invariants (`0 ≤ patient_oop ≤ billed`, `payout ≤ billed`). Served by
+  `cmd/af-serve`; brings the governed catalog to 59 agents.
 - **Typed document uploads + Aadhaar-aware KYC** — `POST /v1/documents` now takes a
   `type` (`csv`/`aadhaar_offline_kyc`/`pan`/`bank_statement`/`passport`/`other`) that sets a
   classification floor (Aadhaar/passport → `secret`). New `pkg/kyc`: Aadhaar Verhoeff

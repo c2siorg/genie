@@ -10,14 +10,14 @@ import (
 
 // The full catalog wires into a single governed registry with unique IDs.
 func TestCatalog_RegistryComplete(t *testing.T) {
-	if got := len(All()); got != 45 {
-		t.Fatalf("want 45 ported specialist specs, got %d", got)
+	if got := len(All()); got != 46 {
+		t.Fatalf("want 46 ported specialist specs, got %d", got)
 	}
 	gate := governance.NewComposite(governance.MaxContentLengthPolicy{Max: 1 << 20})
 	reg := Registry(gate)
 	inv := reg.Inventory()
-	if len(inv) != 58 { // 45 catalog + 4 hand-ported + 9 pipeline = full specialist set
-		t.Fatalf("want 58 total governed agents, got %d", len(inv))
+	if len(inv) != 59 { // 46 catalog + 4 hand-ported + 9 pipeline = full specialist set
+		t.Fatalf("want 59 total governed agents, got %d", len(inv))
 	}
 	seen := map[string]bool{}
 	for _, a := range inv {

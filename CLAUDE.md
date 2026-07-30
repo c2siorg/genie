@@ -148,7 +148,7 @@ these are the load-bearing invariants — preserve them in any afg change:
 | 1 — vertical slice + single-door gate | ✅ | `factory.go`, `currency.go`, `singledoor_test.go`, `cmd/af-hello` |
 | 2 — concurrent orchestration (fan-out) | ✅ | `orchestrate.go` (`NewConcurrentWorkflowBuilder`) |
 | 3 — registry / inventory / fallback | ✅ | `registry.go` (`Inventory()`, `RunWithFallback`) |
-| 4 — all **58** agents ported | ✅ | `pkg/afg/catalog/` (39 deterministic + 6 advisory) + 4 hand-ported + 9 pipeline (`pipeline.go`) |
+| 4 — agents ported | ✅ | `pkg/afg/catalog/` (**46** specs = 40 deterministic + 6 advisory) + 4 hand-ported + 9 pipeline (`pipeline.go`) = **59** governed catalog agents (served by `af-serve`) |
 | HTTP edge (`/v1/ask`, `/v1/ai-inventory`) | ✅ | `httpedge.go` + `cmd/af-serve` — **no Postgres, no bus** |
 | 5 — parity + **cutover** | ✅ | bus removed from `cmd/api`; `/v1/ask` on `QAService`; full repo `go test -race ./...` green |
 | auth | ✅ | `httpedge.go` + `cmd/af-serve` behind real `mid.Auth` JWT/RBAC; identity from claims |

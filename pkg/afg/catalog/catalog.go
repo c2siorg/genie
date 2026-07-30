@@ -20,6 +20,7 @@ func All() []afg.Spec {
 		CashflowUnderwriterSpec(),
 		ClaimAdjudicatorSpec(),
 		ComplaintTriageSpec(),
+		CobSpec(),
 		CyberGuardianSpec(),
 		DebtOptimizerSpec(),
 		DeductionsOptimizerSpec(),
