@@ -25,7 +25,8 @@ payments, and cyber. The `/v1/ask` money pipeline runs nine of them as governed 
 
 ## Contents
 
-- [Why Genie](#why-genie) · [Architecture](#architecture) · [Quick start](#quick-start) ·
+- [Why Genie](#why-genie) · [Architecture](#architecture) · [Flows](#flows) ·
+  [Quick start](#quick-start) ·
   [Using the API](#using-the-api) · [Capabilities](#capabilities) ·
   [Governance & FREE-AI](#governance--free-ai) · [Documentation](#documentation) ·
   [Development](#development) · [Roadmap](#roadmap) · [Contributing](#contributing) ·
@@ -127,6 +128,81 @@ CLI demo and preserved on the `legacy/bus-architecture` branch. The load-bearing
 | `pkg/comm` · `pkg/orchestration` | In-process message bus — the `cmd/genie` CLI / legacy design |
 
 Full layer-by-layer map in **[docs/architecture.md](docs/architecture.md)**.
+
+---
+
+## Flows
+
+**`/v1/ask` — the money pipeline.** A finance question runs the nine-stage governed
+`afg.QAService` inline; the governance gate fires at every stage, and a denial short-circuits
+before any further work.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant MW as chi middleware<br/>RequestID · JWT · RBAC
+    participant H as Ask handler
+    participant DB as Postgres
+    participant QA as afg.QAService
+    participant G as GovMiddleware gate
+    C->>MW: POST /v1/ask {question, document_id} + Bearer JWT
+    MW->>MW: authenticate + authorize (RBAC)
+    MW->>H: claims
+    H->>DB: fetch encrypted document
+    H->>H: decrypt CSV (pkg/crypto envelope)
+    H->>QA: Answer(ctx, csv, question)
+    loop 9 stages: ingestor→…→reporter
+        QA->>G: evaluate(stage payload)
+        alt allowed
+            G-->>QA: proceed
+            QA->>QA: run stage (deterministic; drives agents/*)
+        else denied
+            G-->>H: DeniedError → HTTP 403
+        end
+    end
+    QA-->>H: reporter's final report (byte-identical to legacy)
+    H-->>C: {trace_id, report, ai_disclosure}
+```
+
+**Document upload — Aadhaar offline-KYC.** Typed uploads validate + mask before anything is
+stored; the full Aadhaar number is never persisted, logged, or returned.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant H as Documents handler
+    participant K as pkg/kyc
+    participant E as crypto envelope
+    participant DB as Postgres
+    C->>H: POST /v1/documents?type=aadhaar_offline_kyc (JWT) + UIDAI XML
+    H->>K: ParseOfflineKYCLast4(xml) + validate shape
+    alt malformed offline e-KYC
+        K-->>C: HTTP 400
+    else valid
+        K-->>H: aadhaar_last4
+        H->>H: classification floor → secret (never downgraded)
+        H->>E: encrypt raw blob
+        E->>DB: {doc_type, class=secret, masked_meta, ciphertext}
+        H-->>C: {id, type, classification:"secret", masked:{aadhaar_last4}}
+    end
+```
+
+**Coordination-of-Benefits agent.** Deterministic COB across two overlapping health plans —
+primary/secondary, non-duplication, deductible accumulation, and a min-out-of-pocket search.
+
+```mermaid
+flowchart LR
+    IN[claims + 2 plans + mode] --> ADJ[adjudicate primary<br/>deductible → coinsurance → OOP cap]
+    ADJ --> SEC["secondary non-duplication<br/>max(0, min(sec_as_primary − primary, residual))"]
+    SEC --> ACC[accumulate deductible / OOP<br/>per plan · scope]
+    ACC --> OPT{≤ 16 claims?}
+    OPT -->|yes| ENUM[enumerate primary orderings<br/>pick minimum out-of-pocket]
+    OPT -->|no| STD[standard order]
+    ENUM --> OUT[per-claim payments + total OOP<br/>+ recommendation + disclaimer]
+    STD --> OUT
+```
 
 ---
 
