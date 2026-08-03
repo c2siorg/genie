@@ -13,6 +13,7 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agenttools"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/hitl"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/memory"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/safety"
 )
 
 // ─── Wire types (OpenAI-compatible) ───────────────────────────────────────
@@ -94,17 +95,39 @@ type Runner struct {
 	// Reflexion enables self-critique and answer refinement after the main
 	// agent loop finishes (lesson 14). Nil = disabled.
 	Reflexion *ReflexionConfig
+	// Safety screens user input before the first LLM call and final model
+	// output before it is returned. Nil disables screening.
+	//
+	// New installs a local-only safety.Chain containing HeuristicJailbreak and
+	// ToxicityHeuristic. Any safety.Detector is accepted, including a custom
+	// safety.Chain. Adding LLMJailbreak to that chain means every clean input
+	// or output incurs one LLM call per screening stage, because Chain only
+	// stops after a detector flags; it is intentionally not included by default.
+	Safety safety.Detector
 	// HTTPClient is reused for all LLM calls.
 	HTTPClient *http.Client
 	// Callbacks for streaming output and observability.
 	Callbacks Callbacks
 }
 
-// New returns a Runner with default config (Ollama).
+// New returns a Runner with default config (Ollama) and local-only safety
+// screening. Callers that construct Runner literals retain full control over
+// Safety; nil is a strict no-op.
 func New() *Runner {
 	return &Runner{
 		Config:     DefaultConfig(),
+		Safety:     defaultSafety(),
 		HTTPClient: &http.Client{Timeout: 120 * time.Second},
+	}
+}
+
+func defaultSafety() safety.Chain {
+	return safety.Chain{
+		Plugins: []safety.Plugin{
+			safety.NamedDetector{N: "heuristic-jailbreak", S: safety.StageAny, D: safety.HeuristicJailbreak{}},
+			safety.NamedDetector{N: "toxicity", S: safety.StageAny, D: safety.NewToxicityHeuristic(nil)},
+		},
+		Mode: safety.ModeFirstFlagged,
 	}
 }
 
@@ -143,6 +166,10 @@ func RunAgent(ctx context.Context, userMessage string, history []Message, cfg Co
 //     c. Else: capture final text, break.
 //  4. Return final text + updated message history.
 func (r *Runner) Run(ctx context.Context, userMessage string, history []Message) (string, []Message, error) {
+	if err := r.checkSafety(ctx, "input", userMessage); err != nil {
+		return "", nil, err
+	}
+
 	cfg := r.Config
 	client := r.HTTPClient
 	if client == nil {
@@ -205,10 +232,10 @@ func (r *Runner) Run(ctx context.Context, userMessage string, history []Message)
 		if assistantMsg.Content == nil {
 			assistantMsg.Content = ""
 		}
-		wire = append(wire, assistantMsg)
 
 		// ── Tool calls ───────────────────────────────────────────────────
 		if choice.FinishReason == "tool_calls" || len(assistantMsg.ToolCalls) > 0 {
+			wire = append(wire, assistantMsg)
 			rejected := false
 
 			for _, tc := range assistantMsg.ToolCalls {
@@ -298,6 +325,11 @@ func (r *Runner) Run(ctx context.Context, userMessage string, history []Message)
 			finalText = refined
 		}
 	}
+	finalText, err := r.regenerateSafeOutput(ctx, wire, finalText)
+	if err != nil {
+		return "", nil, err
+	}
+	wire = append(wire, wireMessage{Role: "assistant", Content: finalText})
 
 	if r.Callbacks.OnComplete != nil {
 		r.Callbacks.OnComplete(finalText)
@@ -305,6 +337,61 @@ func (r *Runner) Run(ctx context.Context, userMessage string, history []Message)
 
 	// Convert wire back to Messages for caller.
 	return finalText, wireToMessages(wire), nil
+}
+
+const maxSafetyRegenerations = 2
+
+// regenerateSafeOutput screens the final model response. A flagged response
+// is not added to the conversation history; instead the model receives a
+// generic instruction to produce a safe replacement. After two replacements,
+// the request fails closed.
+func (r *Runner) regenerateSafeOutput(ctx context.Context, wire []wireMessage, finalText string) (string, error) {
+	for attempt := 0; ; attempt++ {
+		err := r.checkSafety(ctx, "output", finalText)
+		if err == nil {
+			return finalText, nil
+		}
+		if r.Safety == nil {
+			return finalText, nil
+		}
+		if attempt == maxSafetyRegenerations {
+			return "", fmt.Errorf("safety: output rejected after %d regeneration attempts: %w", maxSafetyRegenerations, err)
+		}
+
+		retryWire := append(append([]wireMessage{}, wire...), wireMessage{
+			Role:    "system",
+			Content: "The previous draft was blocked by safety screening. Provide a safe replacement without discussing the blocked content.",
+		})
+		resp, callErr := r.callLLM(ctx, retryWire, nil)
+		if callErr != nil {
+			return "", fmt.Errorf("safety regeneration %d: %w", attempt+1, callErr)
+		}
+		if len(resp.Choices) == 0 {
+			return "", fmt.Errorf("safety regeneration %d: no choices", attempt+1)
+		}
+		if resp.Choices[0].FinishReason == "tool_calls" || len(resp.Choices[0].Message.ToolCalls) > 0 {
+			return "", fmt.Errorf("safety regeneration %d: tool calls are not permitted", attempt+1)
+		}
+		finalText = contentString(resp.Choices[0].Message.Content)
+	}
+}
+
+func (r *Runner) checkSafety(ctx context.Context, stage, text string) error {
+	if r.Safety == nil {
+		return nil
+	}
+	verdict, err := r.Safety.Inspect(ctx, text)
+	if err != nil {
+		return fmt.Errorf("safety %s check: %w", stage, err)
+	}
+	if verdict.Flagged {
+		reason := verdict.Reason
+		if reason == "" {
+			reason = "content flagged"
+		}
+		return fmt.Errorf("safety %s rejected: %s", stage, reason)
+	}
+	return nil
 }
 
 // reflexionCycle runs one critique→refine pass.
