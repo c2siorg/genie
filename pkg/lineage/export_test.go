@@ -1,6 +1,7 @@
 package lineage
 
 import (
+	"slices"
 	"context"
 	csvpkg "encoding/csv"
 	"encoding/json"
@@ -398,5 +399,43 @@ func TestComplianceReport_CSV(t *testing.T) {
 	// Header + denied entry
 	if len(records) != 2 {
 		t.Errorf("Expected 2 rows, got %d", len(records))
+	}
+}
+
+// Regression: HighestRiskEvents must be the N *most recent* denials (per the
+// doc), not the oldest. Query returns entries oldest-first, so capping during
+// the scan kept the leading (oldest) N.
+func TestGenerateComplianceReport_KeepsMostRecentDenials(t *testing.T) {
+	rec := NewInMemoryRecorder()
+	mgr := NewManager(rec)
+	ctx := context.Background()
+
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	ids := []string{"deny-A", "deny-B", "deny-C", "deny-D", "deny-E"}
+	for i, id := range ids {
+		if err := rec.Record(ctx, &LineageEntry{
+			ID:         id,
+			Timestamp:  base.Add(time.Duration(i) * time.Hour),
+			UserID:     "u1",
+			ResourceID: "r1",
+			Action:     "read",
+			Decision:   DecisionDenied,
+			ReasonCode: "rbac_mismatch",
+		}); err != nil {
+			t.Fatalf("record %s: %v", id, err)
+		}
+	}
+
+	report, err := mgr.GenerateComplianceReport(ctx, "rep1", base.Add(-time.Hour), base.Add(24*time.Hour), 2)
+	if err != nil {
+		t.Fatalf("GenerateComplianceReport: %v", err)
+	}
+	var got []string
+	for _, e := range report.HighestRiskEvents {
+		got = append(got, e.ID)
+	}
+	want := []string{"deny-D", "deny-E"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("HighestRiskEvents = %v, want the two most recent %v", got, want)
 	}
 }

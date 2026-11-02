@@ -257,10 +257,15 @@ func (m *Manager) GenerateComplianceReport(
 		} else {
 			deniedCount++
 			deniedByReason[entry.ReasonCode]++
-			if len(highRiskEvents) < maxHighRiskEvents {
-				highRiskEvents = append(highRiskEvents, entry)
-			}
+			highRiskEvents = append(highRiskEvents, entry)
 		}
+	}
+
+	// Keep the N most recent denials. Query returns entries oldest-first, so the
+	// most recent are at the tail; taking the leading N would return the oldest,
+	// contradicting the documented "N most recent denied decisions".
+	if maxHighRiskEvents > 0 && len(highRiskEvents) > maxHighRiskEvents {
+		highRiskEvents = highRiskEvents[len(highRiskEvents)-maxHighRiskEvents:]
 	}
 
 	// Check hash chain integrity
