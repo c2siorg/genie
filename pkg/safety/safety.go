@@ -54,9 +54,11 @@ func (HeuristicJailbreak) Inspect(_ context.Context, text string) (Verdict, erro
 	return Verdict{}, nil
 }
 
-// LLMJailbreak uses an LLM to classify subtler attempts that pass the regex
-// gate. Genie pairs this with HeuristicJailbreak in series so the regex
-// shortcut handles 90% of cases for free.
+// LLMJailbreak uses an LLM to classify subtler attempts that pass a regex
+// gate. When used after HeuristicJailbreak in a Chain, it still runs for
+// every clean verdict: Chain short-circuits only when a detector flags.
+// Include it only when the additional LLM latency and cost per screening
+// stage are acceptable.
 type LLMJailbreak struct {
 	Provider llm.Provider
 	Model    string
