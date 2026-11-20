@@ -22,7 +22,7 @@ type PlatformMetrics struct {
 var (
 	metricsOnce sync.Once
 	metricsInst *PlatformMetrics
-	metricsErr  error
+	errMetrics  error
 )
 
 // Metrics returns the process-wide PlatformMetrics, building it on first call.
@@ -37,32 +37,32 @@ func Metrics() *PlatformMetrics {
 			"genie.bus.messages_published",
 			metric.WithDescription("Total messages published on the bus."),
 		); err != nil {
-			metricsErr = err
+			errMetrics = err
 		}
 		if m.MessagesHandled, err = meter.Int64Counter(
 			"genie.agent.messages_handled",
 			metric.WithDescription("Total messages handled by agents."),
 		); err != nil {
-			metricsErr = err
+			errMetrics = err
 		}
 		if m.PolicyDenials, err = meter.Int64Counter(
 			"genie.governance.denials",
 			metric.WithDescription("Total messages denied by governance policies."),
 		); err != nil {
-			metricsErr = err
+			errMetrics = err
 		}
 		if m.AgentErrors, err = meter.Int64Counter(
 			"genie.agent.errors",
 			metric.WithDescription("Total errors returned by agent HandleMessage."),
 		); err != nil {
-			metricsErr = err
+			errMetrics = err
 		}
 		if m.HandleDuration, err = meter.Float64Histogram(
 			"genie.agent.handle_duration_ms",
 			metric.WithDescription("Latency of agent.HandleMessage in milliseconds."),
 			metric.WithUnit("ms"),
 		); err != nil {
-			metricsErr = err
+			errMetrics = err
 		}
 		metricsInst = m
 	})
@@ -70,4 +70,4 @@ func Metrics() *PlatformMetrics {
 }
 
 // MetricsError returns the first error encountered while building instruments.
-func MetricsError() error { return metricsErr }
+func MetricsError() error { return errMetrics }

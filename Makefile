@@ -69,10 +69,22 @@ build: ## Compile every binary under cmd/ into bin/
 	@mkdir -p $(BIN_DIR)
 	$(GO) build $(GOFLAGS) -o $(BIN_DIR)/ ./cmd/...
 
+.PHONY: ui
+ui: ## Rebuild the Next.js console and refresh the embedded export (needs Node)
+	cd web-next && npm ci && npm run build
+	rm -rf pkg/web/handlers/ui
+	mkdir -p pkg/web/handlers/ui
+	cp -R web-next/out/. pkg/web/handlers/ui/
+	@echo "UI export refreshed → pkg/web/handlers/ui (commit the result; go build embeds it)"
+
 .PHONY: build-eval
 build-eval: ## Build only the eval-multiturn binary
 	@mkdir -p $(BIN_DIR)
 	$(GO) build -o $(BIN_DIR)/eval-multiturn ./cmd/eval-multiturn
+
+.PHONY: test
+test: ## Run all unit tests
+	$(GO) test -race $(PKG)
 
 .PHONY: docker-build
 docker-build: ## Build the production Docker image (genie-api:dev)
@@ -92,8 +104,8 @@ vet: ## Run go vet
 	$(GO) vet $(PKG)
 
 .PHONY: lint
-lint: ## Run golangci-lint (install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
-	$(GOLANGCI) run $(PKG)
+lint: ## golangci-lint (strict; matches CI). Install: https://golangci-lint.run/welcome/install/
+	golangci-lint run --timeout 5m ./...
 
 .PHONY: staticcheck
 staticcheck: ## Run staticcheck

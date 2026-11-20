@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Go modules (root)
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  # The Next.js console (activates once web-next/ lands on the branch).
+  - package-ecosystem: "npm"
+    directory: "/web-next"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"

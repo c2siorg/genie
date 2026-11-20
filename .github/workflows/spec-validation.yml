@@ -106,25 +106,24 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
+      # The console is the Next.js app in web-next/, static-exported and
+      # committed into pkg/web/handlers/ui (go build embeds it). This job
+      # proves the console still builds from source on every PR.
       - name: Install dependencies
-        working-directory: frontend
-        run: npm install
+        working-directory: web-next
+        run: npm ci --no-audit --no-fund
 
-      - name: Type check (TypeScript strict)
-        working-directory: frontend
+      - name: Build (Next.js static export, TypeScript strict)
+        working-directory: web-next
         run: npm run build
 
-      - name: Run tests
-        working-directory: frontend
-        run: npm test -- --passWithNoTests
-
-      - name: Check bundle size
-        working-directory: frontend
+      - name: Check export size
+        working-directory: web-next
         run: |
-          SIZE=$(du -sh dist | awk '{print $1}')
-          echo "Frontend bundle: $SIZE"
+          SIZE=$(du -sh out | awk '{print $1}')
+          echo "Console export: $SIZE"
 
   full-ci:
     name: Full CI Pipeline

@@ -142,30 +142,30 @@ func passesFilter(f Fund, fi Filter) bool {
 	return true
 }
 
-func normCap(x, cap float64) float64 {
-	if cap <= 0 {
+func normCap(x, capVal float64) float64 {
+	if capVal <= 0 {
 		return 0
 	}
 	if x <= 0 {
 		return 0
 	}
-	if x >= cap {
+	if x >= capVal {
 		return 1
 	}
-	return x / cap
+	return x / capVal
 }
 
-func normInverse(x, cap float64) float64 {
-	if cap <= 0 {
+func normInverse(x, capVal float64) float64 {
+	if capVal <= 0 {
 		return 0
 	}
 	if x <= 0 {
 		return 1
 	}
-	if x >= cap {
+	if x >= capVal {
 		return 0
 	}
-	return 1 - x/cap
+	return 1 - x/capVal
 }
 
 func round2(x float64) float64 { return float64(int64(x*100+0.5)) / 100 }

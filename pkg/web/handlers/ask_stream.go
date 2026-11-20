@@ -1,30 +1,32 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/reporter"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supervisor"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/afg"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/storage/postgres"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
 
-// AskStream is the SSE variant of Ask.
+// AskStream is the SSE variant of Ask. After the agent-framework cutover the
+// question pipeline runs inline (no bus, no event tap), so the stream emits the
+// AI disclosure, a trace id, a single `agent.handle` progress event while the
+// governed pipeline runs, and finally the `report` event.
 //
-// Each bus event tagged with this request's trace_id is forwarded as an
-// `agent.handle` SSE event. The final reporter output is sent as a `report`
-// event and the connection closes.
+// Honest limitation: the legacy bus edge streamed one `agent.handle` event per
+// agent hop (analyzer, forecaster, ...). The afg QAService runs the pipeline as
+// one governed call, so per-hop streaming is collapsed into a single progress
+// event. The SSE event vocabulary (ai_disclosure/trace/agent.handle/report) is
+// preserved for the console; restoring per-hop progress is a tracked follow-up.
 type AskStream struct {
-	Bus       comm.Bus
-	Tap       *busio.EventTap
+	QA        *afg.QAService
 	Documents postgres.DocumentRepo
 	Encryptor *crypto.Encryptor
 	Timeout   time.Duration
@@ -66,10 +68,6 @@ func (h *AskStream) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	traceID := fmt.Sprintf("tr-%d", time.Now().UnixNano())
-	events := h.Tap.Subscribe(traceID)
-	defer h.Tap.Unsubscribe(traceID)
-
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
@@ -80,54 +78,48 @@ func (h *AskStream) Post(w http.ResponseWriter, r *http.Request) {
 		flusher.Flush()
 	}
 
+	traceID := fmt.Sprintf("tr-%d", time.Now().UnixNano())
 	if h.AIDisclosureBanner != "" {
 		send("ai_disclosure", h.AIDisclosureBanner)
 	}
 	send("trace", traceID)
 
 	roleStrings := make([]string, len(claims.Roles))
-	for i, r := range claims.Roles {
-		roleStrings[i] = string(r)
+	for i, role := range claims.Roles {
+		roleStrings[i] = string(role)
 	}
-
-	h.Bus.Publish(r.Context(), agent.NewMessage("user", supervisor.ID, agent.RoleUser, supervisor.TypeQuestion, req.Question, map[string]any{
-		"trace_id":                     traceID,
-		"account_id":                   claims.Subject,
-		"csv":                          string(plain),
-		protocol.MetaKeyUserID:         claims.Subject,
-		protocol.MetaKeyUserRoles:      roleStrings,
-		protocol.MetaKeyClassification: string(doc.Classification),
-	}))
+	gov := protocol.Message{
+		From: "user", Role: protocol.RoleUser, Type: financeQuestionType,
+		Metadata: map[string]any{
+			"trace_id":                     traceID,
+			protocol.MetaKeyUserID:         claims.Subject,
+			protocol.MetaKeyUserRoles:      roleStrings,
+			protocol.MetaKeyClassification: string(doc.Classification),
+		},
+	}
 
 	timeout := h.Timeout
 	if timeout == 0 {
 		timeout = 10 * time.Second
 	}
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
+	ctx, cancel := context.WithTimeout(afg.WithGovMessage(r.Context(), gov), timeout)
+	defer cancel()
 
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case <-deadline.C:
+	progress, _ := json.Marshal(map[string]any{"from": "financial_supervisor", "type": "pipeline_running", "trace_id": traceID})
+	send("agent.handle", string(progress))
+
+	report, err := h.QA.Answer(ctx, string(plain), req.Question)
+	if err != nil {
+		var denied *afg.DeniedError
+		switch {
+		case errors.As(err, &denied):
+			send("error", "denied by governance policy")
+		case errors.Is(err, context.DeadlineExceeded):
 			send("error", "timeout")
-			return
-		case ev, ok := <-events:
-			if !ok {
-				return
-			}
-			// Terminal event: the final report is To=user, Type=final_report.
-			if ev.To == "user" && ev.Type == reporter.TypeOut {
-				send("report", ev.Content)
-				return
-			}
-			// Progress event: skip raw payloads (CSV etc.) and just send a summary.
-			summary := map[string]any{
-				"from": ev.From, "to": ev.To, "type": ev.Type, "msg_id": ev.ID,
-			}
-			body, _ := json.Marshal(summary)
-			send("agent.handle", string(body))
+		default:
+			send("error", err.Error())
 		}
+		return
 	}
+	send("report", report)
 }

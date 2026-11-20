@@ -14,8 +14,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/llm"
 	"gopkg.in/yaml.v3"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/llm"
 )
 
 // Sutra is one principle.
@@ -33,7 +34,7 @@ type Constitution struct {
 
 // Load reads + parses a YAML file from disk.
 func Load(path string) (*Constitution, error) {
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: constitution path is operator-supplied at startup (config), not user input
 	if err != nil {
 		return nil, fmt.Errorf("constitution: %w", err)
 	}
@@ -109,7 +110,7 @@ func parseVerdict(text string) Verdict {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(strings.ToUpper(line), "SCORE:") {
 			var n int
-			fmt.Sscanf(line, "SCORE: %d", &n)
+			_, _ = fmt.Sscanf(line, "SCORE: %d", &n)
 			if n < 0 {
 				n = 0
 			}

@@ -36,6 +36,7 @@ func (r *LLMQueryRewriter) Rewrite(ctx context.Context, original string) ([]stri
 		Temperature: 0.2,
 	})
 	if err != nil {
+		//nolint:nilerr // graceful degradation: on model error fall back to the original query
 		return []string{original}, nil
 	}
 	out := []string{original}

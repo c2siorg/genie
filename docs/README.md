@@ -9,8 +9,8 @@
 | You want to… | Read |
 |---|---|
 | Get the 30-second pitch | [Root README](../README.md) |
-| **Review AI governance + security end-to-end** | **[ai-governance-security.md](ai-governance-security.md)** — the canonical CISO/risk-officer reference |
-| **Map Genie to the GCP PCSE blueprint** | **[gcp-pcse-mapping.md](gcp-pcse-mapping.md)** — every PCSE exam bullet → file path or honest gap |
+| Look up any term used in the repo | [glossary.md](glossary.md) |
+| Map a LangGraph concept to Genie | [langgraph-to-genie.md](langgraph-to-genie.md) |
 | Understand the architecture pattern | [architecture.md](architecture.md) |
 | Map FREE-AI recommendations to code | [free-ai-mapping.md](free-ai-mapping.md) |
 | Run the stack locally | [operations.md](operations.md) |
@@ -18,7 +18,6 @@
 | Use a platform package | [packages/README.md](packages/README.md) |
 | Open the HTTP API | [api.md](api.md) |
 | Hit MCP/A2A protocols | [protocols.md](protocols.md) |
-| Read long-form writeups | All long-form pieces have moved to [pratikdhanave.github.io/blog](https://pratikdhanave.github.io/blog/) — grouped by topic, with the security + FREE-AI series anchored back to file paths in this repo |
 | See the ADK extension proposal | [adk-extension-proposal.md](adk-extension-proposal.md) |
 
 ---
@@ -28,8 +27,6 @@
 ```
 docs/
 ├── README.md                                  ← this index
-├── ai-governance-security.md                  ← CISO/risk reference; threat model + 11 layers + invariants
-├── gcp-pcse-mapping.md                        ← GCP PCSE exam blueprint → Genie file paths
 ├── architecture.md                            ← MARA + the 7 load-bearing pieces
 ├── free-ai-mapping.md                         ← every Rec → file path
 ├── operations.md                              ← compose-up, env, KEK, observability
@@ -61,12 +58,7 @@ docs/
     ├── safety-plugins.md                      ← pkg/safety plugin chain
     ├── agent-skill-registry.md                ← pkg/agent SkillRegistry
     ├── observability-bq.md                    ← pkg/observability/bq
-    ├── voice-streaming.md                     ← agents/voice StreamingAgent
-    ├── postgres-rls.md                        ← pkg/storage/postgres + 0005_rls.sql (RLS)
-    ├── oauth-token-exchange.md                ← pkg/auth/tokenexchange (RFC 8693)
-    ├── agent-tier.md                          ← pkg/agent.Tier promotion model
-    ├── governance-tenant.md                   ← pkg/governance.TenantPolicy
-    └── auth-elevation.md                      ← pkg/auth/elevation (PCSE §1.4 PAM analog)
+    └── voice-streaming.md                     ← agents/voice StreamingAgent
 ```
 
 ---
@@ -83,24 +75,15 @@ docs/
 ### "I'm a CRO / compliance officer evaluating Genie for FREE-AI alignment"
 
 1. [free-ai-mapping.md](free-ai-mapping.md) — table per recommendation
-2. The long-form FREE-AI walkthroughs now live on the blog: [Mapping a multi-agent platform to GCP PCSE](https://pratikdhanave.github.io/blog/2026/04/24/mapping-genie-to-gcp-pcse-blueprint/), [RBI FREE-AI implementation notes](https://pratikdhanave.github.io/blog/2026/04/18/rbi-free-ai-implementation-notes/), [AI governance — from credential to codebase](https://pratikdhanave.github.io/blog/2026/04/21/ai-governance-from-credential-to-codebase/)
+2. [architecture.md](architecture.md) — how governance, tracing, and fallbacks are wired
 3. Spot-check: pick one Rec → open the linked file → run `go test ./<pkg>/...`
 
 ### "I'm a CISO reviewing the security posture"
 
-1. **[ai-governance-security.md](ai-governance-security.md)** — the canonical reference. Threat model, eleven-layer envelope, every claim anchored to a file path. Read this first.
-2. **[gcp-pcse-mapping.md](gcp-pcse-mapping.md)** — every GCP Professional Cloud Security Engineer exam-blueprint bullet mapped to a Genie file path (or honest gap). Useful for reviewers already fluent in the PCSE vocabulary.
-3. The long-form security narratives now live on the blog: [Consolidated security deep-dive](https://pratikdhanave.github.io/blog/2026/04/22/consolidated-security-deep-dive/), [Defence in depth for agentic AI](https://pratikdhanave.github.io/blog/2026/04/23/defence-in-depth-for-agentic-ai/), [Agentic security in production — operations playbook](https://pratikdhanave.github.io/blog/2026/04/20/agentic-security-in-production/)
-4. [api.md](api.md) — auth, RBAC, rate limits
-5. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow, OAuth 2.0 Token Exchange (RFC 8693)
-6. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
-7. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
-8. The four Q1 hardening primitives — read all four together; they're the defence-in-depth envelope:
-   - [packages/postgres-rls.md](packages/postgres-rls.md) — DB-level tenant isolation
-   - [packages/governance-tenant.md](packages/governance-tenant.md) — bus-level tenant isolation
-   - [packages/oauth-token-exchange.md](packages/oauth-token-exchange.md) — dual-identity audit
-   - [packages/agent-tier.md](packages/agent-tier.md) — promotion gate
-   - [packages/auth-elevation.md](packages/auth-elevation.md) — time-bound privileged access (PCSE §1.4)
+1. [api.md](api.md) — auth, RBAC, rate limits
+2. [protocols.md](protocols.md) — WebAuthn, OAuth 2.1+PKCE, Device flow
+3. [agents/cyber_guardian.md](agents/cyber_guardian.md) — session anomaly detection
+4. [packages/safety-plugins.md](packages/safety-plugins.md) — pluggable shields
 
 ### "I'm a risk officer setting policy"
 

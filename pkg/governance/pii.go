@@ -15,6 +15,9 @@ import (
 var piiPatterns = []*regexp.Regexp{
 	// 12+ consecutive digits (card / bank account / Aadhaar-shaped).
 	regexp.MustCompile(`\d{12,}`),
+	// Aadhaar written in the common 4-4-4 grouping (e.g. "1234 5678 9012" or
+	// "1234-5678-9012"), which the consecutive-digit rule above would miss.
+	regexp.MustCompile(`\b\d{4}[ -]\d{4}[ -]\d{4}\b`),
 	// Email addresses.
 	regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`),
 	// 10-digit phone numbers with optional country prefix.

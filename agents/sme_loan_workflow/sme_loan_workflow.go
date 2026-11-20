@@ -152,7 +152,7 @@ func (a *Agent) Process(ctx context.Context, app Application, autoApprove bool) 
 	case <-time.After(7 * time.Second):
 		res = runResult{errors.New("workflow timed out awaiting approval")}
 	}
-	offer, _ := buildOfferFromState(state, sink, app)
+	offer := buildOfferFromState(state, sink, app)
 	// Only downgrade to rejected on a hard step failure — context-bounded
 	// "no approval" runs stay as in_principle so the caller can still see
 	// what the underwriting would have produced.
@@ -243,7 +243,7 @@ func sanctionLetterDraft(ctx context.Context, state workflow.State) error {
 
 // --- offer construction ------------------------------------------------------
 
-func buildOfferFromState(state workflow.State, sink *workflow.InMemorySink, app Application) (Offer, error) {
+func buildOfferFromState(state workflow.State, sink *workflow.InMemorySink, app Application) Offer {
 	rationale := []string{}
 	decision := "rejected"
 
@@ -282,7 +282,7 @@ func buildOfferFromState(state workflow.State, sink *workflow.InMemorySink, app 
 		WorkflowEvents:    len(sink.Events()),
 		Disclaimer: "Indicative SME loan offer. Final sanction subject to credit committee, " +
 			"complete documentation, and CGTMSE registration where applicable.",
-	}, nil
+	}
 }
 
 // emi returns the standard reducing-balance EMI.

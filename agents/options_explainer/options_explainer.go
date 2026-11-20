@@ -125,7 +125,7 @@ func (a *Agent) Compute(req Request) Result {
 	payoff := make([]PayoffPoint, 0, 21)
 	for i := 0; i <= 20; i++ {
 		p := K * (0.7 + 0.03*float64(i))
-		pnl := 0.0
+		var pnl float64
 		if req.Side == "call" {
 			pnl = (math.Max(0, p-K) - price) * lot
 		} else {

@@ -12,6 +12,9 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+
 jobs:
   ci-gate:
     runs-on: ubuntu-latest
@@ -26,19 +29,11 @@ jobs:
           go-version: "1.26.x"
           cache: true
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22.x"
+      # The Next.js console export is committed into pkg/web/handlers/ui
+      # (refreshed via `make ui`), so no Node build step is needed here —
+      # `go build` embeds the committed export directly.
 
-      - name: Build frontend (React) into the Go embed tree
-        working-directory: frontend
-        run: |
-          npm ci --no-audit --no-fund
-          npm test
-          npm run build
-
-      - name: Build (must compile, embeds the built UI)
+      - name: Build (must compile, embeds the committed UI export)
         run: go build ./...
 
       - name: Vet

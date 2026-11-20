@@ -55,7 +55,7 @@ validate_phase2() {
 
   # Type definitions
   check_test "Order type defined" \
-    "grep -r 'type Order struct' pkg/commerce || grep -r 'interface Order' frontend/src/types/"
+    "grep -r 'type Order struct' pkg/commerce || grep -r 'interface Order' web-next/lib/"
 
   # Tests passing
   check_test "Commerce unit tests pass" \
@@ -77,7 +77,7 @@ validate_phase3() {
     "grep -r 'compliance.*check' pkg/web/handlers || grep -r '/v1/compliance/check' pkg/"
 
   check_test "Compliance types defined" \
-    "grep -r 'type.*Compliance' pkg/compliance || grep -r 'interface.*Compliance' frontend/src/types/"
+    "grep -r 'type.*Compliance' pkg/compliance || grep -r 'interface.*Compliance' web-next/lib/"
 
   # Velocity/limit enforcement lives in the e-Rupee compliance engine
   # (pkg/erupeecompliance/velocity.go), not pkg/compliance (audit/consent/reporting).
@@ -100,7 +100,7 @@ validate_phase4() {
     "grep -r 'hash' pkg/storage && grep -r 'audit' pkg/storage"
 
   check_test "Kill-switch implemented" \
-    "grep -r 'kill.*switch' pkg/ -i || grep -r 'KillSwitch' frontend/src/types"
+    "grep -r 'kill.*switch' pkg/ -i || grep -r 'KillSwitch' web-next/lib"
 
   check_test "Governance tests pass" \
     "cd . && go test ./pkg/agentgov/... ./pkg/incidents/... -v -timeout 30s"
@@ -119,7 +119,7 @@ validate_phase5() {
     "grep -rq 'func (h \\*EvalReviewHandler) ListTraces' pkg/web/handlers && grep -rq 'd.EvalReview.Mount' pkg/web"
 
   check_test "Judge types defined" \
-    "grep -r 'judge' pkg/eval -i && grep -r 'Judge' frontend/src/types"
+    "grep -r 'judge' pkg/eval -i && grep -r 'Judge' web-next/lib"
 
   check_test "Failure modes documented" \
     "grep -r 'failure.*mode' specs/ -i || [ -f specs/phase5_evaluation.md ]"
@@ -143,7 +143,7 @@ validate_phase6() {
     "grep -r 'llm.*Provider' pkg/ || grep -r 'anthropic' pkg/llm || grep -r 'ollama' pkg/llm"
 
   check_test "Assistant types defined" \
-    "grep -r 'AskRequest\\|AskResponse' frontend/src/types/"
+    "grep -r 'AskRequest\\|AskResponse' web-next/lib/"
 
   check_test "Assistant tests pass" \
     "cd . && npm run build 2>/dev/null || true && go test ./pkg/web/handlers/... -v -timeout 30s"

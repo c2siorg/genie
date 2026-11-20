@@ -131,7 +131,7 @@ func (a *Agent) Research(ctx context.Context, req Request) Brief {
 	if maxSteps <= 0 {
 		maxSteps = 4
 	}
-	tools := a.buildTools(ctx)
+	tools := a.buildTools()
 	system := "You are a precise financial researcher. Use the available tools to gather " +
 		"facts before answering. Cite the source corpus for every claim."
 	res, err := reasoning.ReAct(ctx, a.Provider, a.Model, system, req.Question, tools, maxSteps)
@@ -176,11 +176,11 @@ func (a *Agent) offlineBrief(ctx context.Context, req Request) Brief {
 	}
 }
 
-func (a *Agent) buildTools(ctx context.Context) []reasoning.Tool {
+func (a *Agent) buildTools() []reasoning.Tool {
 	corpora := []string{"rbi", "sahamati", "fiu_ind"}
 	tools := make([]reasoning.Tool, 0, len(corpora))
 	for _, c := range corpora {
-		c := c
+
 		tools = append(tools, reasoning.Tool{
 			Name: "search_" + c,
 			Run: func(ctx context.Context, input string) (string, error) {

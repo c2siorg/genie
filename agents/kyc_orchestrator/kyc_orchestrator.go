@@ -212,7 +212,7 @@ func panLooksValid(pan, name string) bool {
 	if surname == "" {
 		return true // can't check; don't penalise on missing name
 	}
-	return strings.ToUpper(string(pan[4])) == strings.ToUpper(string(surname[0]))
+	return strings.EqualFold(string(pan[4]), string(surname[0]))
 }
 
 func nameTokensOverlap(a, b string) bool {

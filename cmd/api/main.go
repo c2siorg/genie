@@ -25,46 +25,71 @@ import (
 	"time"
 
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/aa_fetcher"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/advance_tax_planner"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/alm_agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/aml_monitor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/analyzer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/anomaly"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/asset_allocator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/auditor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/auto_insurance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/bulk_statement_analyzer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/carbon_estimator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/cashflow_underwriter"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/claim_adjudicator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/complaint_triage"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/currency"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/cyber_guardian"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/debt_optimizer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/deductions_optimizer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/deep_research"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/dividend_planner"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/educator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/emergency_fund"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/enricher"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/fallback"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/forecaster"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/fraud"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/goal_planner"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/google_trends"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/health_preauth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/ingestor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/invoice_discounter"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/invoice_processor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/kyc_orchestrator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/lcr_projector"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/loan"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/macro"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mf_screener"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mpc_research"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/mule"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/normalizer"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/options_explainer"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/payment_orchestrator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/phishing_classifier"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/portfolio_advisor"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/prepayment_advisor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/rates"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/recommender"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/reporter"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/sip_vs_lumpsum"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/sme_loan_workflow"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/subscription_detector"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supervisor"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/supply_chain_finance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/synthetic_identity"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_estimator"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/tax_harvester"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/var_calculator"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/voice"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/working_capital"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/afg"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agentgov"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/cbdc"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commerce"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commercesettlement"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
@@ -73,12 +98,9 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeecompliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeepayment"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/incidents"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/mcp"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/opa"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/orchestration"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
@@ -156,7 +178,7 @@ func run() error {
 	// Telemetry — OTLP if endpoint set, else stdout.
 	telCfg := observability.TelemetryConfig{
 		ServiceName:    "genie-api",
-		ServiceVersion: "0.1.0",
+		ServiceVersion: "1.0.0",
 		Exporter:       observability.ExporterStdout,
 	}
 	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
@@ -215,10 +237,10 @@ func run() error {
 	secret := []byte(mustEnv("GENIE_JWT_SECRET"))
 	issuer := auth.NewIssuer(secret, "genie-api", []string{"genie-api"}, 60*time.Minute)
 
-	// Bus + agents
-	env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
+	// Agent inventory. The message bus and orchestrator are gone (replaced by the
+	// governed agent-framework pipeline, afg.QAService); this registry now serves
+	// only as the static AI inventory / AIBOM / disclosures source of truth.
 	reg := registry.NewInMemory()
-	bus := comm.NewInMemoryBus()
 	evalStore := eval.NewInMemoryStore() // swap for postgres eval repo when added
 
 	consents := compliance.NewInMemoryLedger()
@@ -293,6 +315,38 @@ func run() error {
 	register(cyber_guardian.New())
 	register(google_trends.New(nil)) // host wires a TrendFetcher; agent is inert without one
 
+	// Domain-expansion agents — deterministic specialists (no external deps).
+	// These declare RiskHigh via RiskLevel(), which surfaces in /v1/ai-inventory
+	// and the AIBOM. Role gating, where it applies, is enforced by RBACPolicy on the
+	// inbound message Type (config/ai-policy.example.yaml), not by a dispatch-time
+	// risk ceiling — the orchestrator does not gate on RiskClass. See docs/architecture.md §6.3, §10.
+	register(advance_tax_planner.New())
+	register(alm_agent.New())
+	register(aml_monitor.New())
+	register(asset_allocator.New())
+	register(carbon_estimator.New())
+	register(cashflow_underwriter.New())
+	register(complaint_triage.New())
+	register(debt_optimizer.New())
+	register(deductions_optimizer.New())
+	register(dividend_planner.New())
+	register(emergency_fund.New())
+	register(fraud.New())
+	register(goal_planner.New())
+	register(invoice_discounter.New())
+	register(lcr_projector.New())
+	register(mf_screener.New())
+	register(mule.New())
+	register(options_explainer.New())
+	register(phishing_classifier.New())
+	register(prepayment_advisor.New())
+	register(sip_vs_lumpsum.New())
+	register(subscription_detector.New())
+	register(synthetic_identity.New())
+	register(tax_harvester.New())
+	register(var_calculator.New())
+	register(working_capital.New())
+
 	// LLM + embedder stack — Mock by default, Ollama when GENIE_LLM=ollama.
 	llmStack := buildLLMStack(ctx, logger)
 
@@ -333,7 +387,22 @@ func run() error {
 
 	incidentStore := postgres.NewIncidentStore(db)
 
-	// Build AGT governance bundle.
+	// The governed agent-framework question pipeline replaces the bus supervisor
+	// flow: it runs ingestor→normalizer→enricher→analyzer→(forecaster|anomaly|
+	// recommender)→reporter as governed framework stages and returns the final
+	// report inline. The governance gate fires at every stage (single-door
+	// construction), so policy still applies to every hop.
+	//
+	// Deferred with the bus removal (tracked follow-ups, not silently dropped):
+	//   - incident-on-policy-deny / on-agent-error hooks (the orchestrator's job);
+	//   - the auditor's eval-on-every-message subscription;
+	//   - MCP BusTool tools (explain_finance/macro_context/rate_outlook).
+	// The auditor and MCP-backed agents remain in the inventory below.
+	qa := afg.NewQAService(composite)
+
+	// AGT governance bundle — the registry behind /v1/governance/*. The
+	// orchestrator hooks it used to feed are deferred with the bus removal
+	// (see above); the bundle itself still powers the governance endpoints.
 	agentIDs := []string{
 		"ingestor", "normalizer", "enricher", "analyzer", "forecaster",
 		"anomaly", "recommender", "reporter", "supervisor", "currency",
@@ -350,8 +419,6 @@ func run() error {
 		return fmt.Errorf("agentgov bundle: %w", err)
 	}
 
-	govOnDeny, govOnError := govBundle.OrchestratorHooks()
-
 	// ── Lesson 16: OPA policy engine ────────────────────────────────────────
 	// Build an OPA engine from the AI policy YAML + agent ring assignments so
 	// every message can be evaluated against Rego rules at /v1/governance/opa/*.
@@ -366,57 +433,10 @@ func run() error {
 		opaEngine = nil
 	}
 
-	orch := orchestration.NewOrchestrator(reg, bus, composite, env)
-	orch.SetFallback("portfolio_advisor", "portfolio_advisor_fallback")
-	orch.SetFallback("recommender", "recommender_fallback")
-	orch.WithHooks(orchestration.Hooks{
-		OnPolicyDeny: func(ctx context.Context, msg agent.Message, reason string) {
-			govOnDeny(ctx, msg, reason)
-			_, _ = incidentStore.Create(ctx, incidents.Incident{
-				UseCase:     msg.Type,
-				Description: "policy denied message: " + reason,
-				FailureMode: incidents.FailurePolicyDenied,
-				Severity:    incidents.SeverityLow,
-				Metadata:    map[string]any{"msg_id": msg.ID, "from": msg.From, "to": msg.To},
-			})
-		},
-		OnAgentError: func(ctx context.Context, agentID string, msg agent.Message, err error) {
-			govOnError(ctx, agentID, msg, err)
-			_, _ = incidentStore.Create(ctx, incidents.Incident{
-				UseCase:     agentID,
-				Description: "agent error: " + err.Error(),
-				FailureMode: incidents.FailureAgentError,
-				Severity:    incidents.SeverityModerate,
-				Metadata:    map[string]any{"msg_id": msg.ID, "type": msg.Type},
-			})
-		},
-	})
-	orch.Start(ctx)
-
-	bus.Subscribe("", auditor.NewHandler(evalStore))
-
-	corr := busio.NewCorrelator(bus, "user")
-	// Replies from agents invoked via MCP BusTool are addressed back to "mcp".
-	mcpCorr := busio.NewCorrelator(bus, "mcp")
-	// EventTap broadcasts every message tagged with a trace_id to SSE consumers.
-	eventTap := busio.NewEventTap(bus)
-
 	// HTTP wiring
 	userRepo := postgres.NewUserRepo(db)
 	acctRepo := postgres.NewAccountRepo(db)
 	docRepo := postgres.NewDocumentRepo(db)
-
-	mcpServer := mcp.NewServer(
-		mcp.BusTool("explain_finance", "Explain a finance concept",
-			map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}},
-			bus, mcpCorr, "financial_educator", "explain_finance"),
-		mcp.BusTool("macro_context", "Return a one-line macro outlook for a region",
-			map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}},
-			bus, mcpCorr, "macro_research", "macro_context"),
-		mcp.BusTool("rate_outlook", "Return a central-bank rate outlook",
-			map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}},
-			bus, mcpCorr, "rate_watcher", "rate_outlook"),
-	)
 
 	fallbacks := map[string]string{
 		"portfolio_advisor": "portfolio_advisor_fallback",
@@ -461,24 +481,21 @@ func run() error {
 		Accounts:   &handlers.Accounts{Repo: acctRepo},
 		Documents:  &handlers.Documents{Repo: docRepo, Encryptor: enc},
 		Ask: &handlers.Ask{
-			Bus:                bus,
-			Correlator:         corr,
+			QA:                 qa,
 			Documents:          docRepo,
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_ASK_TIMEOUT", 60)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		AskStream: &handlers.AskStream{
-			Bus:                bus,
-			Tap:                eventTap,
+			QA:                 qa,
 			Documents:          docRepo,
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_STREAM_TIMEOUT", 90)) * time.Second,
 			AIDisclosureBanner: aiPolicy.Consumer.AIDisclosureBanner,
 		},
 		ChatWS: &handlers.ChatWS{
-			Bus:                bus,
-			Tap:                eventTap,
+			QA:                 qa,
 			Documents:          docRepo,
 			Encryptor:          enc,
 			Timeout:            time.Duration(envInt("GENIE_CHATWS_TIMEOUT", 120)) * time.Second,
@@ -498,7 +515,6 @@ func run() error {
 			return nil
 		}},
 		MCPTokens: &handlers.MCPTokens{Repo: mcpTokenRepo, Encryptor: enc},
-		MCPServer: mcpServer,
 		Incidents: &handlers.Incidents{Store: incidentStore},
 		Inventory: &handlers.Inventory{Reg: reg, Fallbacks: fallbacks},
 		Disclosures: &handlers.Disclosures{

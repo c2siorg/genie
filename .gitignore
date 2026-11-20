@@ -1,5 +1,28 @@
+# Compiled binaries from `make build`
+/bin/
+
 # OTEL trace dump produced by cmd/genie
 genie-traces.json
+
+# Separate sibling projects that live inside this folder but are their own Git
+# repos — the Python port and the Microsoft Agent Framework learning workspace.
+# Not part of this Go module; ignored so they don't clutter this repo's status.
+/geniepython/
+/microsoftagentframeworklearning/
+
+# stray build artifact (go build ./cmd/api output)
+/api
+
+# Playwright browser-E2E scratch (installed deps + run output; no committed specs yet)
+/tests/e2e-playwright/node_modules/
+/tests/e2e-playwright/test-results/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+
+# Playwright e2e scratch (no committed specs yet)
+/tests/e2e-playwright/
 
 # Environment secrets — NEVER commit these
 .env
@@ -11,12 +34,6 @@ secrets/
 
 # Architecture planning docs — local AI review only, not for repo
 planandthinking.md
-
-# Frontend (React) — node deps and generated build output.
-# The bundle is built into the Go embed tree by `make ui-build` (and in CI);
-# generated/hashed assets are not committed.
-frontend/node_modules/
-pkg/web/handlers/ui/app/
 
 # Stray compiled CLI binaries (build with -o into bin/ instead)
 /eval-golden

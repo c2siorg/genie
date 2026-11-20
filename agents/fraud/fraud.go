@@ -292,10 +292,10 @@ func parseGeoSuffix(desc string) (float64, float64, bool) {
 		return 0, 0, false
 	}
 	var lat, lng float64
-	if _, err := fmtScan(parts[0], &lat); err != nil {
+	if err := fmtScan(parts[0], &lat); err != nil {
 		return 0, 0, false
 	}
-	if _, err := fmtScan(parts[1], &lng); err != nil {
+	if err := fmtScan(parts[1], &lng); err != nil {
 		return 0, 0, false
 	}
 	return lat, lng, true
@@ -315,7 +315,7 @@ func haversineKm(lat1, lng1, lat2, lng2 float64) float64 {
 }
 
 // fmtScan is a tiny strconv wrapper kept inline to avoid pulling in fmt.
-func fmtScan(s string, out *float64) (int, error) {
+func fmtScan(s string, out *float64) error {
 	var x float64
 	var sign float64 = 1
 	i := 0
@@ -340,15 +340,15 @@ func fmtScan(s string, out *float64) (int, error) {
 		}
 	}
 	if !hasDigit {
-		return 0, errEmptyNumber
+		return errEmptyNumber
 	}
 	*out = sign * x
-	return 1, nil
+	return nil
 }
 
 // errEmptyNumber lets fmtScan stay zero-alloc.
-var errEmptyNumber = &numErr{"empty number"}
+var errEmptyNumber = &numError{"empty number"}
 
-type numErr struct{ s string }
+type numError struct{ s string }
 
-func (e *numErr) Error() string { return e.s }
+func (e *numError) Error() string { return e.s }

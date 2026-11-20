@@ -70,7 +70,7 @@ func (o *OpenAIProvider) Complete(ctx context.Context, req CompletionRequest) (C
 	}
 	msgs := make([]openaiMessage, len(req.Messages))
 	for i, m := range req.Messages {
-		role := string(m.Role)
+		var role string
 		// OpenAI uses "user" and "assistant" and "system"; map cleanly.
 		switch m.Role {
 		case RoleAssistant:

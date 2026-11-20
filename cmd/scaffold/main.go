@@ -130,7 +130,7 @@ func generate(root string, s Spec, dry bool) error {
 	}
 
 	dir := filepath.Join(root, "agents", s.Name)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
 	}
 	files := map[string]string{
@@ -149,6 +149,7 @@ func generate(root string, s Spec, dry bool) error {
 		if _, err := os.Stat(path); err == nil {
 			return fmt.Errorf("%s already exists", path)
 		}
+		//nolint:gosec // G306: generated agent source is meant to be world-readable (0644), like any committed .go file
 		if err := os.WriteFile(path, []byte(out), 0o644); err != nil {
 			return err
 		}

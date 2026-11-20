@@ -9,11 +9,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/busio"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/comm"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
-	"github.com/google/uuid"
 )
 
 // ServerTool advertises one Genie capability over MCP. The Handler runs

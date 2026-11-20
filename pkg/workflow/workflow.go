@@ -224,14 +224,14 @@ func (w *Workflow) topoSort() ([]string, error) {
 	var order []string
 	for len(queue) > 0 {
 		// Pop one with smallest id for deterministic order.
-		min := 0
+		minIdx := 0
 		for i := 1; i < len(queue); i++ {
-			if queue[i] < queue[min] {
-				min = i
+			if queue[i] < queue[minIdx] {
+				minIdx = i
 			}
 		}
-		id := queue[min]
-		queue = append(queue[:min], queue[min+1:]...)
+		id := queue[minIdx]
+		queue = append(queue[:minIdx], queue[minIdx+1:]...)
 		order = append(order, id)
 		for _, s := range w.Steps {
 			for _, d := range s.DependsOn {

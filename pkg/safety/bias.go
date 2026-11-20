@@ -36,17 +36,3 @@ func ComputeDemographicParity(pA, nA, pB, nB int, threshold float64) Demographic
 	d.Acceptable = d.GapAbs <= threshold
 	return d
 }
-
-func max(a, b float64) float64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
-}

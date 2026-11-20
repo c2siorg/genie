@@ -55,32 +55,32 @@ func (c *captureSink) Append(_ context.Context, events []Event) error {
 }
 
 func TestBufferAutoFlushesAtMax(t *testing.T) {
-	cap := &captureSink{}
-	b := NewBuffer(cap, 2)
+	sink := &captureSink{}
+	b := NewBuffer(sink, 2)
 	_ = b.Record(context.Background(), Event{Kind: KindAgentHandle, AgentID: "x"})
 	_ = b.Record(context.Background(), Event{Kind: KindAgentHandle, AgentID: "y"}) // triggers flush
-	if len(cap.calls) != 1 || len(cap.calls[0]) != 2 {
-		t.Errorf("expected one auto-flush of 2 events; got %+v", cap.calls)
+	if len(sink.calls) != 1 || len(sink.calls[0]) != 2 {
+		t.Errorf("expected one auto-flush of 2 events; got %+v", sink.calls)
 	}
 }
 
 func TestBufferManualFlush(t *testing.T) {
-	cap := &captureSink{}
-	b := NewBuffer(cap, 100)
+	sink := &captureSink{}
+	b := NewBuffer(sink, 100)
 	_ = b.Record(context.Background(), Event{Kind: KindAgentHandle, AgentID: "x"})
 	_ = b.Flush(context.Background())
-	if len(cap.calls) != 1 || len(cap.calls[0]) != 1 {
-		t.Errorf("expected one manual flush of 1 event; got %+v", cap.calls)
+	if len(sink.calls) != 1 || len(sink.calls[0]) != 1 {
+		t.Errorf("expected one manual flush of 1 event; got %+v", sink.calls)
 	}
 }
 
 func TestBufferFlushEmpty(t *testing.T) {
-	cap := &captureSink{}
-	b := NewBuffer(cap, 10)
+	sink := &captureSink{}
+	b := NewBuffer(sink, 10)
 	if err := b.Flush(context.Background()); err != nil {
 		t.Errorf("flush of empty buffer should be a noop; got %v", err)
 	}
-	if len(cap.calls) != 0 {
+	if len(sink.calls) != 0 {
 		t.Errorf("empty flush should not call sink")
 	}
 }

@@ -4,6 +4,23 @@ orbs:
   go: circleci/go@2.1.0
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/go:1.25
+    resource_class: medium
+    steps:
+      - checkout
+      - go/load-cache
+      - go/mod-download
+      - run:
+          name: install golangci-lint
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+              | sh -s -- -b "$(go env GOPATH)/bin" v2.11.3
+      - run:
+          name: golangci-lint
+          command: golangci-lint run --timeout 5m ./...
+
   test:
     docker:
       - image: cimg/go:1.25
@@ -37,9 +54,11 @@ jobs:
 workflows:
   ci:
     jobs:
+      - lint
       - test
       - docker-build:
           requires:
+            - lint
             - test
           filters:
             branches:

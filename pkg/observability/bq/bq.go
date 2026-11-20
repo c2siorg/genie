@@ -106,11 +106,11 @@ type Buffer struct {
 }
 
 // NewBuffer constructs a buffer with the given batch size (defaults to 100).
-func NewBuffer(s Sink, max int) *Buffer {
-	if max <= 0 {
-		max = 100
+func NewBuffer(s Sink, maxBatch int) *Buffer {
+	if maxBatch <= 0 {
+		maxBatch = 100
 	}
-	return &Buffer{Sink: s, MaxBatch: max}
+	return &Buffer{Sink: s, MaxBatch: maxBatch}
 }
 
 // Record appends one event to the buffer. Flushes automatically if the

@@ -131,8 +131,8 @@ func (a *Agent) Compute(req Request) Plan {
 	}
 }
 
-func sortByStrategy(d []Debt, strat string) {
-	switch strat {
+func sortByStrategy(d []Debt, strategy string) {
+	switch strategy {
 	case StrategySnowball:
 		sort.SliceStable(d, func(i, j int) bool { return d[i].BalanceRupees < d[j].BalanceRupees })
 	default: // avalanche

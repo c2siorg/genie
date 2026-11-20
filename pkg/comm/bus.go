@@ -4,12 +4,13 @@ import (
 	"context"
 	"sync"
 
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
-	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/protocol"
 )
 
 // Handler receives messages published on the bus.
