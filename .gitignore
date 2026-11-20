@@ -23,3 +23,17 @@ genie-traces.json
 
 # Playwright e2e scratch (no committed specs yet)
 /tests/e2e-playwright/
+
+# Environment secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+*.local.env
+secrets/
+.claude/worktrees/
+
+# Architecture planning docs — local AI review only, not for repo
+planandthinking.md
+
+# Stray compiled CLI binaries (build with -o into bin/ instead)
+/eval-golden

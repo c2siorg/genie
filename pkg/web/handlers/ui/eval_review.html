@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Genie Evaluation Trace Review</title>
+	<link rel="stylesheet" href="/ui/eval_review.css">
+</head>
+<body>
+	<div class="eval-container">
+		<!-- Header -->
+		<header class="eval-header">
+			<h1>Evaluation Trace Review</h1>
+			<div class="header-meta">
+				<span id="currentTrace">No trace selected</span>
+				<span id="annotationStatus" class="status"></span>
+			</div>
+		</header>
+
+		<!-- Main layout: 3-panel design -->
+		<div class="eval-panels">
+			<!-- Left Panel: Full Trace Display -->
+			<div class="panel left-panel">
+				<div class="panel-header">
+					<h2>Trace Details</h2>
+					<div class="panel-controls">
+						<button id="btnLoadTraces" class="btn btn-primary" title="Load traces for review">Load Traces</button>
+						<select id="sampleStrategy" class="input-select">
+							<option value="random">Random</option>
+							<option value="failure">Failures Only</option>
+							<option value="uncertainty">Uncertain</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="trace-content" id="traceContent">
+					<p class="placeholder">Select or load a trace to begin review</p>
+				</div>
+
+				<!-- Trace list for navigation -->
+				<div class="trace-list" id="traceList">
+					<div class="list-header">Available Traces</div>
+					<div class="list-items" id="listItems"></div>
+				</div>
+			</div>
+
+			<!-- Center Panel: Pass/Fail Controls & Failure Classification -->
+			<div class="panel center-panel">
+				<div class="panel-header">
+					<h2>Evaluation</h2>
+				</div>
+
+				<!-- Pass/Fail Toggle -->
+				<div class="section">
+					<h3>Pass / Fail</h3>
+					<div class="toggle-group">
+						<button id="btnPass" class="btn btn-large btn-success" title="Mark trace as PASS [S]">
+							<span class="label">PASS</span>
+							<span class="shortcut">S</span>
+						</button>
+						<button id="btnFail" class="btn btn-large btn-danger" title="Mark trace as FAIL [F]">
+							<span class="label">FAIL</span>
+							<span class="shortcut">F</span>
+						</button>
+						<button id="btnUncertain" class="btn btn-large btn-warning" title="Mark trace as UNCERTAIN">
+							<span class="label">UNCERTAIN</span>
+						</button>
+					</div>
+				</div>
+
+				<!-- Failure Mode Multiselect (only visible when FAIL selected) -->
+				<div class="section" id="failureSection" style="display: none;">
+					<h3>Primary Failure Mode</h3>
+					<select id="primaryFailure" class="input-select">
+						<option value="">-- Select failure mode --</option>
+						<optgroup label="Settlement">
+							<option value="double_spend">Double-Spend Detection Failed</option>
+							<option value="settlement_amount_wrong">Settlement Amount Wrong</option>
+							<option value="inconsistent_ledger">Inconsistent Ledger</option>
+							<option value="reconciliation_fail">Reconciliation Failed</option>
+						</optgroup>
+						<optgroup label="Compliance">
+							<option value="aml_bypass">AML Bypass</option>
+							<option value="velocity_exceeded">Velocity Exceeded</option>
+							<option value="kyc_missing">KYC Missing</option>
+						</optgroup>
+						<optgroup label="Commerce">
+							<option value="order_state_broken">Order State Broken</option>
+							<option value="payment_mismatch">Payment Mismatch</option>
+							<option value="lineage_incomplete">Lineage Incomplete</option>
+						</optgroup>
+						<optgroup label="Merchant">
+							<option value="merchant_unboarded">Merchant Unboarded</option>
+							<option value="merchant_limit_exceeded">Merchant Limit Exceeded</option>
+						</optgroup>
+						<optgroup label="LLM Behavior">
+							<option value="hallucination">Hallucination</option>
+							<option value="logic_error">Logic Error</option>
+							<option value="llm_confusion">LLM Confusion</option>
+						</optgroup>
+						<optgroup label="Infrastructure">
+							<option value="timeout">Timeout</option>
+							<option value="service_unavailable">Service Unavailable</option>
+							<option value="database_error">Database Error</option>
+						</optgroup>
+					</select>
+
+					<h3>Secondary Failures</h3>
+					<div class="multiselect-group" id="secondaryFailures">
+						<label><input type="checkbox" value="timeout"> Timeout</label>
+						<label><input type="checkbox" value="logic_error"> Logic Error</label>
+						<label><input type="checkbox" value="network_retry"> Network Retry</label>
+						<label><input type="checkbox" value="state_inconsistency"> State Inconsistency</label>
+					</div>
+				</div>
+
+				<!-- Confidence Slider -->
+				<div class="section">
+					<h3>Confidence</h3>
+					<div class="confidence-slider">
+						<input type="range" id="confidenceSlider" min="0" max="100" value="50" class="slider">
+						<span id="confidenceValue">50%</span>
+					</div>
+					<p class="help-text">How confident are you in this evaluation?</p>
+				</div>
+
+				<!-- Notes -->
+				<div class="section">
+					<h3>Notes</h3>
+					<textarea id="notes" class="textarea" placeholder="Optional: Explain your decision, edge cases, or reasoning..."></textarea>
+				</div>
+
+				<!-- Defer Button -->
+				<div class="section">
+					<label class="checkbox-label">
+						<input type="checkbox" id="deferCheckbox">
+						<span>Defer for later review</span>
+					</label>
+					<textarea id="deferReason" class="textarea" placeholder="Why defer this trace?" style="display: none;"></textarea>
+				</div>
+
+				<!-- Submit -->
+				<div class="section">
+					<button id="btnSubmitAnnotation" class="btn btn-primary btn-full" title="Submit annotation">Submit Annotation</button>
+				</div>
+
+				<!-- Navigation shortcuts -->
+				<div class="section shortcuts">
+					<h4>Keyboard Shortcuts</h4>
+					<ul>
+						<li><kbd>N</kbd> - Next trace</li>
+						<li><kbd>P</kbd> - Previous trace</li>
+						<li><kbd>S</kbd> - Mark PASS</li>
+						<li><kbd>F</kbd> - Mark FAIL</li>
+						<li><kbd>D</kbd> - Defer trace</li>
+					</ul>
+				</div>
+			</div>
+
+			<!-- Right Panel: Similar Traces & Rubric Definitions -->
+			<div class="panel right-panel">
+				<div class="panel-header">
+					<h2>Context & Rubrics</h2>
+					<div class="panel-tabs">
+						<button class="tab-btn active" data-tab="similar">Similar</button>
+						<button class="tab-btn" data-tab="rubrics">Rubrics</button>
+						<button class="tab-btn" data-tab="clusters">Clusters</button>
+					</div>
+				</div>
+
+				<!-- Similar Traces Tab -->
+				<div id="tab-similar" class="tab-content active">
+					<div class="section">
+						<h3>Similar Traces</h3>
+						<div id="similarTraces" class="trace-items">
+							<p class="placeholder">Load a trace to see similar examples</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Rubrics Tab -->
+				<div id="tab-rubrics" class="tab-content">
+					<div class="section">
+						<h3>Evaluation Rubrics</h3>
+						<div id="rubricsList" class="rubrics-list">
+							<p class="placeholder">Loading rubrics...</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Clusters Tab -->
+				<div id="tab-clusters" class="tab-content">
+					<div class="section">
+						<h3>Failure Mode Clusters</h3>
+						<div id="clustersList" class="clusters-list">
+							<p class="placeholder">Loading clusters...</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Status bar -->
+		<footer class="eval-footer">
+			<span id="footerStatus">Ready</span>
+			<span id="footerProgress"></span>
+		</footer>
+	</div>
+
+	<script src="/ui/eval_review.js"></script>
+</body>
+</html>

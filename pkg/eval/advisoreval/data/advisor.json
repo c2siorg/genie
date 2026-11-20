@@ -1,0 +1,107 @@
+{
+  "domain": "advisor",
+  "category": "core",
+  "description": "Advisor-pipeline agent execution cases. Each runs a real agent (Metadata.agent) against Input and checks Expected. profile-analyzer maps KYC->risk tolerance + compliance restrictions; financial-analyst returns spending opportunities; recommendation-generator applies a confidence multiplier by risk tolerance (conservative 0.6, moderate 0.75, aggressive 0.85).",
+  "total_cases": 11,
+  "cases": [
+    {
+      "id": "AD-PA-001",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "High-value verified KYC maps to aggressive risk tolerance with no restrictions.",
+      "input": {"user_id": "u-001", "kyc_status": "verified_high_value", "annual_income_paise": 120000000},
+      "expected": {"risk_tolerance": "aggressive", "min_restrictions": 0},
+      "metadata": {"domain": "advisor", "agent": "profile-analyzer", "category": "kyc_mapping"}
+    },
+    {
+      "id": "AD-PA-002",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Standard verified KYC maps to moderate risk tolerance with a leverage restriction.",
+      "input": {"user_id": "u-002", "kyc_status": "verified_standard"},
+      "expected": {"risk_tolerance": "moderate", "min_restrictions": 1},
+      "metadata": {"domain": "advisor", "agent": "profile-analyzer", "category": "kyc_mapping"}
+    },
+    {
+      "id": "AD-PA-003",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Pending KYC maps to conservative with offshore + derivatives restrictions.",
+      "input": {"user_id": "u-003", "kyc_status": "pending"},
+      "expected": {"risk_tolerance": "conservative", "min_restrictions": 2},
+      "metadata": {"domain": "advisor", "agent": "profile-analyzer", "category": "kyc_mapping"}
+    },
+    {
+      "id": "AD-PA-004",
+      "domain": "advisor",
+      "failure_mode": "FM-AB-VALIDATION",
+      "scenario": "Missing user_id must produce a validation error.",
+      "input": {"kyc_status": "pending"},
+      "expected": {"error": true},
+      "metadata": {"domain": "advisor", "agent": "profile-analyzer", "category": "validation"}
+    },
+    {
+      "id": "AD-PA-005",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Empty KYC defaults to conservative with no restrictions.",
+      "input": {"user_id": "u-005", "kyc_status": ""},
+      "expected": {"risk_tolerance": "conservative", "min_restrictions": 0},
+      "metadata": {"domain": "advisor", "agent": "profile-analyzer", "category": "default"}
+    },
+    {
+      "id": "AD-FA-001",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Valid profile yields zero opportunities (data-source integration is a TODO, not an error).",
+      "input": {"profile": {"user_id": "u-101", "risk_tolerance": "moderate"}},
+      "expected": {"opportunity_count": 0},
+      "metadata": {"domain": "advisor", "agent": "financial-analyst", "category": "analysis"}
+    },
+    {
+      "id": "AD-FA-002",
+      "domain": "advisor",
+      "failure_mode": "FM-AB-VALIDATION",
+      "scenario": "Profile missing user_id must produce a validation error.",
+      "input": {"profile": {"risk_tolerance": "moderate"}},
+      "expected": {"error": true},
+      "metadata": {"domain": "advisor", "agent": "financial-analyst", "category": "validation"}
+    },
+    {
+      "id": "AD-RG-001",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Moderate profile + one opportunity yields one recommendation at 0.75 confidence.",
+      "input": {"profile": {"user_id": "u-201", "risk_tolerance": "moderate"}, "opportunities": [{"id": "opp-1", "category": "dining", "monthly_savings_potential": 30000, "benchmark_percentile": 85}]},
+      "expected": {"recommendation_count": 1, "confidence": 0.75},
+      "metadata": {"domain": "advisor", "agent": "recommendation-generator", "category": "impact"}
+    },
+    {
+      "id": "AD-RG-002",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Aggressive profile applies the 0.85 confidence multiplier.",
+      "input": {"profile": {"user_id": "u-202", "risk_tolerance": "aggressive"}, "opportunities": [{"id": "opp-2", "category": "subscriptions", "monthly_savings_potential": 20000, "benchmark_percentile": 70}]},
+      "expected": {"recommendation_count": 1, "confidence": 0.85},
+      "metadata": {"domain": "advisor", "agent": "recommendation-generator", "category": "impact"}
+    },
+    {
+      "id": "AD-RG-003",
+      "domain": "advisor",
+      "failure_mode": "none",
+      "scenario": "Conservative profile applies the 0.60 confidence multiplier.",
+      "input": {"profile": {"user_id": "u-203", "risk_tolerance": "conservative"}, "opportunities": [{"id": "opp-3", "category": "transport", "monthly_savings_potential": 15000, "benchmark_percentile": 60}]},
+      "expected": {"recommendation_count": 1, "confidence": 0.6},
+      "metadata": {"domain": "advisor", "agent": "recommendation-generator", "category": "impact"}
+    },
+    {
+      "id": "AD-RG-004",
+      "domain": "advisor",
+      "failure_mode": "FM-AB-VALIDATION",
+      "scenario": "No opportunities must produce a validation error.",
+      "input": {"profile": {"user_id": "u-204", "risk_tolerance": "moderate"}, "opportunities": []},
+      "expected": {"error": true},
+      "metadata": {"domain": "advisor", "agent": "recommendation-generator", "category": "validation"}
+    }
+  ]
+}

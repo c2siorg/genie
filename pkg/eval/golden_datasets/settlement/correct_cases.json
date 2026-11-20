@@ -1,0 +1,628 @@
+{
+  "test_dataset": {
+    "domain": "settlement",
+    "failure_mode_category": "correct",
+    "total_cases": 30,
+    "description": "Happy-path settlement scenarios with correct execution, balance consistency, and audit trails",
+    "cases": [
+      {
+        "test_case_id": "SE-CORRECT-001",
+        "failure_mode": "none",
+        "rubric": "RB-SE-001,RB-SE-002",
+        "input": {
+          "order_id": "ORD-2024-001",
+          "merchant_id": "MERCH-100",
+          "customer_id": "CUST-001",
+          "amount_paise": 50000,
+          "currency": "INR",
+          "payment_method": "erupeewallet",
+          "order_status": "PaymentConfirmed",
+          "timestamp": "2026-06-06T10:00:00Z",
+          "metadata": {
+            "batch_id": "BATCH-001",
+            "settlement_round": 1,
+            "compliance_checks": ["velocity_ok", "kyc_verified", "aml_clear"]
+          }
+        },
+        "execution_trace": [
+          "step_1_validate_order: success (amount=50000 paise, status=PaymentConfirmed)",
+          "step_2_compliance_check: success (velocity_ok=true, kyc=verified, aml=clear)",
+          "step_3_ledger_prepare: success (ledger.PrepareTransaction(ORD-2024-001, MERCH-100, 50000))",
+          "step_4_ledger_commit: success (ledger.CommitTransaction returned txn_id=TXN-001)",
+          "step_5_lineage_record: success (lineage.Record(ORD-2024-001, StepSettlementCompleted, TXN-001))",
+          "step_6_order_status_update: success (order.status=Fulfilled)",
+          "step_7_reconciliation_check: success (IsReconciled=true)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "merchant_balance_change": 50000,
+          "ledger_transaction_id": "TXN-001",
+          "order_status_final": "Fulfilled",
+          "audit_entries_created": 1,
+          "lineage_complete": true,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "merchant_balance_change": 50000,
+          "ledger_transaction_id": "TXN-001",
+          "order_status_final": "Fulfilled",
+          "audit_entries_created": 1,
+          "lineage_complete": true,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-001",
+              "dimension": "idempotency",
+              "level": "excellent",
+              "score": 95,
+              "evidence": "Concurrent payment request with same order ID rejected; single ledger entry confirmed"
+            },
+            {
+              "rubric": "RB-SE-002",
+              "dimension": "consistency",
+              "level": "excellent",
+              "score": 98,
+              "evidence": "Round-trip verification passed; ledger balance matches settlement amount; read-your-own-write consistent"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-002",
+        "failure_mode": "none",
+        "rubric": "RB-SE-003,RB-SE-004",
+        "input": {
+          "order_id": ["ORD-2024-002", "ORD-2024-003", "ORD-2024-004"],
+          "merchant_ids": ["MERCH-100", "MERCH-101", "MERCH-100"],
+          "amounts_paise": [30000, 40000, 20000],
+          "settlement_type": "batch",
+          "batch_id": "BATCH-002",
+          "timestamp": "2026-06-06T10:15:00Z",
+          "metadata": {
+            "netting_enabled": true,
+            "netting_type": "bilateral",
+            "total_batch_amount": 90000
+          }
+        },
+        "execution_trace": [
+          "step_1_validate_batch: success (3 orders, batch_total=90000)",
+          "step_2_consolidate_settlement: success (grouped by merchant: MERCH-100=50000, MERCH-101=40000)",
+          "step_3_apply_netting: success (bilateral netting applied, net positions calculated)",
+          "step_4_convert_to_cbdc: success (ConvertToCBDCPositions: MERCH-100=+50000, MERCH-101=+40000)",
+          "step_5_batch_ledger_commit: success (ledger.CommitBatch(BATCH-002, positions))",
+          "step_6_reconciliation_batch_check: success (sum(batch)=sum(ledger), IsReconciled=true)"
+        ],
+        "expected_output": {
+          "batch_settlement_result": "success",
+          "batch_id": "BATCH-002",
+          "batch_total_paise": 90000,
+          "merchant_count": 2,
+          "netting_applied": true,
+          "positions": {
+            "MERCH-100": 50000,
+            "MERCH-101": 40000
+          },
+          "reconciliation_pass": true,
+          "no_duplicates": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "batch_settlement_result": "success",
+          "batch_id": "BATCH-002",
+          "batch_total_paise": 90000,
+          "merchant_count": 2,
+          "netting_applied": true,
+          "positions": {
+            "MERCH-100": 50000,
+            "MERCH-101": 40000
+          },
+          "reconciliation_pass": true,
+          "no_duplicates": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-003",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Batch sum=90000 matches sum(orders)=90000; deterministic merchant sorting; no duplicate orders"
+            },
+            {
+              "rubric": "RB-SE-004",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Netting calculation correct; no overflow (sum fits int64); rounding to paise; net positions match expected"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-003",
+        "failure_mode": "none",
+        "rubric": "RB-SE-005",
+        "input": {
+          "order_id": "ORD-2024-005",
+          "merchant_id": "MERCH-102",
+          "customer_id": "CUST-002",
+          "amount_paise": 100000,
+          "settlement_type": "single",
+          "timestamp": "2026-06-06T11:00:00Z",
+          "metadata": {
+            "uses_idempotency_key": true,
+            "idempotency_key": "IDK-2024-005"
+          }
+        },
+        "execution_trace": [
+          "step_1_validate_idempotency_key: success (IDK-2024-005 is unique)",
+          "step_2_ledger_prepare: success (with idempotency_key=IDK-2024-005)",
+          "step_3_ledger_commit: success (txn_id=TXN-005, idempotency_verified)",
+          "step_4_lineage_record: success (recorded with idempotency_key)",
+          "step_5_duplicate_check: not_triggered (idempotency ensures single execution)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "transaction_id": "TXN-005",
+          "idempotency_key_verified": true,
+          "single_execution_confirmed": true,
+          "merchant_balance": 100000,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "transaction_id": "TXN-005",
+          "idempotency_key_verified": true,
+          "single_execution_confirmed": true,
+          "merchant_balance": 100000,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-005",
+              "dimension": "idempotency",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Idempotency key ensures single execution; duplicate request rejected; settlement recorded once"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-004",
+        "failure_mode": "none",
+        "rubric": "RB-SE-006",
+        "input": {
+          "order_id": "ORD-2024-006",
+          "merchant_id": "MERCH-103",
+          "customer_id": "CUST-003",
+          "amount_paise": 75000,
+          "merchant_settlement_status": "confirmed",
+          "ledger_write_timestamp": "2026-06-06T11:30:00Z",
+          "ledger_read_timestamp": "2026-06-06T11:30:01Z",
+          "metadata": {
+            "round_trip_verification_enabled": true
+          }
+        },
+        "execution_trace": [
+          "step_1_ledger_commit: success (ledger.CommitTransaction(ORD-2024-006, MERCH-103, 75000))",
+          "step_2_wait_consistency: 100ms (after write, before read)",
+          "step_3_round_trip_read: success (ledger.GetBalance(MERCH-103) returns 75000)",
+          "step_4_consistency_verified: true (write value == read value)",
+          "step_5_lineage_recorded: success"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "write_amount": 75000,
+          "read_amount": 75000,
+          "round_trip_verified": true,
+          "consistency_level": "strong",
+          "latency_write_to_read_ms": 100,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "write_amount": 75000,
+          "read_amount": 75000,
+          "round_trip_verified": true,
+          "consistency_level": "strong",
+          "latency_write_to_read_ms": 100,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-006",
+              "dimension": "consistency",
+              "level": "excellent",
+              "score": 99,
+              "evidence": "Round-trip verification: write 75000, read 75000 (100% match); <500ms consistency latency"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-005",
+        "failure_mode": "none",
+        "rubric": "RB-SE-007",
+        "input": {
+          "order_id": "ORD-2024-007",
+          "merchant_id": "MERCH-104",
+          "customer_id": "CUST-004",
+          "amount_paise": 250000,
+          "settlement_deadline_ms": 30000,
+          "timestamp": "2026-06-06T12:00:00Z",
+          "metadata": {
+            "has_timeout_handler": true,
+            "retry_enabled": true,
+            "max_retries": 3
+          }
+        },
+        "execution_trace": [
+          "step_1_settlement_initiated: timestamp=2026-06-06T12:00:00Z",
+          "step_2_ledger_commit_attempt_1: success (completed in 5000ms)",
+          "step_3_lineage_recorded: success",
+          "step_4_order_fulfilled: success",
+          "step_5_sla_check: pass (5000ms < 30000ms deadline)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "total_latency_ms": 5000,
+          "sla_deadline_ms": 30000,
+          "sla_status": "pass",
+          "retries_used": 0,
+          "settlement_completed": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "total_latency_ms": 5000,
+          "sla_deadline_ms": 30000,
+          "sla_status": "pass",
+          "retries_used": 0,
+          "settlement_completed": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-007",
+              "dimension": "availability",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Settlement completed in 5000ms, well under 30000ms SLA; no retries needed; timeout handler ready"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-006",
+        "failure_mode": "none",
+        "rubric": "RB-SE-008",
+        "input": {
+          "order_id": "ORD-2024-008",
+          "merchant_id": "MERCH-105",
+          "amount_paise": 120000,
+          "timestamp": "2026-06-06T12:30:00Z",
+          "metadata": {
+            "ledger_backup_enabled": true,
+            "replication_factor": 3,
+            "consistent_snapshot": true
+          }
+        },
+        "execution_trace": [
+          "step_1_ledger_commit_primary: success (primary ledger confirms)",
+          "step_2_replication_backup_1: success (replica 1 confirms)",
+          "step_3_replication_backup_2: success (replica 2 confirms)",
+          "step_4_snapshot_taken: success (consistent snapshot created)",
+          "step_5_lineage_recorded: success",
+          "step_6_settlement_finalized: success"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "primary_ledger_confirms": true,
+          "backup_replicas_count": 2,
+          "all_replicas_consistent": true,
+          "snapshot_created": true,
+          "reconciliation_pass": true,
+          "data_loss_risk": "minimal",
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "primary_ledger_confirms": true,
+          "backup_replicas_count": 2,
+          "all_replicas_consistent": true,
+          "snapshot_created": true,
+          "reconciliation_pass": true,
+          "data_loss_risk": "minimal",
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-008",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "3-replica replication confirmed; consistent snapshot created; settlement auditable and durable"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-007",
+        "failure_mode": "none",
+        "rubric": "RB-SE-009",
+        "input": {
+          "order_id": "ORD-2024-009",
+          "merchant_id": "MERCH-106",
+          "amount_paise": 180000,
+          "currency": "INR",
+          "settlement_type": "cross_currency",
+          "fx_rate": 1.0,
+          "fx_rate_timestamp": "2026-06-06T12:00:00Z",
+          "fx_rate_max_age_minutes": 5,
+          "timestamp": "2026-06-06T12:02:00Z"
+        },
+        "execution_trace": [
+          "step_1_validate_fx_rate_freshness: success (2min old, <5min max age)",
+          "step_2_apply_fx_conversion: success (180000 * 1.0 = 180000)",
+          "step_3_validate_conversion_precision: success (no rounding loss, paise precision)",
+          "step_4_ledger_commit: success (amount=180000)",
+          "step_5_round_trip_verify: success (ledger balance update confirmed)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "fx_rate_valid": true,
+          "fx_rate_age_minutes": 2,
+          "converted_amount": 180000,
+          "conversion_precision": "paise",
+          "round_trip_verified": true,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "fx_rate_valid": true,
+          "fx_rate_age_minutes": 2,
+          "converted_amount": 180000,
+          "conversion_precision": "paise",
+          "round_trip_verified": true,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-009",
+              "dimension": "consistency",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "FX rate fresh (<5min); conversion accurate; round-trip verification passes; ledger consistent"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-008",
+        "failure_mode": "none",
+        "rubric": "RB-SE-010",
+        "input": {
+          "order_id": "ORD-2024-010",
+          "merchant_id": "MERCH-107",
+          "amount_paise": 95000,
+          "settlement_type": "with_retry",
+          "retry_config": {
+            "max_retries": 3,
+            "initial_backoff_ms": 100,
+            "backoff_multiplier": 2,
+            "max_backoff_ms": 5000
+          },
+          "timestamp": "2026-06-06T13:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_settlement_attempt: success (first attempt succeeds)",
+          "step_2_lineage_recorded: success",
+          "step_3_order_fulfilled: success",
+          "step_4_retry_not_needed: true (settlement succeeded on first attempt)"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "retry_count": 0,
+          "max_retries_configured": 3,
+          "exponential_backoff_enabled": true,
+          "total_latency_ms": 2000,
+          "first_attempt_success": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "retry_count": 0,
+          "max_retries_configured": 3,
+          "exponential_backoff_enabled": true,
+          "total_latency_ms": 2000,
+          "first_attempt_success": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-010",
+              "dimension": "availability",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Settlement succeeds immediately; retry logic configured but not needed; max retries=3, exponential backoff ready"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-009",
+        "failure_mode": "none",
+        "rubric": "RB-SE-001",
+        "input": {
+          "order_id": "ORD-2024-011",
+          "merchant_id": "MERCH-108",
+          "customer_id": "CUST-005",
+          "amount_paise": 300000,
+          "concurrent_attempts": 5,
+          "timestamp": "2026-06-06T13:30:00Z",
+          "metadata": {
+            "test_idempotency": true,
+            "concurrent_payment_check": true
+          }
+        },
+        "execution_trace": [
+          "concurrent_attempt_1: success (ledger_txn=TXN-011-1)",
+          "concurrent_attempt_2: rejected (duplicate detected, same orderID)",
+          "concurrent_attempt_3: rejected (duplicate detected, same orderID)",
+          "concurrent_attempt_4: rejected (duplicate detected, same orderID)",
+          "concurrent_attempt_5: rejected (duplicate detected, same orderID)",
+          "final_ledger_state: single entry (TXN-011-1), amount=300000"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "unique_ledger_entries": 1,
+          "duplicate_attempts_blocked": 4,
+          "final_transaction_id": "TXN-011-1",
+          "merchant_balance": 300000,
+          "no_double_spend": true,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "unique_ledger_entries": 1,
+          "duplicate_attempts_blocked": 4,
+          "final_transaction_id": "TXN-011-1",
+          "merchant_balance": 300000,
+          "no_double_spend": true,
+          "reconciliation_pass": true,
+          "error_code": null
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-001",
+              "dimension": "idempotency",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "5 concurrent attempts, 1 succeeds, 4 rejected; ledger has single entry; no double-spend"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      },
+      {
+        "test_case_id": "SE-CORRECT-010",
+        "failure_mode": "none",
+        "rubric": "RB-SE-002",
+        "input": {
+          "order_id": "ORD-2024-012",
+          "merchant_id": "MERCH-109",
+          "amount_paise": 210000,
+          "test_acid_properties": true,
+          "timestamp": "2026-06-06T14:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_atomicity_test: commit succeeds (all-or-nothing)",
+          "step_2_consistency_test: all reads return 210000",
+          "step_3_isolation_test: no dirty reads, concurrent reads isolated",
+          "step_4_durability_test: survives process restart, value persists"
+        ],
+        "expected_output": {
+          "settlement_result": "success",
+          "atomicity": true,
+          "consistency": true,
+          "isolation": true,
+          "durability": true,
+          "acid_compliant": true,
+          "merchant_balance": 210000,
+          "reconciliation_pass": true
+        },
+        "actual_output": {
+          "settlement_result": "success",
+          "atomicity": true,
+          "consistency": true,
+          "isolation": true,
+          "durability": true,
+          "acid_compliant": true,
+          "merchant_balance": 210000,
+          "reconciliation_pass": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-SE-002",
+              "dimension": "consistency",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "ACID properties verified: atomicity, consistency, isolation, durability all pass"
+            }
+          ],
+          "severity": "none",
+          "failure_detected": false,
+          "detection_latency_ms": 0
+        }
+      }
+    ]
+  }
+}

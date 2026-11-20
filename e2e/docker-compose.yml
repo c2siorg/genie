@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: genie
+      POSTGRES_PASSWORD: genie_dev_password
+      POSTGRES_DB: genie_test
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U genie']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Ollama for LLM (optional - can skip with GENIE_LLM=mock)
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: '0.0.0.0:11434'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:11434/api/tags']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-ollama
+
+  # Genie API server
+  genie-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    environment:
+      GENIE_HTTP_ADDR: ':8080'
+      GENIE_DB_DSN: 'postgres://genie:genie_dev_password@db:5432/genie_test?sslmode=disable'
+      GENIE_JWT_SECRET: 'test-secret-key-for-genie-e2e-testing'
+      GENIE_KEK_BASE64: 'dGVzdC1lbmNyeXB0aW9uLWtleS0zMi1ieXRlcy1iYXNlNjQ='
+      GENIE_LLM: ${GENIE_LLM:-mock}
+      GENIE_OLLAMA_URL: 'http://ollama:11434'
+      GENIE_OLLAMA_CHAT: 'llama3.2:1b'
+      LOG_LEVEL: 'info'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '8080:8080'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  ollama_data:

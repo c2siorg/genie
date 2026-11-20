@@ -1,0 +1,40 @@
+# Local development for the decoupled advisor agents. Run alongside the main
+# docker-compose.yaml:
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.agents.yml up
+#
+# Each agent listens on :8080 inside its container; host ports differ to avoid
+# collisions. In Kubernetes every agent uses :8080 (its own pod IP), so no
+# host-port mapping is needed there.
+#
+# No "version:" key — deprecated in Compose V2.
+services:
+  genie-profile-analyzer:
+    build:
+      context: .
+      dockerfile: agents/cmd/profile-analyzer/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      PORT: "8080"
+      GENIE_AGENT_TOKEN: "${GENIE_AGENT_TOKEN:-dev-secret}"
+
+  genie-financial-analyst:
+    build:
+      context: .
+      dockerfile: agents/cmd/financial-analyst/Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      PORT: "8080"
+      GENIE_AGENT_TOKEN: "${GENIE_AGENT_TOKEN:-dev-secret}"
+
+  genie-recommendation-generator:
+    build:
+      context: .
+      dockerfile: agents/cmd/recommendation-generator/Dockerfile
+    ports:
+      - "8083:8080"
+    environment:
+      PORT: "8080"
+      GENIE_AGENT_TOKEN: "${GENIE_AGENT_TOKEN:-dev-secret}"

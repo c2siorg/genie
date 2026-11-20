@@ -15,10 +15,12 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -83,13 +85,22 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/agents/working_capital"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/afg"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agent"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/agentgov"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/aibom"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/auth/elevation"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/cbdc"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commerce"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/commercesettlement"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/compliance"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/constitution"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/crypto"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeecompliance"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/erupeepayment"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/eval"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/merchant"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/observability"
+	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/opa"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/policy"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/rag"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/registry"
@@ -100,6 +111,55 @@ import (
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/handlers"
 	"github.com/PratikDhanave/multi-agent-reference-architecture-go/pkg/web/mid"
 )
+
+// InMemorySettlementExecutor implements the settlement executor interface
+// for testing and in-memory operation.
+type InMemorySettlementExecutor struct {
+	batches map[string]*commercesettlement.SettlementBatch
+}
+
+func NewInMemorySettlementExecutor() *InMemorySettlementExecutor {
+	return &InMemorySettlementExecutor{
+		batches: make(map[string]*commercesettlement.SettlementBatch),
+	}
+}
+
+func (e *InMemorySettlementExecutor) ExecuteBatch(ctx context.Context, batchID string, positions map[string]int64) error {
+	// Create settlement entries from positions
+	entries := make(map[string]*commercesettlement.SettlementEntry)
+	totalAmount := int64(0)
+	merchantIDs := []string{}
+
+	for merchantID, amount := range positions {
+		entries[merchantID] = &commercesettlement.SettlementEntry{
+			MerchantID:      merchantID,
+			AmountOwedPaise: amount,
+			SettlementTxnID: batchID + "-" + merchantID,
+		}
+		totalAmount += amount
+		merchantIDs = append(merchantIDs, merchantID)
+	}
+
+	batch := &commercesettlement.SettlementBatch{
+		ID:               batchID,
+		SettlementDate:   time.Now().UTC(),
+		MerchantIDs:      merchantIDs,
+		TotalAmountPaise: totalAmount,
+		Status:           commercesettlement.StatusSettled,
+		CreatedAt:        time.Now().UTC(),
+		Entries:          entries,
+	}
+	e.batches[batchID] = batch
+	return nil
+}
+
+func (e *InMemorySettlementExecutor) GetBatchStatus(ctx context.Context, batchID string) (string, error) {
+	batch, exists := e.batches[batchID]
+	if !exists {
+		return "pending", nil
+	}
+	return string(batch.Status), nil
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -135,6 +195,30 @@ func run() error {
 		_ = tel.Shutdown(sctx)
 	}()
 
+	// Prometheus metrics server — always-on on a dedicated port so Prometheus
+	// can scrape /metrics without crossing the JWT-authenticated API boundary.
+	// Override with GENIE_METRICS_ADDR; default :9464 (standard prom port).
+	metricsAddr := os.Getenv("GENIE_METRICS_ADDR")
+	if metricsAddr == "" {
+		metricsAddr = ":9464"
+	}
+	metricsMux := http.NewServeMux()
+	metricsMux.Handle("/metrics", tel.MetricsHandler)
+	metricsMux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	metricsSrv := &http.Server{
+		Addr:              metricsAddr,
+		Handler:           metricsMux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	go func() {
+		logger.Info("metrics listening", "addr", metricsAddr)
+		if err := metricsSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("metrics server", "error", err)
+		}
+	}()
+
 	// Database
 	dsn := mustEnv("GENIE_DB_DSN")
 	db, err := postgres.Open(ctx, postgres.Config{DSN: dsn, MaxConns: 10})
@@ -161,7 +245,9 @@ func run() error {
 
 	consents := compliance.NewInMemoryLedger()
 	auditLog := compliance.NewInMemoryAuditLog()
-	_ = auditLog // reserved for incident-correlated audit entries.
+	// auditLog feeds the elevation service (and is reserved for incident-
+	// correlated audit entries on other transitions in the future).
+	elevationSvc := elevation.New(auditLog)
 
 	// Annexure V — board-approved AI policy lives in YAML, not Go code.
 	policyPath := os.Getenv("GENIE_AI_POLICY")
@@ -262,7 +348,7 @@ func run() error {
 	register(working_capital.New())
 
 	// LLM + embedder stack — Mock by default, Ollama when GENIE_LLM=ollama.
-	llmStack := buildLLMStack(logger)
+	llmStack := buildLLMStack(ctx, logger)
 
 	// RAG knowledge — seed the FREE-AI report's Sutras so the educator can
 	// cite them at runtime. Production loads richer corpora.
@@ -273,6 +359,30 @@ func run() error {
 	// Constitution + LLM-as-judge — only enable if the constitution YAML loads.
 	if cst, err := constitution.Load("config/constitution.yaml"); err == nil {
 		register(auditor.New(evalStore).WithJudge(llmStack.Provider, cst, llmStack.Model))
+	}
+
+	// ── Agent decoupling toggle (Week 3) ───────────────────────────────────
+	// Every agent above runs IN-PROCESS by default. Setting
+	// GENIE_AGENT_<ID>_MODE=http (plus GENIE_AGENT_<ID>_URL) REPLACES that one
+	// agent with an HTTPRegistryAgent that proxies to a remote agent service —
+	// the registry replaces by ID. This is additive and strictly opt-in: with no
+	// env vars set, the backend behaves exactly as before. Once every agent is
+	// validated in http mode, the in-process imports/registrations above can be
+	// removed to satisfy the "zero agent code in backend" mandate.
+	agentToken := os.Getenv("GENIE_AGENT_TOKEN")
+	for _, def := range registry.AllLegacyAgents {
+		key := "GENIE_AGENT_" + strings.ToUpper(def.ID) + "_MODE"
+		if os.Getenv(key) != "http" {
+			continue // default: keep the in-process agent
+		}
+		url := os.Getenv("GENIE_AGENT_" + strings.ToUpper(def.ID) + "_URL")
+		if url == "" {
+			logger.Error("agent set to http mode but URL missing; keeping in-process",
+				"agent", def.ID, "expected_env", "GENIE_AGENT_"+strings.ToUpper(def.ID)+"_URL")
+			continue
+		}
+		register(registry.NewHTTPRegistryAgent(def, url, agentToken))
+		logger.Info("agent switched to remote HTTP proxy", "agent", def.ID, "url", url)
 	}
 
 	incidentStore := postgres.NewIncidentStore(db)
@@ -290,6 +400,39 @@ func run() error {
 	// The auditor and MCP-backed agents remain in the inventory below.
 	qa := afg.NewQAService(composite)
 
+	// AGT governance bundle — the registry behind /v1/governance/*. The
+	// orchestrator hooks it used to feed are deferred with the bus removal
+	// (see above); the bundle itself still powers the governance endpoints.
+	agentIDs := []string{
+		"ingestor", "normalizer", "enricher", "analyzer", "forecaster",
+		"anomaly", "recommender", "reporter", "supervisor", "currency",
+		"macro", "rates", "loan", "educator", "auditor",
+		"portfolio_advisor", "portfolio_advisor_fallback", "recommender_fallback",
+		"aa_fetcher", "voice", "tax_estimator", "kyc_orchestrator",
+		"claim_adjudicator", "sme_loan_workflow", "invoice_processor",
+		"deep_research", "bulk_statement_analyzer", "mpc_research",
+		"auto_insurance", "health_preauth", "supply_chain_finance",
+		"payment_orchestrator", "cyber_guardian", "google_trends",
+	}
+	govBundle, err := agentgov.NewBundle(agentIDs)
+	if err != nil {
+		return fmt.Errorf("agentgov bundle: %w", err)
+	}
+
+	// ── Lesson 16: OPA policy engine ────────────────────────────────────────
+	// Build an OPA engine from the AI policy YAML + agent ring assignments so
+	// every message can be evaluated against Rego rules at /v1/governance/opa/*.
+	opaCfg := opa.DefaultPolicyConfig()
+	opaCfg.AgentRings = agentgov.RingMap(agentIDs)
+	opaCfg.HomeRegion = string(homeRegion)
+	opaCfg.AdminBypass = true
+	opaEngine, opaErr := opa.New(ctx, opaCfg, nil) // nil → load embedded policies/
+	if opaErr != nil {
+		logger.Error("opa engine init", "error", opaErr)
+		// Non-fatal: API runs without OPA introspection endpoints.
+		opaEngine = nil
+	}
+
 	// HTTP wiring
 	userRepo := postgres.NewUserRepo(db)
 	acctRepo := postgres.NewAccountRepo(db)
@@ -300,12 +443,43 @@ func run() error {
 		"recommender":       "recommender_fallback",
 	}
 
+	// E-Rupee Commerce Module Initialization
+	// Payment Agent
+	acctMgr := erupeepayment.NewInMemoryAccountManager(nil)
+	txnLog := erupeepayment.NewInMemoryTransactionLog(nil)
+	paymentAgent := erupeepayment.NewPaymentAgent(acctMgr, txnLog)
+
+	// Commerce Workflow (real stubs for payment & settlement agents)
+	orderMgr := commerce.NewInMemoryOrderManager()
+	paymentStub := commerce.NewRealPaymentAgentStub(paymentAgent)
+	settlementExecutor := NewInMemorySettlementExecutor()
+	settlementStub := commerce.NewRealSettlementAgentStub(settlementExecutor)
+	workflowOrch := commerce.NewDefaultWorkflowOrchestrator(orderMgr, paymentStub, settlementStub)
+
+	// Merchant Onboarding
+	merchantMgr := merchant.NewInMemoryMerchantManager()
+	onboardingWf := merchant.NewInMemoryOnboardingWorkflow(merchantMgr)
+
+	// CBDC Ledger & Settlement
+	cbdcLedger := cbdc.NewInMemoryLedger()
+	cbdcBridge := cbdc.NewMockCBDCBridge(2)
+	rbiLimits := cbdc.NewRBILimitsValidator()
+
+	// Payment Compliance Engine
+	complianceEngine := erupeecompliance.NewComplianceEngine()
+
 	deps := web.Deps{
-		Issuer:    issuer,
-		Logger:    logger,
-		Users:     &handlers.Users{Repo: userRepo, Issuer: issuer},
-		Accounts:  &handlers.Accounts{Repo: acctRepo},
-		Documents: &handlers.Documents{Repo: docRepo, Encryptor: enc},
+		Issuer: issuer,
+		Logger: logger,
+		// CSRF stays report-only until the SPA sends X-CSRF-Token; flip with
+		// GENIE_CSRF_ENFORCE=true. No effect on Bearer-token API traffic.
+		CSRFEnforce: os.Getenv("GENIE_CSRF_ENFORCE") == "true",
+		// Eval observability endpoints (/v1/eval/*), admin-only. Shares the
+		// in-memory eval store with the auditor; annotations are in-memory.
+		EvalReview: handlers.NewEvalReviewHandler(evalStore, eval.NewInMemoryAnnotationStore()),
+		Users:      &handlers.Users{Repo: userRepo, Issuer: issuer},
+		Accounts:   &handlers.Accounts{Repo: acctRepo},
+		Documents:  &handlers.Documents{Repo: docRepo, Encryptor: enc},
 		Ask: &handlers.Ask{
 			QA:                 qa,
 			Documents:          docRepo,
@@ -354,6 +528,29 @@ func run() error {
 		RateLimit: mid.NewRateLimit(60, 1.0), // 60-req burst, 1/sec refill
 		AIBOM:     &handlers.AIBOM{Reg: reg, Builder: aibom.NewBuilder()},
 		Feedback:  &handlers.Feedback{Store: synth.NewInMemoryFeedbackStore()},
+		// Elevation — PCSE §1.4 analog: time-bound privileged access with
+		// audit chain integration. Routes registered under /v1/elevation/*.
+		Elevation: &handlers.Elevation{Service: elevationSvc},
+		// AGT governance endpoints — admin-gated under /v1/governance/*.
+		AgentGov: &handlers.AgentGov{Bundle: govBundle},
+		// OPA policy introspection — admin-gated under /v1/governance/opa/*.
+		// Nil when the engine failed to init (degraded mode).
+		OPAHandler: func() *handlers.OPAHandler {
+			if opaEngine != nil {
+				return &handlers.OPAHandler{Engine: opaEngine}
+			}
+			return nil
+		}(),
+		// E-Rupee Commerce Handlers
+		Payment: &handlers.Payment{
+			PaymentAgent:   paymentAgent,
+			AccountManager: acctMgr,
+			TransactionLog: txnLog,
+		},
+		Commerce:   handlers.NewCommerceHandler(orderMgr, workflowOrch),
+		Merchant:   handlers.NewMerchantHandler(merchantMgr, onboardingWf),
+		Compliance: handlers.NewComplianceHandler(complianceEngine),
+		CBDC:       handlers.NewCBDCHandler(cbdcBridge, cbdcLedger, rbiLimits),
 	}
 	if ui, err := handlers.NewUI(); err == nil {
 		deps.UI = ui
@@ -393,6 +590,9 @@ func run() error {
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("graceful shutdown failed", "error", err)
+	}
+	if err := metricsSrv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("metrics server shutdown failed", "error", err)
 	}
 	return nil
 }

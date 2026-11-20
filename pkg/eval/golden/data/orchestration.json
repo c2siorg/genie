@@ -1,0 +1,53 @@
+{
+  "domain": "orchestration",
+  "category": "core",
+  "description": "Workflow state-transition cases keyed to OrchestrationJudgeInput. Deterministic judge (threshold 0.6): transition_valid +0.35; (settlement_initiated && !payment_confirmed) -0.35 / (step_sequence non-empty && payment_confirmed) +0.35; idempotency_key present +0.3.",
+  "total_cases": 5,
+  "cases": [
+    {
+      "id": "OR-OK-001",
+      "domain": "orchestration",
+      "failure_mode": "none",
+      "scenario": "Valid transition with payment confirmed before settlement and an idempotency key present.",
+      "input": {"order_id": "ORD-OR-001", "step_sequence": ["OrderCreated", "PaymentInitiated", "PaymentConfirmed", "SettlementInitiated"], "current_step": "SettlementInitiated", "previous_step": "PaymentConfirmed", "transition_valid": true, "payment_confirmed": true, "settlement_initiated": true, "idempotency_key": "idem-or-001"},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "orchestration", "severity": "low", "category": "valid"}
+    },
+    {
+      "id": "OR-OK-002",
+      "domain": "orchestration",
+      "failure_mode": "none",
+      "scenario": "Valid fulfilment transition with full step history and idempotency.",
+      "input": {"order_id": "ORD-OR-002", "step_sequence": ["OrderCreated", "PaymentInitiated", "PaymentConfirmed", "SettlementInitiated", "SettlementCompleted", "Fulfilled"], "current_step": "Fulfilled", "previous_step": "SettlementCompleted", "transition_valid": true, "payment_confirmed": true, "settlement_initiated": true, "idempotency_key": "idem-or-002"},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "orchestration", "severity": "low", "category": "valid"}
+    },
+    {
+      "id": "OR-FAIL-001",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-001",
+      "scenario": "Out-of-order: settlement initiated before payment was confirmed, on an invalid transition — must be detected.",
+      "input": {"order_id": "ORD-OR-101", "step_sequence": ["OrderCreated", "SettlementInitiated"], "current_step": "SettlementInitiated", "previous_step": "OrderCreated", "transition_valid": false, "payment_confirmed": false, "settlement_initiated": true, "idempotency_key": "idem-or-101"},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "critical", "category": "ordering"}
+    },
+    {
+      "id": "OR-FAIL-002",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-002",
+      "scenario": "Missing idempotency key on a retried workflow — duplicate-execution risk must be detected.",
+      "input": {"order_id": "ORD-OR-102", "step_sequence": ["OrderCreated", "PaymentInitiated", "PaymentConfirmed"], "current_step": "PaymentConfirmed", "previous_step": "PaymentInitiated", "transition_valid": true, "payment_confirmed": true, "settlement_initiated": false, "idempotency_key": ""},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "high", "category": "idempotency"}
+    },
+    {
+      "id": "OR-FAIL-003",
+      "domain": "orchestration",
+      "failure_mode": "FM-OR-003",
+      "scenario": "Invalid state transition flagged despite present steps and idempotency — must be detected.",
+      "input": {"order_id": "ORD-OR-103", "step_sequence": ["OrderCreated", "PaymentConfirmed", "Fulfilled"], "current_step": "Fulfilled", "previous_step": "PaymentConfirmed", "transition_valid": false, "payment_confirmed": true, "settlement_initiated": false, "idempotency_key": "idem-or-103"},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "orchestration", "severity": "high", "category": "transition"}
+    }
+  ]
+}

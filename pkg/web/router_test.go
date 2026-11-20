@@ -147,3 +147,33 @@ func TestRouter_HealthzNotRateLimited(t *testing.T) {
 		}
 	}
 }
+
+// TestRouter_SecurityHeaders verifies the SecurityHeaders middleware is wired:
+// every response (here the public /healthz probe) must carry the defensive
+// headers (CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff,
+// Referrer-Policy). Regression guard against the middleware being dropped.
+func TestRouter_SecurityHeaders(t *testing.T) {
+	d := minimalDeps()
+	srv := httptest.NewServer(NewRouter(d))
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/healthz")
+	if err != nil {
+		t.Fatalf("GET /healthz: %v", err)
+	}
+	defer resp.Body.Close()
+
+	want := map[string]string{
+		"X-Frame-Options":        "DENY",
+		"X-Content-Type-Options": "nosniff",
+		"Referrer-Policy":        "strict-origin-when-cross-origin",
+	}
+	for h, v := range want {
+		if got := resp.Header.Get(h); got != v {
+			t.Errorf("header %s = %q, want %q", h, got, v)
+		}
+	}
+	if csp := resp.Header.Get("Content-Security-Policy"); csp == "" {
+		t.Error("Content-Security-Policy header missing")
+	}
+}

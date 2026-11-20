@@ -1,0 +1,733 @@
+{
+  "rubrics": [
+    {
+      "id": "RB-SE-001",
+      "name": "Double-Spend Prevention (Ledger Idempotency)",
+      "description": "Evaluates whether CBDC ledger enforces transaction idempotency to prevent same token from being spent twice. Tests concurrent payment confirmations.",
+      "domain": "settlement",
+      "primary_dimension": "idempotency",
+      "criteria": [
+        "Concurrent payment requests for same order result in single ledger entry",
+        "Duplicate payment with same OrderID is detected and rejected",
+        "Idempotency key validation prevents double-spend",
+        "Ledger commit is atomic and all-or-nothing"
+      ],
+      "scoring_guideline": "Failing: concurrent payments both succeed. Poor: one succeeds after delay. Fair: duplicate detected but not prevented. Good: duplicate prevented. Excellent: prevented + alert + audit trail.",
+      "level_descriptions": {
+        "failing": "Concurrent payments result in double-spend (both succeed)",
+        "poor": "Double-spend detected only after commit",
+        "fair": "Duplicate rejected with error but race window exists",
+        "good": "Idempotency enforced; duplicates rejected immediately",
+        "excellent": "Idempotency enforced with alert + detailed audit trail"
+      },
+      "evidence": [
+        "reconciliation.IsReconciled() result",
+        "ledger balance history for customer",
+        "audit trail showing payment attempts",
+        "concurrent test execution logs"
+      ],
+      "related_failure_modes": ["FM-SE-001", "FM-OR-004"],
+      "test_procedure": "Execute two concurrent payment requests for same order; verify ledger shows single entry; check customer balance",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-002",
+      "name": "Ledger Transaction Consistency",
+      "description": "Evaluates whether ledger maintains ACID properties (atomicity, consistency, isolation, durability) for settlement transactions.",
+      "domain": "settlement",
+      "primary_dimension": "consistency",
+      "criteria": [
+        "Settlement amount matches order amount exactly",
+        "All-or-nothing semantics: settlement either fully commits or fully rolls back",
+        "No partial commits visible to auditors",
+        "Read-your-own-write consistency after commit"
+      ],
+      "scoring_guideline": "Failing: inconsistent reads, partial commits visible. Poor: eventual consistency delays. Fair: mostly consistent. Good: ACID compliant. Excellent: strong consistency + replication.",
+      "level_descriptions": {
+        "failing": "Inconsistent reads; settlement amount wrong or partial",
+        "poor": "Eventual consistency but >1s latency to consistency",
+        "fair": "Consistent within 500ms",
+        "good": "Strong consistency; all reads see committed value",
+        "excellent": "Strong consistency with replicated confirmation from backup ledger"
+      },
+      "evidence": [
+        "ledger.CommitTransaction() success/failure code",
+        "round-trip verification (write then immediate read)",
+        "settlement.SettlementResult.Success flag",
+        "ledger backup replica consistency check"
+      ],
+      "related_failure_modes": ["FM-SE-002", "FM-SE-004", "FM-SE-009"],
+      "test_procedure": "Commit settlement; immediately query ledger; verify amount matches; check backup ledger",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-003",
+      "name": "Settlement Batch Composition Correctness",
+      "description": "Evaluates whether settlement batch contains exactly the intended orders (correct merchants, correct amounts, no duplicates).",
+      "domain": "settlement",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Batch sum equals sum of individual orders",
+        "Batch contains no duplicate orders",
+        "Batch merchant grouping deterministic (sorted consistently)",
+        "Batch does not include rolled-back or cancelled orders"
+      ],
+      "scoring_guideline": "Failing: batch sum wrong or includes wrong merchants. Poor: minor discrepancies. Fair: correct composition but not auditable. Good: correct and auditable. Excellent: correct + immutable proof.",
+      "level_descriptions": {
+        "failing": "Batch sum mismatches order sums significantly (>1%)",
+        "poor": "Minor discrepancy (<1%) or includes one rolled-back order",
+        "fair": "Correct composition but ordering or grouping not deterministic",
+        "good": "Correct composition, deterministic grouping, no duplicates",
+        "excellent": "Correct + merkle tree proof + immutable commitment"
+      },
+      "evidence": [
+        "ConsolidateSettlementBatch() output",
+        "sum(batch orders) vs. batch.TotalPaise",
+        "batch order list (no duplicates)",
+        "merchant grouping sequence"
+      ],
+      "related_failure_modes": ["FM-SE-002"],
+      "test_procedure": "Create 5 orders for 3 merchants; consolidate batch; verify sum and composition",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-004",
+      "name": "Netting Calculation Correctness",
+      "description": "Evaluates whether netting calculations (bilateral/multilateral settlement) produce correct net positions without overflow or precision loss.",
+      "domain": "settlement",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Netting sum does not overflow or underflow integer bounds",
+        "Rounding applied consistently (banker's rounding to paise)",
+        "Negative and positive net positions correct",
+        "Formula matches documented netting rule"
+      ],
+      "scoring_guideline": "Failing: overflow or rounding error >0.5% of settlement. Poor: minor rounding error. Fair: correct but not formally verified. Good: correct and tested. Excellent: correct + formal proof.",
+      "level_descriptions": {
+        "failing": "Overflow/underflow or rounding error >1 paise",
+        "poor": "Minor rounding error, accumulates over time",
+        "fair": "Correct for most cases but edge cases untested",
+        "good": "Correct for all tested cases with comprehensive test coverage",
+        "excellent": "Correct + formal proof of netting algorithm"
+      },
+      "evidence": [
+        "ApplyNettingRules() output",
+        "netting sum vs. manual calculation",
+        "integer bounds check (no overflow)",
+        "rounding validation (paise precision)"
+      ],
+      "related_failure_modes": ["FM-SE-003"],
+      "test_procedure": "Apply netting to 3 merchants with large amounts; verify sum and check for overflow; test edge cases",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-005",
+      "name": "Settlement Finality and Irreversibility",
+      "description": "Evaluates whether settled transactions are final and irreversible except for authorized reversal (chargeback, refund). Orders move to fulfilled atomically with ledger.",
+      "domain": "settlement",
+      "primary_dimension": "atomicity",
+      "criteria": [
+        "Order status Fulfilled only after ledger commit confirms",
+        "Settlement cannot be reversed without explicit authorization",
+        "Time-locked settlement (no reversal after grace period)",
+        "Lineage records finality event with timestamp"
+      ],
+      "scoring_guideline": "Failing: order fulfilled before ledger confirms. Poor: finality delayed >30s. Fair: eventual finality. Good: immediate finality. Excellent: time-locked irreversibility.",
+      "level_descriptions": {
+        "failing": "Order fulfilled before ledger confirmation",
+        "poor": "Finality delayed >30s after ledger commit",
+        "fair": "Eventual finality but ordering dependent",
+        "good": "Finality immediate upon ledger commit",
+        "excellent": "Finality immediate + time-locked + cryptographic proof"
+      },
+      "evidence": [
+        "order.PaidAt timestamp vs. ledger.CommitTransaction timestamp",
+        "order.Status == StatusFulfilled check",
+        "lineage entry with finality marker",
+        "settlement reversal authorization audit"
+      ],
+      "related_failure_modes": ["FM-SE-004"],
+      "test_procedure": "Settle order and immediately query status; verify order fulfilled only after ledger confirms",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-006",
+      "name": "Reconciliation Data Integrity",
+      "description": "Evaluates whether settlement reconciliation (VerifyOrderSettlement, IsReconciled) detects and reports mismatches between order, ledger, and lineage.",
+      "domain": "settlement",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Reconciliation detects amount mismatch",
+        "Reconciliation detects status mismatch (order fulfilled but ledger shows pending)",
+        "Reconciliation detects missing settlement record",
+        "Reconciliation returns false on any mismatch"
+      ],
+      "scoring_guideline": "Failing: reconciliation passes despite known mismatch. Poor: detects some mismatches. Fair: detects most mismatches. Good: detects all mismatches. Excellent: detects + auto-corrects.",
+      "level_descriptions": {
+        "failing": "Reconciliation returns true despite order-ledger mismatch",
+        "poor": "Detects amount mismatch but not status mismatch",
+        "fair": "Detects most mismatches; edge cases missed",
+        "good": "Detects all mismatches and returns false",
+        "excellent": "Detects + returns detailed mismatch report + auto-correction proposal"
+      },
+      "evidence": [
+        "reconciliation.IsReconciled() result",
+        "reconciliation.VerifyOrderSettlement() output",
+        "order status vs. ledger status",
+        "reconciliation.ReconciliationCheck.BrokenAt field"
+      ],
+      "related_failure_modes": ["FM-SE-002", "FM-SE-008"],
+      "test_procedure": "Create settlement mismatch (e.g., order fulfilled but ledger pending); run reconciliation; verify false result",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-007",
+      "name": "Currency Conversion Accuracy (FX)",
+      "description": "Evaluates whether FX conversion (e.g., EUR to INR) applies current rates, correct rounding, and records rate used for audit.",
+      "domain": "settlement",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "FX rate used is current (max 5 minutes old)",
+        "Conversion formula correct and documented",
+        "Rounding applied to paise (₹0.01) not rupee",
+        "Conversion logged in audit with rate, timestamp, formula used"
+      ],
+      "scoring_guideline": "Failing: stale FX rate or rounding error >1%. Poor: stale rate >60min. Fair: rate <15min old. Good: rate <5min old. Excellent: real-time rate + audit trail.",
+      "level_descriptions": {
+        "failing": "FX rate >60min old or rounding error >1 paise",
+        "poor": "FX rate 15-60min old",
+        "fair": "FX rate 5-15min old",
+        "good": "FX rate <5min old with audit trail",
+        "excellent": "Real-time FX rate with cryptographic signature on audit entry"
+      },
+      "evidence": [
+        "FX rate timestamp vs. conversion timestamp",
+        "conversion formula in audit entry",
+        "rounding method (banker's vs. truncation)",
+        "converted amount vs. manual calculation"
+      ],
+      "related_failure_modes": ["FM-SE-006"],
+      "test_procedure": "Convert EUR to INR; verify rate current; recalculate manually; compare results",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-SE-008",
+      "name": "Settlement Timeout and Retry Resilience",
+      "description": "Evaluates whether settlement handles timeouts gracefully with exponential backoff, max retry limits, and proper error escalation.",
+      "domain": "settlement",
+      "primary_dimension": "recovery",
+      "criteria": [
+        "Timeout SLA enforced (e.g., 5 minutes max)",
+        "Retry uses exponential backoff (not constant)",
+        "Max retry limit prevents infinite loops (e.g., max 3)",
+        "Permanent errors not retried",
+        "Escalation to HITL after max retries"
+      ],
+      "scoring_guideline": "Failing: no timeout or infinite retry loop. Poor: timeout >30min or no backoff. Fair: timeout <10min. Good: timeout 5min + backoff. Excellent: timeout + backoff + HITL escalation.",
+      "level_descriptions": {
+        "failing": "No timeout or infinite retry loop observed",
+        "poor": "Timeout >30min or retry loop >5 attempts",
+        "fair": "Timeout 5-30min with basic retry",
+        "good": "Timeout 5min + exponential backoff + max 3 retries",
+        "excellent": "Timeout 5min + exponential backoff + max 3 retries + HITL escalation + fallback to async queue"
+      },
+      "evidence": [
+        "retry attempt count and timestamps",
+        "backoff interval progression",
+        "max retry limit enforcement",
+        "HITL escalation trigger",
+        "error classification (transient vs. permanent)"
+      ],
+      "related_failure_modes": ["FM-SE-007", "FM-SE-010"],
+      "test_procedure": "Simulate ledger timeout; observe retry behavior; verify exponential backoff and max retry limit",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-001",
+      "name": "Velocity Monitoring (AML Transaction Limits)",
+      "description": "Evaluates whether AML velocity checks detect rapid transaction patterns and enforce configured thresholds (e.g., max ₹50k in 1 hour).",
+      "domain": "compliance",
+      "primary_dimension": "detectability",
+      "criteria": [
+        "Velocity window correctly calculated (e.g., last 1 hour)",
+        "Real-time transaction sum checked against threshold",
+        "Cache invalidated on each transaction (not stale)",
+        "Concurrent transactions included in velocity calculation",
+        "Alert fired when threshold approached (e.g., 80%)"
+      ],
+      "scoring_guideline": "Failing: velocity check bypassed or cached. Poor: misses some transactions. Fair: detects most violations. Good: detects all in-window transactions. Excellent: detects + alert + detailed evidence.",
+      "level_descriptions": {
+        "failing": "Velocity check bypassed or false negative",
+        "poor": "Misses concurrent transactions; cache outdated",
+        "fair": "Detects most violations; minor false positives",
+        "good": "Detects all in-window transactions; accurate alerts",
+        "excellent": "Real-time detection + alert + HITL escalation with evidence"
+      },
+      "evidence": [
+        "transaction history for customer in window",
+        "velocity cache invalidation timestamps",
+        "concurrent transaction handling",
+        "alert fired when threshold reached"
+      ],
+      "related_failure_modes": ["FM-CO-001"],
+      "test_procedure": "Submit 5 rapid orders >threshold; verify velocity check blocks 5th; check alert generation",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-002",
+      "name": "Sanctions Screening (FATF/OFAC Blacklist Matching)",
+      "description": "Evaluates whether sanctions screening detects customer/merchant on blacklist (FATF, OFAC, RBI) with fuzzy name matching and list currency.",
+      "domain": "compliance",
+      "primary_dimension": "detectability",
+      "criteria": [
+        "Sanctions lists updated daily (max 24h stale)",
+        "Name matching threshold appropriate (e.g., >0.95)",
+        "Multiple FATF list sources checked",
+        "Whitelist exceptions logged and auditable",
+        "Screening result cached with TTL <4h"
+      ],
+      "scoring_guideline": "Failing: stale list or high false negative. Poor: threshold >0.90 or list >24h old. Fair: threshold 0.85-0.90. Good: threshold >0.95 and daily update. Excellent: real-time update + evidence log.",
+      "level_descriptions": {
+        "failing": "List >7 days old or threshold <0.80 (high false negatives)",
+        "poor": "List 1-7 days old or threshold 0.80-0.90",
+        "fair": "List <24h old; threshold 0.90-0.95",
+        "good": "List <24h old; threshold >0.95; multiple sources",
+        "excellent": "Real-time list update + threshold >0.95 + cryptographic audit trail"
+      },
+      "evidence": [
+        "sanctions list update timestamp",
+        "name matching score and threshold",
+        "FATF list sources used",
+        "whitelist exceptions logged",
+        "screening result cache TTL"
+      ],
+      "related_failure_modes": ["FM-CO-002"],
+      "test_procedure": "Screen known sanctioned customer; verify detection; check list age and matching threshold",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-003",
+      "name": "KYC Verification Enforcement",
+      "description": "Evaluates whether KYC verification is enforced before account can transact (order creation, settlement). Unverified accounts blocked.",
+      "domain": "compliance",
+      "primary_dimension": "detectability",
+      "criteria": [
+        "Order creation blocked if merchant/customer unverified",
+        "Settlement blocked if KYC pending",
+        "KYC status checked at multiple stages (onboarding, order, settlement)",
+        "Temporary account flag enforced consistently",
+        "KYC expiry enforced (re-verification required)"
+      ],
+      "scoring_guideline": "Failing: order placed with unverified account. Poor: KYC check missing from one stage. Fair: KYC checked but expiry not enforced. Good: KYC enforced at all stages. Excellent: enforced + auto-renewal.",
+      "level_descriptions": {
+        "failing": "Order/settlement allowed with unverified KYC",
+        "poor": "KYC checked at order but not at settlement",
+        "fair": "KYC enforced at order/settlement but expiry not checked",
+        "good": "KYC verified at order/settlement; expiry enforced",
+        "excellent": "KYC enforced + auto-renewal triggered at 11-month mark"
+      },
+      "evidence": [
+        "merchant.KYCStatus before order creation",
+        "customer.VerificationPending check",
+        "order creation handler KYC validation",
+        "settlement handler KYC validation",
+        "KYC expiry check and renewal flow"
+      ],
+      "related_failure_modes": ["FM-CO-003"],
+      "test_procedure": "Create order with unverified merchant; verify rejection; verify after KYC completion acceptance",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-004",
+      "name": "Consent Management (A2A/Data Sharing)",
+      "description": "Evaluates whether explicit consent is obtained and recorded before accessing customer data (e.g., account aggregator, payment history).",
+      "domain": "compliance",
+      "primary_dimension": "detectability",
+      "criteria": [
+        "Consent obtained before data access (not retroactive)",
+        "Consent scope documented (which data fields)",
+        "Consent expiry enforced (re-consent required)",
+        "All data accesses logged against consent registry",
+        "Audit trail shows consent -> data access link"
+      ],
+      "scoring_guideline": "Failing: data accessed without consent. Poor: consent obtained retroactively. Fair: consent enforced but not fully scoped. Good: consent verified before each access. Excellent: consent + immutable proof.",
+      "level_descriptions": {
+        "failing": "Data accessed without consent evidence",
+        "poor": "Consent obtained after data access",
+        "fair": "Consent enforced but scope or expiry not checked",
+        "good": "Consent verified before data access; scope and expiry checked",
+        "excellent": "Consent verified + immutable consent proof + cryptographic signature"
+      },
+      "evidence": [
+        "consent.Verify() result before data access",
+        "consent scope (fields listed)",
+        "consent expiry timestamp",
+        "audit log of data access with consent ID"
+      ],
+      "related_failure_modes": ["FM-CO-004"],
+      "test_procedure": "Attempt to access customer data without consent; verify rejection; grant consent and retry; verify approval",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-005",
+      "name": "Regulatory Reporting Accuracy",
+      "description": "Evaluates whether settlement data reported to regulators (RBI, FATF) is accurate (correct amounts, no duplicates, excludes reversals).",
+      "domain": "compliance",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Reported settlement amount matches ledger",
+        "Cancelled/reversed orders excluded from report",
+        "Report data validated against settlement ledger before filing",
+        "Report generation time window auditable",
+        "No duplicate entries in report"
+      ],
+      "scoring_guideline": "Failing: reported amount mismatches ledger. Poor: minor discrepancies or includes reversals. Fair: mostly accurate. Good: accurate with audit trail. Excellent: accurate + immutable proof.",
+      "level_descriptions": {
+        "failing": "Reported amount mismatches ledger >1%",
+        "poor": "Minor discrepancy <1% or includes one reversal",
+        "fair": "Mostly accurate; time window not fully auditable",
+        "good": "Accurate with full audit trail and validation",
+        "excellent": "Accurate + signed by independent auditor + cryptographic commitment"
+      },
+      "evidence": [
+        "regulatory report data",
+        "settlement ledger totals for report period",
+        "reversed/cancelled orders excluded",
+        "report generation timestamp",
+        "validation log comparing report to ledger"
+      ],
+      "related_failure_modes": ["FM-CO-005"],
+      "test_procedure": "Generate regulatory report; verify total against ledger; check for excluded reversals",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-006",
+      "name": "Customer Risk Scoring Accuracy",
+      "description": "Evaluates whether customer risk scores (for AML/KYC decisions) are current, accurate, and trigger timely escalation for high-risk profiles.",
+      "domain": "compliance",
+      "primary_dimension": "detectability",
+      "criteria": [
+        "Risk score cache TTL <4h (max 4 hours old)",
+        "PEP/sanctions designation triggers immediate score recalculation",
+        "Risk score decision properly documented in audit",
+        "High-risk threshold and escalation rules clear",
+        "Score recalculation on any customer data update"
+      ],
+      "scoring_guideline": "Failing: cache TTL >24h or PEP not triggering update. Poor: TTL 4-24h. Fair: TTL <4h but not recalc on data change. Good: TTL <4h + recalc on change. Excellent: real-time + alert.",
+      "level_descriptions": {
+        "failing": "Risk score cache TTL >24h or stale after PEP update",
+        "poor": "TTL 4-24h or recalculation delayed",
+        "fair": "TTL <4h but not triggered on data updates",
+        "good": "TTL <4h and recalc on any customer data change",
+        "excellent": "Real-time score with automatic PEP/sanctions alert"
+      },
+      "evidence": [
+        "risk score timestamp vs. current time",
+        "PEP list update timestamp",
+        "score recalculation trigger events",
+        "risk score decision audit entry",
+        "high-risk escalation audit"
+      ],
+      "related_failure_modes": ["FM-CO-006"],
+      "test_procedure": "Score customer; mark as PEP; verify score recalculates immediately; check high-risk escalation",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-CO-007",
+      "name": "Compliance Decision Audit Trail Completeness",
+      "description": "Evaluates whether compliance decisions (AML, KYC, sanctions) are fully logged with decision reason, evidence, and review ability.",
+      "domain": "compliance",
+      "primary_dimension": "auditability",
+      "criteria": [
+        "Compliance check type logged (AML velocity, sanctions, etc.)",
+        "Decision reason documented (approved/blocked/escalated)",
+        "Evidence logged (customer score, matching results, thresholds)",
+        "Compliance officer review audit included",
+        "Full context retrievable for regulatory inquiry"
+      ],
+      "scoring_guideline": "Failing: no decision log. Poor: decision logged but not evidence. Fair: decision + partial evidence. Good: decision + evidence + reasoning. Excellent: good + immutable proof + cryptographic signature.",
+      "level_descriptions": {
+        "failing": "No compliance decision logged",
+        "poor": "Decision logged but without evidence or reasoning",
+        "fair": "Decision + partial evidence (e.g., score but not threshold)",
+        "good": "Decision + full evidence + reasoning documented",
+        "excellent": "Decision + evidence + immutable audit trail + signed by officer"
+      },
+      "evidence": [
+        "audit entry for compliance check",
+        "check type (velocity, sanctions, KYC, etc.)",
+        "decision (approve/block/escalate)",
+        "evidence fields (scores, thresholds, matching results)",
+        "officer review timestamp and signature"
+      ],
+      "related_failure_modes": ["FM-CO-007"],
+      "test_procedure": "Run compliance check; query audit entry; verify all fields present and complete",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-OR-001",
+      "name": "Workflow State Machine Validity",
+      "description": "Evaluates whether order workflow only executes valid state transitions (no impossible sequences like Cancelled -> Fulfilled).",
+      "domain": "orchestration",
+      "primary_dimension": "consistency",
+      "criteria": [
+        "Transition rules enforce valid state graph",
+        "Invalid transitions rejected with error",
+        "All transitions logged with current state and next state",
+        "State machine cannot skip required steps (e.g., payment before settlement)",
+        "Lineage shows valid sequence only"
+      ],
+      "scoring_guideline": "Failing: invalid transition allowed. Poor: detected but not prevented. Fair: prevented but logging incomplete. Good: prevented + logged. Excellent: prevented + validated + immutable.",
+      "level_descriptions": {
+        "failing": "Invalid transition allowed (e.g., Cancelled -> Fulfilled)",
+        "poor": "Invalid transition detected but not prevented",
+        "fair": "Invalid transition prevented but logging incomplete",
+        "good": "Invalid transition prevented + full audit log",
+        "excellent": "Prevented + immutable state proof + cryptographic signature"
+      },
+      "evidence": [
+        "order.Status before/after transition",
+        "lineage entry for state transition",
+        "state machine rule validation",
+        "rejection of invalid transition attempt"
+      ],
+      "related_failure_modes": ["FM-OR-001"],
+      "test_procedure": "Attempt invalid transition (e.g., Cancelled -> Fulfilled); verify rejection; verify audit log",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-OR-002",
+      "name": "Agent Communication Timeout Handling",
+      "description": "Evaluates whether calls to payment/settlement agents have explicit timeouts and failures are properly handled.",
+      "domain": "orchestration",
+      "primary_dimension": "recovery",
+      "criteria": [
+        "Payment agent call has explicit timeout (e.g., 30s)",
+        "Settlement agent call has explicit timeout",
+        "Timeout error logged with context",
+        "Workflow does not hang indefinitely",
+        "Fallback/retry logic triggered on timeout"
+      ],
+      "scoring_guideline": "Failing: no timeout or workflow hangs. Poor: timeout >30s. Fair: timeout <30s but no retry. Good: timeout + retry. Excellent: timeout + retry + HITL.",
+      "level_descriptions": {
+        "failing": "No timeout; workflow hangs indefinitely",
+        "poor": "Timeout >30s or timeout error not logged",
+        "fair": "Timeout 30s with basic logging",
+        "good": "Timeout 30s + retry with exponential backoff",
+        "excellent": "Timeout 30s + retry + HITL escalation + async fallback"
+      },
+      "evidence": [
+        "agent call timeout configuration",
+        "timeout error log with timestamp",
+        "workflow continuation after timeout",
+        "retry attempt count"
+      ],
+      "related_failure_modes": ["FM-OR-002", "FM-SE-007"],
+      "test_procedure": "Simulate agent timeout; verify workflow timeout within 30s; verify retry triggered",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-OR-003",
+      "name": "Workflow Step Ordering and Dependencies",
+      "description": "Evaluates whether workflow steps execute in correct order (payment before settlement, settlement before fulfillment) with proper dependency checking.",
+      "domain": "orchestration",
+      "primary_dimension": "consistency",
+      "criteria": [
+        "Step prerequisites checked before execution (e.g., payment confirmed before settlement)",
+        "Steps cannot execute concurrently unless explicitly allowed",
+        "Lineage shows steps in execution order",
+        "Out-of-order execution rejected with error",
+        "Retry restarts from failed step, not from beginning"
+      ],
+      "scoring_guideline": "Failing: steps execute out of order. Poor: step ordering not validated. Fair: ordered but concurrent execution possible. Good: ordered + dependencies enforced. Excellent: ordered + dependencies + immutable proof.",
+      "level_descriptions": {
+        "failing": "Steps execute out of order (e.g., settlement before payment)",
+        "poor": "Step ordering assumed but not validated",
+        "fair": "Ordering enforced but concurrent execution possible",
+        "good": "Ordering enforced; dependencies validated; no concurrency",
+        "excellent": "Ordered + dependencies + immutable commitment + formal verification"
+      },
+      "evidence": [
+        "workflow step sequence in lineage",
+        "dependency check before step execution",
+        "prerequisite validation error if missing",
+        "step execution timestamps"
+      ],
+      "related_failure_modes": ["FM-OR-003"],
+      "test_procedure": "Attempt settlement before payment; verify rejection; verify forced order after payment confirmed",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-OR-004",
+      "name": "Workflow Idempotency and Retry Safety",
+      "description": "Evaluates whether rerunning same workflow step (e.g., retry payment) is safe (idempotent) or detects duplicate attempts.",
+      "domain": "orchestration",
+      "primary_dimension": "idempotency",
+      "criteria": [
+        "Retry of failed payment check uses idempotency key",
+        "Duplicate payment request rejected",
+        "Workflow can be safely replayed without side effects",
+        "Idempotency key validated at agent boundary",
+        "Duplicate detection logged with original request ID"
+      ],
+      "scoring_guideline": "Failing: duplicate payment allowed. Poor: detected only after commit. Fair: duplicate detected but logging incomplete. Good: duplicate prevented. Excellent: prevented + immutable proof.",
+      "level_descriptions": {
+        "failing": "Retry results in duplicate payment (charge twice)",
+        "poor": "Duplicate detected after ledger commit",
+        "fair": "Duplicate detected before commit but logging incomplete",
+        "good": "Duplicate prevented immediately with alert",
+        "excellent": "Duplicate prevented + immutable dedup proof + full audit trail"
+      },
+      "evidence": [
+        "idempotency key in payment request",
+        "duplicate request rejection",
+        "payment request/response logged once",
+        "deduplication cache hit log"
+      ],
+      "related_failure_modes": ["FM-OR-004"],
+      "test_procedure": "Trigger payment retry; verify idempotency key used; attempt duplicate submission; verify rejection",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-LA-001",
+      "name": "Audit Trail Immutability and Hash Chain",
+      "description": "Evaluates whether lineage entries are immutable and linked by hash chain (each entry commits hash of previous entry).",
+      "domain": "lineage_audit",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Lineage entries stored immutably (no update/delete post-creation)",
+        "Hash chain computed: H(n) = SHA256(H(n-1) || data(n))",
+        "Hash chain verified on read with lineage.Verify(ctx)",
+        "Any modification detected as broken chain",
+        "Audit entries cryptographically signed"
+      ],
+      "scoring_guideline": "Failing: lineage modified after creation. Poor: hash chain not validated on read. Fair: hash chain validated. Good: hash chain + signed. Excellent: hash chain + blockchain.",
+      "level_descriptions": {
+        "failing": "Lineage entry modified after creation",
+        "poor": "Hash chain computed but not validated on read",
+        "fair": "Hash chain validated; no cryptographic signature",
+        "good": "Hash chain + cryptographic signature on entries",
+        "excellent": "Hash chain + signature + blockchain-backed proof"
+      },
+      "evidence": [
+        "lineage.Verify(ctx) result",
+        "hash chain computation and verification",
+        "audit entry before/after attempt",
+        "cryptographic signature on entries"
+      ],
+      "related_failure_modes": ["FM-LA-001"],
+      "test_procedure": "Create lineage entry; verify hash chain; attempt modification; verify chain broken",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-LA-002",
+      "name": "Audit Entry Completeness and Schema Validation",
+      "description": "Evaluates whether audit entries contain all required fields (amount, timestamp, status, error code) and match documented schema.",
+      "domain": "lineage_audit",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Required fields present: OrderID, Step, Action, Timestamp, Input, Output",
+        "Amount field required for settlement entries",
+        "Error field populated if action failed",
+        "Schema validation enforced on write",
+        "Null/empty fields detected and logged"
+      ],
+      "scoring_guideline": "Failing: missing required field. Poor: field present but empty. Fair: mostly complete with minor gaps. Good: complete with validation. Excellent: complete + validated + signed.",
+      "level_descriptions": {
+        "failing": "Required field missing (e.g., no amount in settlement entry)",
+        "poor": "Required field present but empty/null",
+        "fair": "Mostly complete; occasional fields empty",
+        "good": "All required fields present + schema validation enforced",
+        "excellent": "Complete + schema validation + typed fields + cryptographic commitment"
+      },
+      "evidence": [
+        "audit entry structure (OrderID, Step, Action, etc.)",
+        "amount field present and non-zero",
+        "error field populated on failure",
+        "schema validation log"
+      ],
+      "related_failure_modes": ["FM-LA-002"],
+      "test_procedure": "Create audit entry with missing amount; verify rejection; create complete entry; verify acceptance",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-LA-003",
+      "name": "Settlement Lineage Order-Ledger-Audit Consistency",
+      "description": "Evaluates whether order status, ledger state, and lineage records are consistent (all three show same settlement outcome).",
+      "domain": "lineage_audit",
+      "primary_dimension": "consistency",
+      "criteria": [
+        "Order status matches ledger settlement state",
+        "Lineage entry exists for every settlement event",
+        "Amount in order, ledger, and lineage identical",
+        "reconciliation.IsReconciled() detects any mismatch",
+        "Timestamp ordering consistent across systems"
+      ],
+      "scoring_guideline": "Failing: order fulfilled but ledger pending. Poor: minor timestamp difference. Fair: mostly consistent. Good: fully consistent. Excellent: consistent + immutable commitment.",
+      "level_descriptions": {
+        "failing": "Order fulfilled but ledger shows pending",
+        "poor": "Mostly consistent; timestamp differences >1s",
+        "fair": "Consistent within 500ms; minor discrepancies",
+        "good": "Fully consistent; reconciliation passes",
+        "excellent": "Consistent + immutable proof + cryptographic commitment"
+      },
+      "evidence": [
+        "order.Status vs. ledger.TransactionState",
+        "order.Amount vs. lineage.Input.Amount vs. ledger.Amount",
+        "reconciliation.IsReconciled() result",
+        "timestamp alignment across systems"
+      ],
+      "related_failure_modes": ["FM-LA-004"],
+      "test_procedure": "Settle order; verify status consistent across order/ledger/lineage; run reconciliation",
+      "acceptance_criteria": "good"
+    },
+    {
+      "id": "RB-LA-004",
+      "name": "Lineage Timestamp Accuracy and Monotonicity",
+      "description": "Evaluates whether lineage entry timestamps are accurate (server-generated, not client-supplied) and monotonically increasing.",
+      "domain": "lineage_audit",
+      "primary_dimension": "data_integrity",
+      "criteria": [
+        "Timestamp generated server-side (not client-supplied)",
+        "Timestamp immutable after entry creation",
+        "Timestamps monotonically increasing within order",
+        "No future timestamps (clock skew detection)",
+        "Timestamp audit trail for modifications"
+      ],
+      "scoring_guideline": "Failing: client-supplied timestamp or backdated. Poor: timestamp client-modifiable. Fair: server-generated but not monotonic. Good: monotonic + immutable. Excellent: monotonic + immutable + blockchain.",
+      "level_descriptions": {
+        "failing": "Timestamp client-supplied or manually backdated",
+        "poor": "Server-generated but client can modify",
+        "fair": "Server-generated, immutable, but not fully monotonic",
+        "good": "Server-generated, immutable, monotonically increasing",
+        "excellent": "Monotonic + immutable + blockchain-backed timestamping service"
+      },
+      "evidence": [
+        "timestamp generation location (server/client)",
+        "timestamp immutability enforcement",
+        "timestamp sequence for order steps",
+        "no future timestamp detected"
+      ],
+      "related_failure_modes": ["FM-LA-003"],
+      "test_procedure": "Create lineage entries; verify timestamps monotonic; attempt to backdate; verify rejection",
+      "acceptance_criteria": "good"
+    }
+  ],
+  "summary": {
+    "total_rubrics": 18,
+    "by_domain": {
+      "settlement": 8,
+      "compliance": 7,
+      "orchestration": 4,
+      "lineage_audit": 4
+    },
+    "by_dimension": {
+      "detectability": 3,
+      "recovery": 3,
+      "consistency": 3,
+      "data_integrity": 6,
+      "idempotency": 2,
+      "auditability": 1
+    }
+  }
+}

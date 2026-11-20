@@ -1,0 +1,71 @@
+{
+  "domain": "compliance",
+  "category": "core",
+  "description": "KYC/AML/velocity/consent cases keyed to ComplianceJudgeInput. Deterministic judge (threshold 0.6): KYC=='verified' +0.3, AMLRiskScore<30 +0.3, !velocity_exceeded +0.2, consent_provided +0.2. Failure-mode cases use compound violations so they cross below threshold and are correctly DETECTED.",
+  "total_cases": 7,
+  "cases": [
+    {
+      "id": "CO-OK-001",
+      "domain": "compliance",
+      "failure_mode": "none",
+      "scenario": "Verified customer, low AML risk, within velocity, consent on file.",
+      "input": {"customer_id": "CUST-001", "order_id": "ORD-CO-001", "kyc_status": "verified", "aml_risk_score": 10, "velocity_exceeded": false, "consent_provided": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "compliance", "severity": "low", "category": "approved"}
+    },
+    {
+      "id": "CO-OK-002",
+      "domain": "compliance",
+      "failure_mode": "none",
+      "scenario": "Verified customer with moderate but acceptable AML risk.",
+      "input": {"customer_id": "CUST-002", "order_id": "ORD-CO-002", "kyc_status": "verified", "aml_risk_score": 25, "velocity_exceeded": false, "consent_provided": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "compliance", "severity": "low", "category": "approved"}
+    },
+    {
+      "id": "CO-OK-003",
+      "domain": "compliance",
+      "failure_mode": "none",
+      "scenario": "Fully clean profile, minimal AML risk.",
+      "input": {"customer_id": "CUST-003", "order_id": "ORD-CO-003", "kyc_status": "verified", "aml_risk_score": 5, "velocity_exceeded": false, "consent_provided": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "compliance", "severity": "low", "category": "approved"}
+    },
+    {
+      "id": "CO-FAIL-001",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-001",
+      "scenario": "AML velocity breach: rapid high-value transactions push risk up and exceed the velocity window — must be blocked.",
+      "input": {"customer_id": "CUST-101", "order_id": "ORD-CO-101", "kyc_status": "verified", "aml_risk_score": 35, "velocity_threshold_paise": 50000, "current_velocity_paise": 255000, "velocity_exceeded": true, "consent_provided": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "critical", "category": "velocity"}
+    },
+    {
+      "id": "CO-FAIL-002",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-003",
+      "scenario": "KYC not verified (still pending) — onboarding must block the transaction.",
+      "input": {"customer_id": "CUST-102", "order_id": "ORD-CO-102", "kyc_status": "pending", "aml_risk_score": 10, "velocity_exceeded": false, "consent_provided": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "critical", "category": "kyc"}
+    },
+    {
+      "id": "CO-FAIL-003",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-002",
+      "scenario": "Sanctions/high-risk profile: very high AML score and missing consent — must be blocked.",
+      "input": {"customer_id": "CUST-103", "order_id": "ORD-CO-103", "kyc_status": "verified", "aml_risk_score": 80, "matching_threshold": 0.95, "velocity_exceeded": false, "consent_provided": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "critical", "category": "sanctions"}
+    },
+    {
+      "id": "CO-FAIL-004",
+      "domain": "compliance",
+      "failure_mode": "FM-CO-004",
+      "scenario": "Velocity exceeded and consent withdrawn — data-access plus limit breach must block.",
+      "input": {"customer_id": "CUST-104", "order_id": "ORD-CO-104", "kyc_status": "verified", "aml_risk_score": 10, "velocity_exceeded": true, "consent_provided": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "compliance", "severity": "high", "category": "consent"}
+    }
+  ]
+}

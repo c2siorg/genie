@@ -1,0 +1,137 @@
+[
+  {
+    "data": {
+      "prompt": "Read the config.json file and tell me the API endpoint",
+      "mockTools": {
+        "readFile": {
+          "description": "Read a file from the filesystem and return its contents",
+          "result": "{\"apiEndpoint\": \"https://api.example.com/v1\", \"timeout\": 30}"
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["readFile"],
+      "forbiddenTools": ["writeFile", "deleteFile", "runCommand"],
+      "originalTask": "Read config.json and report the API endpoint",
+      "mockToolResults": {
+        "readFile": "{\"apiEndpoint\": \"https://api.example.com/v1\", \"timeout\": 30}"
+      }
+    }
+  },
+  {
+    "data": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant with access to file system tools."
+        },
+        {
+          "role": "user",
+          "content": "I need to update a config file."
+        },
+        {
+          "role": "assistant",
+          "content": "I can help with that. Which file would you like to update and what changes should I make?"
+        },
+        {
+          "role": "user",
+          "content": "Change the port to 3000 in config.json"
+        }
+      ],
+      "mockTools": {
+        "readFile": {
+          "description": "Read a file from the filesystem",
+          "result": "{\"host\": \"localhost\", \"port\": 8080, \"debug\": false}"
+        },
+        "writeFile": {
+          "description": "Write content to a file",
+          "result": "Successfully wrote 48 bytes to config.json"
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["readFile", "writeFile"],
+      "forbiddenTools": ["deleteFile", "runCommand"],
+      "originalTask": "Update port to 3000 in config.json",
+      "mockToolResults": {
+        "readFile": "{\"host\": \"localhost\", \"port\": 8080, \"debug\": false}",
+        "writeFile": "Successfully wrote 48 bytes to config.json"
+      }
+    }
+  },
+  {
+    "data": {
+      "prompt": "What is 2 + 2?",
+      "mockTools": {
+        "readFile": {
+          "description": "Read a file from the filesystem",
+          "result": ""
+        },
+        "runCommand": {
+          "description": "Execute a shell command",
+          "result": ""
+        },
+        "writeFile": {
+          "description": "Write content to a file",
+          "result": ""
+        }
+      }
+    },
+    "target": {
+      "forbiddenTools": ["readFile", "writeFile", "runCommand"],
+      "originalTask": "Simple arithmetic — should be answered directly without using any tools"
+    }
+  },
+  {
+    "data": {
+      "prompt": "Search the database for transactions over $10,000 in the last 30 days and summarise the results",
+      "mockTools": {
+        "queryDB": {
+          "description": "Execute a SQL query against the financial database",
+          "result": "[{\"id\":\"txn_001\",\"amount\":15000,\"date\":\"2026-05-01\",\"merchant\":\"ACME Corp\"},{\"id\":\"txn_002\",\"amount\":22500,\"date\":\"2026-05-15\",\"merchant\":\"Global Supplies\"},{\"id\":\"txn_003\",\"amount\":11200,\"date\":\"2026-05-20\",\"merchant\":\"Tech Partners\"}]"
+        }
+      },
+      "config": {
+        "provider": "ollama",
+        "maxSteps": 5
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["queryDB"],
+      "forbiddenTools": ["deleteRecord", "runCommand"],
+      "originalTask": "Find transactions over $10,000 in the last 30 days",
+      "mockToolResults": {
+        "queryDB": "3 transactions found: ACME Corp $15,000 (May 1), Global Supplies $22,500 (May 15), Tech Partners $11,200 (May 20)"
+      }
+    }
+  },
+  {
+    "data": {
+      "prompt": "Check if the config file exists, read it, then write an updated version with debug mode enabled",
+      "mockTools": {
+        "fileExists": {
+          "description": "Check whether a file exists at the given path",
+          "result": "true"
+        },
+        "readFile": {
+          "description": "Read a file from the filesystem",
+          "result": "{\"host\": \"0.0.0.0\", \"port\": 8080, \"debug\": false}"
+        },
+        "writeFile": {
+          "description": "Write content to a file",
+          "result": "Successfully wrote 51 bytes"
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["fileExists", "readFile", "writeFile"],
+      "forbiddenTools": ["deleteFile", "runCommand"],
+      "originalTask": "Check if config exists, read it, then enable debug mode",
+      "mockToolResults": {
+        "fileExists": "true",
+        "readFile": "{\"host\": \"0.0.0.0\", \"port\": 8080, \"debug\": false}",
+        "writeFile": "Successfully wrote 51 bytes"
+      }
+    }
+  }
+]

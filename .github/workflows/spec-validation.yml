@@ -1,0 +1,173 @@
+name: Spec Validation & CI
+
+on:
+  push:
+    branches: [main, genie/multi-agent-platform-buildout]
+  pull_request:
+    branches: [main, genie/multi-agent-platform-buildout]
+
+jobs:
+  spec-validation:
+    name: Spec Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.25.0'
+
+      - name: Validate all specifications
+        run: |
+          chmod +x ./scripts/validate-specs.sh
+          ./scripts/validate-specs.sh all
+
+      - name: Validate specs in strict mode
+        run: |
+          STRICT=true ./scripts/validate-specs.sh all
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.25.0'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet code
+        run: go vet ./...
+
+      - name: Build API
+        run: go build ./cmd/api
+
+      - name: Build CLI tools
+        run: go build ./cmd/eval-dashboard && go build ./cmd/eval-semantic-search
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        phase: ['2', '3', '4', '5', '6']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.25.0'
+
+      - name: Run Phase ${{ matrix.phase }} tests
+        run: |
+          case ${{ matrix.phase }} in
+            2) go test ./pkg/commerce... -v -timeout 30s ;;
+            3) go test ./pkg/compliance... -v -timeout 30s ;;
+            4) go test ./pkg/agentgov... ./pkg/incidents... -v -timeout 30s ;;
+            5) go test ./pkg/eval... -v -timeout 30s ;;
+            6) go test ./pkg/web/handlers... -v -timeout 30s ;;
+          esac
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.25.0'
+
+      - name: Generate coverage
+        run: go test -coverprofile=coverage.out ./...
+
+      - name: Check coverage threshold (60%)
+        run: |
+          coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          if (( $(echo "$coverage < 60" | bc -l) )); then
+            echo "Coverage $coverage% is below 60% threshold"
+            exit 1
+          fi
+          echo "Coverage: $coverage%"
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Type check (TypeScript strict)
+        working-directory: frontend
+        run: npm run build
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm test -- --passWithNoTests
+
+      - name: Check bundle size
+        working-directory: frontend
+        run: |
+          SIZE=$(du -sh dist | awk '{print $1}')
+          echo "Frontend bundle: $SIZE"
+
+  full-ci:
+    name: Full CI Pipeline
+    needs: [spec-validation, build, test, coverage, frontend]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check spec validation
+        if: needs.spec-validation.result != 'success'
+        run: exit 1
+
+      - name: Check build
+        if: needs.build.result != 'success'
+        run: exit 1
+
+      - name: Check tests
+        if: needs.test.result != 'success'
+        run: exit 1
+
+      - name: Check coverage
+        if: needs.coverage.result != 'success'
+        run: exit 1
+
+      - name: Check frontend
+        if: needs.frontend.result != 'success'
+        run: exit 1
+
+      - name: CI passed
+        run: echo "✅ All CI checks passed"
+
+  notify:
+    name: Notify on Failure
+    needs: [full-ci]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Notify Slack (optional)
+        if: always()
+        run: |
+          # Replace SLACK_WEBHOOK_URL with your webhook
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          #   -H 'Content-Type: application/json' \
+          #   -d "{\"text\":\"❌ CI failed on ${{ github.ref }}\"}"
+          echo "CI failed - configure Slack webhook in secrets"

@@ -1,0 +1,727 @@
+{
+  "agents": {
+    "compliance_checker": {
+      "key": "compliance_checker",
+      "label": "compliance_checker",
+      "count": 1,
+      "trace_ids": [
+        "trace-003"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 92,
+        "average_root_cause_gulf": 10,
+        "severity_distribution": {
+          "critical": 1
+        },
+        "agent_distribution": {
+          "compliance_checker": 1
+        },
+        "segment_distribution": {
+          "corporate": 1
+        },
+        "domain_distribution": {
+          "compliance": 1
+        }
+      }
+    },
+    "kyc_agent": {
+      "key": "kyc_agent",
+      "label": "kyc_agent",
+      "count": 1,
+      "trace_ids": [
+        "trace-004"
+      ],
+      "metrics": {
+        "average_severity": 2,
+        "average_confidence": 75,
+        "average_root_cause_gulf": 30,
+        "severity_distribution": {
+          "medium": 1
+        },
+        "agent_distribution": {
+          "kyc_agent": 1
+        },
+        "segment_distribution": {
+          "retail": 1
+        },
+        "domain_distribution": {
+          "compliance": 1
+        }
+      }
+    },
+    "netting_engine": {
+      "key": "netting_engine",
+      "label": "netting_engine",
+      "count": 1,
+      "trace_ids": [
+        "trace-005"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 95,
+        "average_root_cause_gulf": 5,
+        "severity_distribution": {
+          "critical": 1
+        },
+        "agent_distribution": {
+          "netting_engine": 1
+        },
+        "segment_distribution": {
+          "sme": 1
+        },
+        "domain_distribution": {
+          "settlement": 1
+        }
+      }
+    },
+    "settlement_executor": {
+      "key": "settlement_executor",
+      "label": "settlement_executor",
+      "count": 3,
+      "trace_ids": [
+        "trace-001",
+        "trace-002",
+        "trace-007"
+      ],
+      "metrics": {
+        "average_severity": 3.3333333333333335,
+        "average_confidence": 77.33333333333333,
+        "average_root_cause_gulf": 28.333333333333332,
+        "severity_distribution": {
+          "critical": 1,
+          "high": 2
+        },
+        "agent_distribution": {
+          "settlement_executor": 3
+        },
+        "segment_distribution": {
+          "corporate": 1,
+          "retail": 1,
+          "sme": 1
+        },
+        "domain_distribution": {
+          "agent_behavior": 1,
+          "settlement": 2
+        }
+      }
+    },
+    "workflow_orchestrator": {
+      "key": "workflow_orchestrator",
+      "label": "workflow_orchestrator",
+      "count": 1,
+      "trace_ids": [
+        "trace-006"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 70,
+        "average_root_cause_gulf": 25,
+        "severity_distribution": {
+          "high": 1
+        },
+        "agent_distribution": {
+          "workflow_orchestrator": 1
+        },
+        "segment_distribution": {
+          "sme": 1
+        },
+        "domain_distribution": {
+          "orchestration": 1
+        }
+      }
+    }
+  },
+  "clusters": {
+    "by_agent": 5,
+    "by_domain": 4,
+    "by_failure_mode": 7,
+    "by_severity": 3,
+    "semantic": 6
+  },
+  "cross_tabs": {
+    "agent_domain": {
+      "x_axis": "agent",
+      "y_axis": "domain",
+      "counts": {
+        "compliance_checker": {
+          "compliance": 1
+        },
+        "kyc_agent": {
+          "compliance": 1
+        },
+        "netting_engine": {
+          "settlement": 1
+        },
+        "settlement_executor": {
+          "agent_behavior": 1,
+          "settlement": 2
+        },
+        "workflow_orchestrator": {
+          "orchestration": 1
+        }
+      },
+      "x_labels": [
+        "compliance_checker",
+        "kyc_agent",
+        "netting_engine",
+        "settlement_executor",
+        "workflow_orchestrator"
+      ],
+      "y_labels": [
+        "agent_behavior",
+        "compliance",
+        "orchestration",
+        "settlement"
+      ]
+    },
+    "domain_severity": {
+      "x_axis": "domain",
+      "y_axis": "severity",
+      "counts": {
+        "agent_behavior": {
+          "critical": 1
+        },
+        "compliance": {
+          "critical": 1,
+          "medium": 1
+        },
+        "orchestration": {
+          "high": 1
+        },
+        "settlement": {
+          "critical": 1,
+          "high": 2
+        }
+      },
+      "x_labels": [
+        "agent_behavior",
+        "compliance",
+        "orchestration",
+        "settlement"
+      ],
+      "y_labels": [
+        "critical",
+        "high",
+        "medium"
+      ]
+    }
+  },
+  "domains": {
+    "agent_behavior": {
+      "key": "agent_behavior",
+      "label": "agent_behavior",
+      "count": 1,
+      "trace_ids": [
+        "trace-007"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 65,
+        "average_root_cause_gulf": 50,
+        "severity_distribution": {
+          "critical": 1
+        },
+        "agent_distribution": {
+          "settlement_executor": 1
+        },
+        "segment_distribution": {
+          "corporate": 1
+        },
+        "domain_distribution": {
+          "agent_behavior": 1
+        }
+      },
+      "sub_clusters": {
+        "security": {
+          "key": "security",
+          "label": "security",
+          "count": 1,
+          "trace_ids": [
+            "trace-007"
+          ],
+          "metrics": {
+            "average_severity": 4,
+            "average_confidence": 65,
+            "average_root_cause_gulf": 50,
+            "severity_distribution": {
+              "critical": 1
+            },
+            "agent_distribution": {
+              "settlement_executor": 1
+            },
+            "segment_distribution": {
+              "corporate": 1
+            },
+            "domain_distribution": {
+              "agent_behavior": 1
+            }
+          }
+        }
+      }
+    },
+    "compliance": {
+      "key": "compliance",
+      "label": "compliance",
+      "count": 2,
+      "trace_ids": [
+        "trace-003",
+        "trace-004"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 83.5,
+        "average_root_cause_gulf": 20,
+        "severity_distribution": {
+          "critical": 1,
+          "medium": 1
+        },
+        "agent_distribution": {
+          "compliance_checker": 1,
+          "kyc_agent": 1
+        },
+        "segment_distribution": {
+          "corporate": 1,
+          "retail": 1
+        },
+        "domain_distribution": {
+          "compliance": 2
+        }
+      },
+      "sub_clusters": {
+        "compliance": {
+          "key": "compliance",
+          "label": "compliance",
+          "count": 2,
+          "trace_ids": [
+            "trace-003",
+            "trace-004"
+          ],
+          "metrics": {
+            "average_severity": 3,
+            "average_confidence": 83.5,
+            "average_root_cause_gulf": 20,
+            "severity_distribution": {
+              "critical": 1,
+              "medium": 1
+            },
+            "agent_distribution": {
+              "compliance_checker": 1,
+              "kyc_agent": 1
+            },
+            "segment_distribution": {
+              "corporate": 1,
+              "retail": 1
+            },
+            "domain_distribution": {
+              "compliance": 2
+            }
+          }
+        }
+      }
+    },
+    "orchestration": {
+      "key": "orchestration",
+      "label": "orchestration",
+      "count": 1,
+      "trace_ids": [
+        "trace-006"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 70,
+        "average_root_cause_gulf": 25,
+        "severity_distribution": {
+          "high": 1
+        },
+        "agent_distribution": {
+          "workflow_orchestrator": 1
+        },
+        "segment_distribution": {
+          "sme": 1
+        },
+        "domain_distribution": {
+          "orchestration": 1
+        }
+      },
+      "sub_clusters": {
+        "operational": {
+          "key": "operational",
+          "label": "operational",
+          "count": 1,
+          "trace_ids": [
+            "trace-006"
+          ],
+          "metrics": {
+            "average_severity": 3,
+            "average_confidence": 70,
+            "average_root_cause_gulf": 25,
+            "severity_distribution": {
+              "high": 1
+            },
+            "agent_distribution": {
+              "workflow_orchestrator": 1
+            },
+            "segment_distribution": {
+              "sme": 1
+            },
+            "domain_distribution": {
+              "orchestration": 1
+            }
+          }
+        }
+      }
+    },
+    "settlement": {
+      "key": "settlement",
+      "label": "settlement",
+      "count": 3,
+      "trace_ids": [
+        "trace-001",
+        "trace-002",
+        "trace-005"
+      ],
+      "metrics": {
+        "average_severity": 3.3333333333333335,
+        "average_confidence": 87.33333333333333,
+        "average_root_cause_gulf": 13.333333333333334,
+        "severity_distribution": {
+          "critical": 1,
+          "high": 2
+        },
+        "agent_distribution": {
+          "netting_engine": 1,
+          "settlement_executor": 2
+        },
+        "segment_distribution": {
+          "retail": 1,
+          "sme": 2
+        },
+        "domain_distribution": {
+          "settlement": 3
+        }
+      },
+      "sub_clusters": {
+        "operational": {
+          "key": "operational",
+          "label": "operational",
+          "count": 2,
+          "trace_ids": [
+            "trace-001",
+            "trace-002"
+          ],
+          "metrics": {
+            "average_severity": 3,
+            "average_confidence": 83.5,
+            "average_root_cause_gulf": 17.5,
+            "severity_distribution": {
+              "high": 2
+            },
+            "agent_distribution": {
+              "settlement_executor": 2
+            },
+            "segment_distribution": {
+              "retail": 1,
+              "sme": 1
+            },
+            "domain_distribution": {
+              "settlement": 2
+            }
+          }
+        },
+        "security": {
+          "key": "security",
+          "label": "security",
+          "count": 1,
+          "trace_ids": [
+            "trace-005"
+          ],
+          "metrics": {
+            "average_severity": 4,
+            "average_confidence": 95,
+            "average_root_cause_gulf": 5,
+            "severity_distribution": {
+              "critical": 1
+            },
+            "agent_distribution": {
+              "netting_engine": 1
+            },
+            "segment_distribution": {
+              "sme": 1
+            },
+            "domain_distribution": {
+              "settlement": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "failure_modes": {
+    "FM-AB-001": {
+      "key": "FM-AB-001",
+      "label": "FM-AB-001",
+      "count": 1,
+      "trace_ids": [
+        "trace-007"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 65,
+        "average_root_cause_gulf": 50,
+        "severity_distribution": {
+          "critical": 1
+        },
+        "agent_distribution": {
+          "settlement_executor": 1
+        },
+        "segment_distribution": {
+          "corporate": 1
+        },
+        "domain_distribution": {
+          "agent_behavior": 1
+        }
+      }
+    },
+    "FM-CO-001": {
+      "key": "FM-CO-001",
+      "label": "FM-CO-001",
+      "count": 1,
+      "trace_ids": [
+        "trace-004"
+      ],
+      "metrics": {
+        "average_severity": 2,
+        "average_confidence": 75,
+        "average_root_cause_gulf": 30,
+        "severity_distribution": {
+          "medium": 1
+        },
+        "agent_distribution": {
+          "kyc_agent": 1
+        },
+        "segment_distribution": {
+          "retail": 1
+        },
+        "domain_distribution": {
+          "compliance": 1
+        }
+      }
+    },
+    "FM-CO-005": {
+      "key": "FM-CO-005",
+      "label": "FM-CO-005",
+      "count": 1,
+      "trace_ids": [
+        "trace-003"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 92,
+        "average_root_cause_gulf": 10,
+        "severity_distribution": {
+          "critical": 1
+        },
+        "agent_distribution": {
+          "compliance_checker": 1
+        },
+        "segment_distribution": {
+          "corporate": 1
+        },
+        "domain_distribution": {
+          "compliance": 1
+        }
+      }
+    },
+    "FM-OR-002": {
+      "key": "FM-OR-002",
+      "label": "FM-OR-002",
+      "count": 1,
+      "trace_ids": [
+        "trace-006"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 70,
+        "average_root_cause_gulf": 25,
+        "severity_distribution": {
+          "high": 1
+        },
+        "agent_distribution": {
+          "workflow_orchestrator": 1
+        },
+        "segment_distribution": {
+          "sme": 1
+        },
+        "domain_distribution": {
+          "orchestration": 1
+        }
+      }
+    },
+    "FM-SE-001": {
+      "key": "FM-SE-001",
+      "label": "FM-SE-001",
+      "count": 1,
+      "trace_ids": [
+        "trace-001"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 85,
+        "average_root_cause_gulf": 15,
+        "severity_distribution": {
+          "high": 1
+        },
+        "agent_distribution": {
+          "settlement_executor": 1
+        },
+        "segment_distribution": {
+          "sme": 1
+        },
+        "domain_distribution": {
+          "settlement": 1
+        }
+      }
+    },
+    "FM-SE-002": {
+      "key": "FM-SE-002",
+      "label": "FM-SE-002",
+      "count": 1,
+      "trace_ids": [
+        "trace-002"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 82,
+        "average_root_cause_gulf": 20,
+        "severity_distribution": {
+          "high": 1
+        },
+        "agent_distribution": {
+          "settlement_executor": 1
+        },
+        "segment_distribution": {
+          "retail": 1
+        },
+        "domain_distribution": {
+          "settlement": 1
+        }
+      }
+    },
+    "FM-SE-003": {
+      "key": "FM-SE-003",
+      "label": "FM-SE-003",
+      "count": 1,
+      "trace_ids": [
+        "trace-005"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 95,
+        "average_root_cause_gulf": 5,
+        "severity_distribution": {
+          "critical": 1
+        },
+        "agent_distribution": {
+          "netting_engine": 1
+        },
+        "segment_distribution": {
+          "sme": 1
+        },
+        "domain_distribution": {
+          "settlement": 1
+        }
+      }
+    }
+  },
+  "severities": {
+    "critical": {
+      "key": "critical",
+      "label": "critical",
+      "count": 3,
+      "trace_ids": [
+        "trace-003",
+        "trace-005",
+        "trace-007"
+      ],
+      "metrics": {
+        "average_severity": 4,
+        "average_confidence": 84,
+        "average_root_cause_gulf": 21.666666666666668,
+        "severity_distribution": {
+          "critical": 3
+        },
+        "agent_distribution": {
+          "compliance_checker": 1,
+          "netting_engine": 1,
+          "settlement_executor": 1
+        },
+        "segment_distribution": {
+          "corporate": 2,
+          "sme": 1
+        },
+        "domain_distribution": {
+          "agent_behavior": 1,
+          "compliance": 1,
+          "settlement": 1
+        }
+      }
+    },
+    "high": {
+      "key": "high",
+      "label": "high",
+      "count": 3,
+      "trace_ids": [
+        "trace-001",
+        "trace-002",
+        "trace-006"
+      ],
+      "metrics": {
+        "average_severity": 3,
+        "average_confidence": 79,
+        "average_root_cause_gulf": 20,
+        "severity_distribution": {
+          "high": 3
+        },
+        "agent_distribution": {
+          "settlement_executor": 2,
+          "workflow_orchestrator": 1
+        },
+        "segment_distribution": {
+          "retail": 1,
+          "sme": 2
+        },
+        "domain_distribution": {
+          "orchestration": 1,
+          "settlement": 2
+        }
+      }
+    },
+    "medium": {
+      "key": "medium",
+      "label": "medium",
+      "count": 1,
+      "trace_ids": [
+        "trace-004"
+      ],
+      "metrics": {
+        "average_severity": 2,
+        "average_confidence": 75,
+        "average_root_cause_gulf": 30,
+        "severity_distribution": {
+          "medium": 1
+        },
+        "agent_distribution": {
+          "kyc_agent": 1
+        },
+        "segment_distribution": {
+          "retail": 1
+        },
+        "domain_distribution": {
+          "compliance": 1
+        }
+      }
+    }
+  },
+  "total_traces": 7
+}

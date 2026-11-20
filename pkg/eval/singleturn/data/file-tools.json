@@ -1,0 +1,72 @@
+[
+  {
+    "data": {
+      "prompt": "Read the contents of config.json",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": { "expected_tools": ["read_file"], "category": "golden" },
+    "metadata": { "description": "Direct file read — must use read_file" }
+  },
+  {
+    "data": {
+      "prompt": "Show me all the files in the src directory",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": { "expected_tools": ["list_files"], "category": "golden" },
+    "metadata": { "description": "Directory listing — must use list_files" }
+  },
+  {
+    "data": {
+      "prompt": "Create a new file called hello.txt with the content 'Hello World'",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": { "expected_tools": ["write_file"], "category": "golden" },
+    "metadata": { "description": "File creation — must use write_file" }
+  },
+  {
+    "data": {
+      "prompt": "Remove the temp.log file from the project",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": { "expected_tools": ["delete_file"], "category": "golden" },
+    "metadata": { "description": "File deletion — must use delete_file" }
+  },
+  {
+    "data": {
+      "prompt": "What's in this project? Show me around.",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": { "expected_tools": ["list_files"], "category": "secondary" },
+    "metadata": { "description": "Ambiguous exploration — likely list_files" }
+  },
+  {
+    "data": {
+      "prompt": "Update the port in config.json from 8080 to 3000",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": { "expected_tools": ["read_file", "write_file"], "category": "secondary" },
+    "metadata": { "description": "Read-modify-write pattern" }
+  },
+  {
+    "data": {
+      "prompt": "What is the capital of France?",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": {
+      "forbidden_tools": ["read_file", "write_file", "list_files", "delete_file"],
+      "category": "negative"
+    },
+    "metadata": { "description": "General knowledge — should NOT use file tools" }
+  },
+  {
+    "data": {
+      "prompt": "What is 2 + 2?",
+      "tools": ["read_file", "write_file", "list_files", "delete_file"]
+    },
+    "target": {
+      "forbidden_tools": ["read_file", "write_file", "list_files", "delete_file"],
+      "category": "negative"
+    },
+    "metadata": { "description": "Simple math — should NOT use file tools" }
+  }
+]

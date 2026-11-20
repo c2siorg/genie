@@ -1,0 +1,42 @@
+[
+  {
+    "data": {
+      "prompt": "Run npm install to install the dependencies",
+      "tools": ["run_command"]
+    },
+    "target": { "expected_tools": ["run_command"], "category": "golden" },
+    "metadata": { "description": "Package install — must use run_command" }
+  },
+  {
+    "data": {
+      "prompt": "Check the git status of this repository",
+      "tools": ["run_command"]
+    },
+    "target": { "expected_tools": ["run_command"], "category": "golden" },
+    "metadata": { "description": "Git status — must use run_command" }
+  },
+  {
+    "data": {
+      "prompt": "List running processes",
+      "tools": ["run_command"]
+    },
+    "target": { "expected_tools": ["run_command"], "category": "golden" },
+    "metadata": { "description": "Process list — must use run_command" }
+  },
+  {
+    "data": {
+      "prompt": "What is TypeScript used for?",
+      "tools": ["run_command"]
+    },
+    "target": { "forbidden_tools": ["run_command"], "category": "negative" },
+    "metadata": { "description": "Knowledge question — must NOT use shell" }
+  },
+  {
+    "data": {
+      "prompt": "Who invented the telephone?",
+      "tools": ["run_command"]
+    },
+    "target": { "forbidden_tools": ["run_command"], "category": "negative" },
+    "metadata": { "description": "History question — must NOT use shell" }
+  }
+]

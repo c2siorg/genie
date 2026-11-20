@@ -1,0 +1,652 @@
+{
+  "evaluation_matrix": {
+    "metadata": {
+      "version": "1.0.0",
+      "created_at": "2026-06-06T00:00:00Z",
+      "description": "Comprehensive evaluation matrix mapping 38 failure modes across 5 domains to 18 evaluation rubrics and risk assessment criteria",
+      "total_failure_modes": 38,
+      "total_rubrics": 18,
+      "total_matrix_cells": 684
+    },
+    "failure_mode_rubric_mapping": [
+      {
+        "failure_mode_id": "FM-SE-001",
+        "failure_mode_name": "Double-Spend in CBDC Ledger",
+        "severity": "critical",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-SE-001", "RB-SE-002", "RB-SE-008"],
+        "risk_score": 95,
+        "risk_factors": ["idempotency violation", "concurrent access", "ledger corruption"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-SE-002",
+        "failure_mode_name": "Settlement Batch Mismatch",
+        "severity": "critical",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-SE-003", "RB-SE-004", "RB-LA-001"],
+        "risk_score": 92,
+        "risk_factors": ["batch composition error", "amount mismatch", "audit trail broken"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-SE-003",
+        "failure_mode_name": "Netting Calculation Overflow",
+        "severity": "high",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-SE-005", "RB-SE-006"],
+        "risk_score": 78,
+        "risk_factors": ["integer overflow", "rounding error", "merchant position corruption"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-SE-004",
+        "failure_mode_name": "Settlement Finality Violation",
+        "severity": "high",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-OR-003", "RB-LA-002"],
+        "risk_score": 82,
+        "risk_factors": ["order status race", "ledger commitment latency", "finality guarantee breach"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-SE-005",
+        "failure_mode_name": "Orphaned Settlement Records",
+        "severity": "high",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-LA-003", "RB-OR-004"],
+        "risk_score": 80,
+        "risk_factors": ["partial failure", "ledger-order mismatch", "recovery gap"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-SE-006",
+        "failure_mode_name": "Currency Conversion Error in Settlement",
+        "severity": "medium",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-SE-007"],
+        "risk_score": 65,
+        "risk_factors": ["stale FX rate", "rounding error", "merchant loss"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-SE-007",
+        "failure_mode_name": "Batch Settlement Timeout",
+        "severity": "high",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-OR-005", "RB-OR-006"],
+        "risk_score": 81,
+        "risk_factors": ["SLA breach", "indefinite hang", "resource exhaustion"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-SE-008",
+        "failure_mode_name": "Reconciliation Data Loss",
+        "severity": "critical",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-LA-004", "RB-LA-005"],
+        "risk_score": 98,
+        "risk_factors": ["data loss", "audit trail broken", "regulatory breach"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-CO-001",
+        "failure_mode_name": "AML Velocity Breach (Undetected)",
+        "severity": "critical",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-001", "RB-CO-002"],
+        "risk_score": 94,
+        "risk_factors": ["AML bypass", "velocity evasion", "money laundering"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-CO-002",
+        "failure_mode_name": "Sanctions Screening False Negative",
+        "severity": "critical",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-003", "RB-CO-004"],
+        "risk_score": 96,
+        "risk_factors": ["sanctions evasion", "regulatory violation", "license suspension risk"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-CO-003",
+        "failure_mode_name": "KYC Verification Bypass",
+        "severity": "critical",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-005", "RB-MC-001"],
+        "risk_score": 93,
+        "risk_factors": ["unverified customer", "KYC skip", "regulatory breach"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-CO-004",
+        "failure_mode_name": "Data Consent Missing (A2A/Data Sharing)",
+        "severity": "high",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-006", "RB-LA-006"],
+        "risk_score": 79,
+        "risk_factors": ["privacy violation", "data misuse", "consent audit broken"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-CO-005",
+        "failure_mode_name": "Regulatory Reporting False Data",
+        "severity": "high",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-007", "RB-LA-007"],
+        "risk_score": 85,
+        "risk_factors": ["reporting inaccuracy", "regulatory investigation", "audit dispute"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-CO-006",
+        "failure_mode_name": "Customer Risk Scoring Stale",
+        "severity": "medium",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-008"],
+        "risk_score": 68,
+        "risk_factors": ["stale risk score", "high-risk approval", "PEP evasion"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-CO-007",
+        "failure_mode_name": "Compliance Decision Audit Trail Missing",
+        "severity": "medium",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-LA-008"],
+        "risk_score": 70,
+        "risk_factors": ["audit incomplete", "compliance unverifiable", "inspection failure"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-CO-008",
+        "failure_mode_name": "Customer Document Verification Fraud",
+        "severity": "high",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-009", "RB-MC-002"],
+        "risk_score": 84,
+        "risk_factors": ["fake KYC", "fraudulent merchant", "money laundering"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-001",
+        "failure_mode_name": "Invalid State Transition",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-001", "RB-LA-002"],
+        "risk_score": 80,
+        "risk_factors": ["impossible sequence", "lineage invalid", "state corruption"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-002",
+        "failure_mode_name": "Agent Communication Timeout",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-002", "RB-OR-005"],
+        "risk_score": 77,
+        "risk_factors": ["indefinite hang", "agent unavailable", "SLA breach"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-003",
+        "failure_mode_name": "Workflow Step Out-of-Order Execution",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-003", "RB-OR-004"],
+        "risk_score": 81,
+        "risk_factors": ["dependency violation", "settlement precondition failure", "audit bad sequence"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-004",
+        "failure_mode_name": "Duplicate Payment Agent Call",
+        "severity": "critical",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-004", "RB-SE-001"],
+        "risk_score": 91,
+        "risk_factors": ["idempotency violation", "double-charge", "customer complaint"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-OR-005",
+        "failure_mode_name": "Orchestrator Crash During Workflow",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-006", "RB-LA-009"],
+        "risk_score": 79,
+        "risk_factors": ["crash recovery gap", "state ambiguity", "manual reconciliation required"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-006",
+        "failure_mode_name": "Race Condition in Workflow Lock",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-007", "RB-SE-001"],
+        "risk_score": 83,
+        "risk_factors": ["concurrent access", "state corruption", "settlement conflict"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-007",
+        "failure_mode_name": "Missing Error Handler in Workflow",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-008"],
+        "risk_score": 77,
+        "risk_factors": ["error ignored", "order proceeds without payment", "revenue lost"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-OR-008",
+        "failure_mode_name": "Workflow Rollback Incomplete",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-009"],
+        "risk_score": 76,
+        "risk_factors": ["partial rollback", "inconsistent state", "HITL escalation required"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-MC-001",
+        "failure_mode_name": "Merchant Account Impersonation",
+        "severity": "critical",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-001", "RB-CO-003"],
+        "risk_score": 97,
+        "risk_factors": ["identity theft", "fraudster access", "fund diversion"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-MC-002",
+        "failure_mode_name": "Customer Card Number Reuse (Multiple Accounts)",
+        "severity": "high",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-002", "RB-CO-001"],
+        "risk_score": 86,
+        "risk_factors": ["velocity bypass", "fraud across accounts", "chargeback risk"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-MC-003",
+        "failure_mode_name": "Merchant Dispute Not Routed (Lost)",
+        "severity": "medium",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-003"],
+        "risk_score": 62,
+        "risk_factors": ["unresolved dispute", "customer chargeback", "settlement reversed"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-MC-004",
+        "failure_mode_name": "Merchant Settlement Withdraw to Wrong Account",
+        "severity": "high",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-004"],
+        "risk_score": 75,
+        "risk_factors": ["merchant loss", "non-recoverable fund", "liability claim"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-MC-005",
+        "failure_mode_name": "Customer Refund Never Issued",
+        "severity": "high",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-005", "RB-OR-005"],
+        "risk_score": 79,
+        "risk_factors": ["refund timeout", "trapped funds", "RBI violation"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-MC-006",
+        "failure_mode_name": "Chargeback Not Recorded in Lineage",
+        "severity": "medium",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-LA-010"],
+        "risk_score": 63,
+        "risk_factors": ["chargeback untracked", "reconciliation broken", "settlement incorrect"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-MC-007",
+        "failure_mode_name": "Merchant Commission Calculation Error",
+        "severity": "medium",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-006"],
+        "risk_score": 60,
+        "risk_factors": ["commission wrong", "merchant complaint", "audit discrepancy"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-MC-008",
+        "failure_mode_name": "Customer Account Lockout Due to Failed Verification",
+        "severity": "medium",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-MC-007"],
+        "risk_score": 58,
+        "risk_factors": ["permanent lockout", "trapped funds", "customer churn"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-AB-001",
+        "failure_mode_name": "Agent Hallucination in Settlement Amount",
+        "severity": "high",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-001", "RB-AB-002"],
+        "risk_score": 88,
+        "risk_factors": ["hallucinated amount", "settlement mismatch", "financial loss"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-AB-002",
+        "failure_mode_name": "Agent Prompt Injection (SQL/Command)",
+        "severity": "critical",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-003", "RB-AB-004"],
+        "risk_score": 99,
+        "risk_factors": ["system compromise", "data loss", "unauthorized transactions"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-AB-003",
+        "failure_mode_name": "Agent Consistency Drift (Cross-Turn)",
+        "severity": "medium",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-005"],
+        "risk_score": 64,
+        "risk_factors": ["inconsistent decision", "audit contradiction", "trust loss"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-AB-004",
+        "failure_mode_name": "Agent Tool Misuse (Wrong Agent for Task)",
+        "severity": "medium",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-006"],
+        "risk_score": 61,
+        "risk_factors": ["wrong tool selection", "irrelevant data", "bad decision"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-AB-005",
+        "failure_mode_name": "Agent Refusal Without Clear Reason",
+        "severity": "medium",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-007"],
+        "risk_score": 59,
+        "risk_factors": ["legitimate order blocked", "SLA breach", "merchant unpaid"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-AB-006",
+        "failure_mode_name": "Agent Alignment Drift (Value Misalignment)",
+        "severity": "high",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-008"],
+        "risk_score": 87,
+        "risk_factors": ["compliance bypassed", "regulatory violation", "license risk"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-LA-001",
+        "failure_mode_name": "Lineage Hash Chain Broken",
+        "severity": "critical",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-001", "RB-LA-002"],
+        "risk_score": 100,
+        "risk_factors": ["audit trail invalid", "immutability broken", "regulatory inspection failure"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-LA-002",
+        "failure_mode_name": "Audit Entry Missing Required Fields",
+        "severity": "medium",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-003"],
+        "risk_score": 67,
+        "risk_factors": ["incomplete audit", "reconstruction impossible", "inspection incomplete"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-LA-003",
+        "failure_mode_name": "Lineage Timestamp Manipulation",
+        "severity": "high",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-004"],
+        "risk_score": 89,
+        "risk_factors": ["backdated entry", "SLA audit invalid", "timeline untrustworthy"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-LA-004",
+        "failure_mode_name": "Settlement Order-Ledger-Lineage Mismatch",
+        "severity": "critical",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-005", "RB-LA-006"],
+        "risk_score": 90,
+        "risk_factors": ["triple mismatch", "state untrustworthy", "regulatory impossible"],
+        "mitigation_priority": "critical"
+      },
+      {
+        "failure_mode_id": "FM-LA-005",
+        "failure_mode_name": "Lineage Query Response Tampering",
+        "severity": "high",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-007"],
+        "risk_score": 72,
+        "risk_factors": ["MITM attack", "audit falsified", "regulatory fraud"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-LA-006",
+        "failure_mode_name": "Lineage Record Deletion (Regulatory Erasure)",
+        "severity": "high",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-008"],
+        "risk_score": 74,
+        "risk_factors": ["deletion unaudited", "privacy unverifiable", "litigation risk"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-SE-009",
+        "failure_mode_name": "Settlement Round-Trip Verification Failure",
+        "severity": "high",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-SE-009"],
+        "risk_score": 73,
+        "risk_factors": ["consistency violation", "settlement validity questionable", "reconciliation broken"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-CO-009",
+        "failure_mode_name": "Compliance Rule Change Mid-Transaction",
+        "severity": "medium",
+        "domain": "compliance",
+        "linked_rubrics": ["RB-CO-010"],
+        "risk_score": 55,
+        "risk_factors": ["inconsistent rule application", "old rules override", "compliance unclear"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-OR-009",
+        "failure_mode_name": "Workflow Deadlock (Circular Dependency)",
+        "severity": "high",
+        "domain": "orchestration",
+        "linked_rubrics": ["RB-OR-010"],
+        "risk_score": 74,
+        "risk_factors": ["indefinite hang", "no liveness", "SLA breach"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-MC-009",
+        "failure_mode_name": "Customer KYC Expiry Not Enforced",
+        "severity": "high",
+        "domain": "merchant_customer",
+        "linked_rubrics": ["RB-CO-011"],
+        "risk_score": 76,
+        "risk_factors": ["stale KYC", "unverified transaction", "regulatory violation"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-AB-007",
+        "failure_mode_name": "Agent Context Window Overflow",
+        "severity": "medium",
+        "domain": "agent_behavior",
+        "linked_rubrics": ["RB-AB-009"],
+        "risk_score": 56,
+        "risk_factors": ["incomplete context", "truncated response", "bad decision"],
+        "mitigation_priority": "medium"
+      },
+      {
+        "failure_mode_id": "FM-LA-007",
+        "failure_mode_name": "Lineage Privacy Data Leakage",
+        "severity": "high",
+        "domain": "lineage_audit",
+        "linked_rubrics": ["RB-LA-009"],
+        "risk_score": 71,
+        "risk_factors": ["PII leak", "privacy breach", "regulatory fine"],
+        "mitigation_priority": "high"
+      },
+      {
+        "failure_mode_id": "FM-SE-010",
+        "failure_mode_name": "Settlement Retry Loop Infinite",
+        "severity": "medium",
+        "domain": "settlement",
+        "linked_rubrics": ["RB-OR-011"],
+        "risk_score": 53,
+        "risk_factors": ["resource exhaustion", "log overflow", "system slowdown"],
+        "mitigation_priority": "medium"
+      }
+    ],
+    "risk_matrix": {
+      "critical": {
+        "count": 12,
+        "average_risk_score": 94.1,
+        "failure_modes": [
+          "FM-SE-001", "FM-SE-002", "FM-SE-008",
+          "FM-CO-001", "FM-CO-002", "FM-CO-003",
+          "FM-OR-004", "FM-MC-001", "FM-AB-002",
+          "FM-LA-001", "FM-LA-004"
+        ]
+      },
+      "high": {
+        "count": 18,
+        "average_risk_score": 79.7,
+        "failure_modes": [
+          "FM-SE-003", "FM-SE-004", "FM-SE-005", "FM-SE-007",
+          "FM-CO-004", "FM-CO-005", "FM-CO-008",
+          "FM-OR-001", "FM-OR-002", "FM-OR-003", "FM-OR-005", "FM-OR-006", "FM-OR-007", "FM-OR-008",
+          "FM-MC-002", "FM-MC-004", "FM-MC-005",
+          "FM-AB-001", "FM-AB-006",
+          "FM-LA-003", "FM-LA-005", "FM-LA-006",
+          "FM-SE-009",
+          "FM-OR-009",
+          "FM-MC-009",
+          "FM-LA-007"
+        ]
+      },
+      "medium": {
+        "count": 8,
+        "average_risk_score": 61.6,
+        "failure_modes": [
+          "FM-SE-006",
+          "FM-CO-006", "FM-CO-007",
+          "FM-MC-003", "FM-MC-006", "FM-MC-007", "FM-MC-008",
+          "FM-AB-003", "FM-AB-004", "FM-AB-005", "FM-AB-007",
+          "FM-LA-002",
+          "FM-CO-009",
+          "FM-SE-010"
+        ]
+      }
+    },
+    "domain_summary": {
+      "settlement": {
+        "total_modes": 10,
+        "critical": 3,
+        "high": 6,
+        "medium": 1,
+        "average_risk": 78.9,
+        "test_coverage_priority": "critical"
+      },
+      "compliance": {
+        "total_modes": 9,
+        "critical": 3,
+        "high": 4,
+        "medium": 2,
+        "average_risk": 79.3,
+        "test_coverage_priority": "critical"
+      },
+      "orchestration": {
+        "total_modes": 9,
+        "critical": 1,
+        "high": 7,
+        "medium": 1,
+        "average_risk": 76.1,
+        "test_coverage_priority": "high"
+      },
+      "merchant_customer": {
+        "total_modes": 8,
+        "critical": 1,
+        "high": 6,
+        "medium": 2,
+        "average_risk": 71.9,
+        "test_coverage_priority": "high"
+      },
+      "agent_behavior": {
+        "total_modes": 7,
+        "critical": 1,
+        "high": 2,
+        "medium": 4,
+        "average_risk": 68.4,
+        "test_coverage_priority": "high"
+      },
+      "lineage_audit": {
+        "total_modes": 7,
+        "critical": 2,
+        "high": 4,
+        "medium": 1,
+        "average_risk": 77.9,
+        "test_coverage_priority": "critical"
+      }
+    },
+    "test_execution_plan": {
+      "phase_1_critical_path": {
+        "duration_days": 14,
+        "priority": "critical",
+        "failure_modes": ["FM-SE-001", "FM-SE-002", "FM-SE-008", "FM-CO-001", "FM-CO-002", "FM-CO-003", "FM-OR-004", "FM-MC-001", "FM-AB-002", "FM-LA-001"],
+        "expected_outcomes": "eliminate critical risk, pass regulatory inspection"
+      },
+      "phase_2_high_risk": {
+        "duration_days": 21,
+        "priority": "high",
+        "failure_modes": ["FM-SE-003", "FM-SE-004", "FM-SE-005", "FM-SE-007", "FM-CO-004", "FM-CO-005", "FM-CO-008", "FM-OR-001", "FM-OR-002", "FM-OR-003"],
+        "expected_outcomes": "reach 80% system reliability"
+      },
+      "phase_3_medium_risk": {
+        "duration_days": 14,
+        "priority": "medium",
+        "failure_modes": ["FM-SE-006", "FM-CO-006", "FM-CO-007", "FM-MC-003", "FM-MC-006", "FM-MC-007", "FM-MC-008"],
+        "expected_outcomes": "reach 90% system reliability, operational excellence"
+      }
+    },
+    "evaluation_scoring": {
+      "critical_threshold": 85,
+      "high_threshold": 70,
+      "medium_threshold": 50,
+      "passing_score": "good",
+      "audit_frequency": {
+        "critical_modes": "weekly",
+        "high_modes": "biweekly",
+        "medium_modes": "monthly"
+      },
+      "escalation_rules": {
+        "failing_critical": "immediate executive escalation + regulatory notice",
+        "failing_high": "HITL review + corrective action plan (24h)",
+        "fair_critical": "enhanced monitoring + root cause analysis",
+        "fair_high": "normal monitoring + improvement tracking"
+      }
+    }
+  }
+}

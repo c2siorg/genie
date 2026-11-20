@@ -1,0 +1,151 @@
+{
+  "timestamp": "2026-06-01T16:38:26.230252",
+  "html_file": "/Users/genesis/Developer/goworkspace/src/github.com/c2siorg/genie/pkg/web/handlers/ui/index.html",
+  "css_file": "/Users/genesis/Developer/goworkspace/src/github.com/c2siorg/genie/pkg/web/handlers/ui/styles.css",
+  "scorecard": {
+    "aria_labels": {
+      "found": 25,
+      "target": 50,
+      "status": "PARTIAL",
+      "percentage": 50.0
+    },
+    "aria_describedby": {
+      "found": 10,
+      "target": 5,
+      "status": "PASS"
+    },
+    "aria_live": {
+      "found": 10,
+      "target": 5,
+      "status": "PASS"
+    },
+    "aria_selected": {
+      "found": 4,
+      "target": 4,
+      "status": "PASS"
+    },
+    "semantic_roles": {
+      "found": 7,
+      "target": 10,
+      "roles": {
+        "tablist": [
+          740
+        ],
+        "tab": [
+          833,
+          963,
+          1108,
+          1253
+        ],
+        "alert": [
+          1973,
+          2955
+        ],
+        "status": [
+          5574
+        ],
+        "log": [
+          5823
+        ],
+        "region": [
+          5978
+        ],
+        "article": [
+          6115
+        ]
+      },
+      "status": "PARTIAL"
+    },
+    "tabindex_management": {
+      "status": "PASS",
+      "active_found": true,
+      "inactive_found": true,
+      "active_count": 1,
+      "inactive_count": 3
+    }
+  },
+  "css_features": {
+    "focus_visible": {
+      "status": "PASS",
+      "description": "CSS :focus-visible rules with 2px outline",
+      "found": true
+    },
+    "skeleton_animation": {
+      "status": "PASS",
+      "description": "@keyframes skeleton-load animation",
+      "found": true
+    },
+    "aria_invalid_styling": {
+      "status": "PASS",
+      "description": "[aria-invalid=\"true\"] error state styling",
+      "found": true
+    },
+    "aria_busy_styling": {
+      "status": "PASS",
+      "description": "[aria-busy=\"true\"] button loading state",
+      "found": true
+    }
+  },
+  "phase_1_improvements": {
+    "aria_labels": "PARTIAL",
+    "semantic_roles": "PARTIAL",
+    "tabindex_management": "PASS",
+    "aria_live_regions": "PASS",
+    "aria_selected_tabs": "PASS",
+    "aria_describedby": "PASS"
+  },
+  "accessibility_score": 9.2,
+  "score_components": {
+    "aria_labels": 5.0,
+    "aria_describedby": 10.0,
+    "aria_live": 10.0,
+    "aria_selected": 10.0,
+    "semantic_roles": 7.0,
+    "tabindex": 10.0,
+    "css_focus_visible": 10.0,
+    "css_skeleton": 10.0,
+    "css_aria_invalid": 10.0,
+    "css_aria_busy": 10.0
+  },
+  "details": {
+    "aria_labels_sample": [
+      {
+        "value": "Genie - AI Financial Assistant",
+        "position": 554
+      },
+      {
+        "value": "Main navigation",
+        "position": 755
+      },
+      {
+        "value": "Email address",
+        "position": 2173
+      },
+      {
+        "value": "Password",
+        "position": 2479
+      },
+      {
+        "value": "Sign in to your account",
+        "position": 2850
+      }
+    ],
+    "semantic_roles_distribution": {
+      "tablist": 1,
+      "tab": 4,
+      "alert": 2,
+      "status": 1,
+      "log": 1,
+      "region": 1,
+      "article": 1
+    },
+    "tabindex_distribution": {
+      "0": 1,
+      "-1": 3
+    },
+    "aria_live_types": {
+      "polite": 1
+    },
+    "css_features_all_present": true
+  }
+}

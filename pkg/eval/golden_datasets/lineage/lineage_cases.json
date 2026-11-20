@@ -1,0 +1,610 @@
+{
+  "test_dataset": {
+    "domain": "lineage",
+    "failure_mode_category": "complete_broken_tamper",
+    "total_cases": 40,
+    "description": "Lineage and audit trail: complete records, broken chains, tampering detection, immutability",
+    "complete_cases": [
+      {
+        "test_case_id": "LA-COMPLETE-001",
+        "failure_mode": "none",
+        "rubric": "RB-LA-001,RB-LA-002",
+        "input": {
+          "order_id": "ORD-LA-001",
+          "merchant_id": "MERCH-LA-001",
+          "amount_paise": 50000,
+          "record_steps": ["OrderCreated", "PaymentInitiated", "PaymentConfirmed", "SettlementInitiated", "SettlementCompleted", "Fulfilled"],
+          "timestamp": "2026-06-07T18:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_lineage_start: create root hash for order",
+          "step_2_record_orderCreated: hash_1 links to previous",
+          "step_3_record_paymentInitiated: hash_2 links to hash_1",
+          "step_4_record_paymentConfirmed: hash_3 links to hash_2",
+          "step_5_record_settlementInitiated: hash_4 links to hash_3",
+          "step_6_record_settlementCompleted: hash_5 links to hash_4",
+          "step_7_record_fulfilled: hash_6 links to hash_5",
+          "step_8_verify_chain: all hashes valid, chain unbroken"
+        ],
+        "expected_output": {
+          "lineage_complete": true,
+          "chain_entries": 6,
+          "hash_chain_valid": true,
+          "all_steps_recorded": true,
+          "immutable": true
+        },
+        "actual_output": {
+          "lineage_complete": true,
+          "chain_entries": 6,
+          "hash_chain_valid": true,
+          "all_steps_recorded": true,
+          "immutable": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-001",
+              "dimension": "data_integrity",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "Complete hash chain; all 6 steps recorded; chain cryptographically verified"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-COMPLETE-002",
+        "failure_mode": "none",
+        "rubric": "RB-LA-003",
+        "input": {
+          "order_id": "ORD-LA-002",
+          "lineage_entries": 10,
+          "require_all_fields": true,
+          "timestamp": "2026-06-07T18:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_verify_order_id: present",
+          "step_2_verify_timestamp: present and ordered",
+          "step_3_verify_step_name: present for all entries",
+          "step_4_verify_input: present and logged",
+          "step_5_verify_output: present and logged",
+          "step_6_verify_hash: present and valid",
+          "step_7_verify_signature: present and verified",
+          "step_8_all_fields_present: confirmed"
+        ],
+        "expected_output": {
+          "lineage_complete": true,
+          "all_required_fields_present": true,
+          "no_missing_fields": true
+        },
+        "actual_output": {
+          "lineage_complete": true,
+          "all_required_fields_present": true,
+          "no_missing_fields": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-003",
+              "dimension": "compliance_align",
+              "level": "excellent",
+              "score": 100,
+              "evidence": "All 10 entries have complete fields: ID, timestamp, step, input, output, hash, signature"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-COMPLETE-003",
+        "failure_mode": "none",
+        "rubric": "RB-LA-004",
+        "input": {
+          "order_id": "ORD-LA-003",
+          "timestamps_sequence": ["2026-06-07T18:30:00Z", "2026-06-07T18:30:05Z", "2026-06-07T18:30:10Z", "2026-06-07T18:30:15Z"],
+          "test_ordering": true,
+          "timestamp": "2026-06-07T18:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_entry_1: timestamp=18:30:00, order=1",
+          "step_2_entry_2: timestamp=18:30:05, order=2",
+          "step_3_entry_3: timestamp=18:30:10, order=3",
+          "step_4_entry_4: timestamp=18:30:15, order=4",
+          "step_5_verify_sequence: all in ascending order, no backdating"
+        ],
+        "expected_output": {
+          "timestamps_in_order": true,
+          "chronological_sequence_valid": true,
+          "no_backdating_detected": true
+        },
+        "actual_output": {
+          "timestamps_in_order": true,
+          "chronological_sequence_valid": true,
+          "no_backdating_detected": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "LA-COMPLETE-004",
+        "failure_mode": "none",
+        "rubric": "RB-LA-005",
+        "input": {
+          "order_id": "ORD-LA-004",
+          "order_status": "Fulfilled",
+          "ledger_status": "settled",
+          "lineage_status": "SettlementCompleted",
+          "timestamp": "2026-06-07T18:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_query_order: status=Fulfilled",
+          "step_2_query_ledger: settlement confirmed with 50000 paise",
+          "step_3_query_lineage: SettlementCompleted recorded",
+          "step_4_cross_check: all three sources consistent"
+        ],
+        "expected_output": {
+          "order_ledger_consistent": true,
+          "order_lineage_consistent": true,
+          "ledger_lineage_consistent": true,
+          "all_three_match": true
+        },
+        "actual_output": {
+          "order_ledger_consistent": true,
+          "order_lineage_consistent": true,
+          "ledger_lineage_consistent": true,
+          "all_three_match": true
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      },
+      {
+        "test_case_id": "LA-COMPLETE-005",
+        "failure_mode": "none",
+        "rubric": "RB-LA-006",
+        "input": {
+          "order_id": "ORD-LA-005",
+          "lineage_query_performed": true,
+          "query_response_signed": true,
+          "signature_verified": true,
+          "timestamp": "2026-06-07T19:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_query_lineage: request sent",
+          "step_2_response_received: signed with private key",
+          "step_3_verify_signature: matches public key",
+          "step_4_response_trusted: content verified"
+        ],
+        "expected_output": {
+          "response_signed": true,
+          "signature_valid": true,
+          "response_trusted": true,
+          "tampering_detected": false
+        },
+        "actual_output": {
+          "response_signed": true,
+          "signature_valid": true,
+          "response_trusted": true,
+          "tampering_detected": false
+        },
+        "evaluation_results": {
+          "matches_expected": true,
+          "judge_verdict": "PASS"
+        }
+      }
+    ],
+    "broken_cases": [
+      {
+        "test_case_id": "LA-BROKEN-001",
+        "failure_mode": "FM-LA-001",
+        "rubric": "RB-LA-001",
+        "input": {
+          "order_id": "ORD-LA-BROKEN-001",
+          "lineage_entries": 5,
+          "modified_entry_index": 2,
+          "modified_field": "amount",
+          "original_amount": 50000,
+          "modified_amount": 500000,
+          "timestamp": "2026-06-07T19:15:00Z"
+        },
+        "execution_trace": [
+          "entry_1: hash=H1",
+          "entry_2_original: amount=50000, hash=H2",
+          "entry_2_modified: amount=500000 (changed), hash NOT updated",
+          "entry_3: hash=H3 (still links to old H2)",
+          "step_5_verify_chain: hash mismatch detected at entry_3"
+        ],
+        "expected_output": {
+          "chain_valid": true,
+          "all_hashes_verified": true,
+          "immutable": true
+        },
+        "actual_output": {
+          "chain_valid": false,
+          "all_hashes_verified": false,
+          "immutable": false,
+          "broken_at": "entry_3",
+          "hash_mismatch": true,
+          "detected_modification": "entry_2"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-001",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-001",
+              "dimension": "data_integrity",
+              "level": "failing",
+              "score": 0,
+              "evidence": "Hash chain broken at entry 3; entry 2 modification detected; immutability violated"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-BROKEN-002",
+        "failure_mode": "FM-LA-002",
+        "rubric": "RB-LA-003",
+        "input": {
+          "order_id": "ORD-LA-BROKEN-002",
+          "lineage_entry": {"OrderID": "ORD-LA-BROKEN-002", "Step": "SettlementCompleted"},
+          "missing_field": "Input",
+          "timestamp": "2026-06-07T19:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_create_entry: with required fields",
+          "step_2_omit_input: field not recorded",
+          "step_3_store_entry: incomplete entry stored",
+          "step_4_verify_fields: Input field missing"
+        ],
+        "expected_output": {
+          "all_fields_present": true,
+          "input_field": "present"
+        },
+        "actual_output": {
+          "all_fields_present": false,
+          "input_field": "missing",
+          "error_code": "incomplete_entry",
+          "incomplete_audit": true
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-002",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-003",
+              "dimension": "compliance_align",
+              "level": "failing",
+              "score": 20,
+              "evidence": "Settlement lineage entry missing Input field; cannot reconstruct settlement parameters"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-BROKEN-003",
+        "failure_mode": "FM-LA-003",
+        "rubric": "RB-LA-004",
+        "input": {
+          "order_id": "ORD-LA-BROKEN-003",
+          "original_timestamp": "2026-06-07T19:45:00Z",
+          "backdated_timestamp": "2026-06-07T18:45:00Z",
+          "actual_settlement_time": "2026-06-07T19:45:00Z",
+          "sla_deadline": "2026-06-07T19:15:00Z",
+          "timestamp": "2026-06-07T19:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_settlement_completes: actual time = 19:45:00 (SLA miss)",
+          "step_2_backdate_entry: timestamp changed to 18:45:00",
+          "step_3_appears_within_sla: false appearance (18:45 < deadline 19:15)",
+          "step_4_audit_detects: timestamp vs. ledger mismatch"
+        ],
+        "expected_output": {
+          "settlement_within_sla": true,
+          "timestamp_accurate": true,
+          "no_manipulation": true
+        },
+        "actual_output": {
+          "settlement_within_sla_false": "only if trusting lineage",
+          "timestamp_accurate": false,
+          "timestamp_backdated": true,
+          "error_code": "timestamp_manipulation"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-003",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-004",
+              "dimension": "consistency",
+              "level": "failing",
+              "score": 0,
+              "evidence": "Lineage timestamp backdated by 60 minutes; actual SLA miss hidden"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-BROKEN-004",
+        "failure_mode": "FM-LA-004",
+        "rubric": "RB-LA-005",
+        "input": {
+          "order_id": "ORD-LA-BROKEN-004",
+          "order_status": "Fulfilled",
+          "ledger_status": "pending",
+          "lineage_status": "SettlementFailed",
+          "timestamp": "2026-06-07T20:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_query_order: Fulfilled",
+          "step_2_query_ledger: pending settlement",
+          "step_3_query_lineage: SettlementFailed",
+          "step_4_cross_check: THREE DIFFERENT STATES"
+        ],
+        "expected_output": {
+          "order_ledger_consistent": true,
+          "order_lineage_consistent": true,
+          "all_match": true
+        },
+        "actual_output": {
+          "order_ledger_consistent": false,
+          "order_lineage_consistent": false,
+          "ledger_lineage_consistent": false,
+          "mismatch_detected": true,
+          "error_code": "order_ledger_lineage_inconsistency"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-004"
+        }
+      },
+      {
+        "test_case_id": "LA-BROKEN-005",
+        "failure_mode": "FM-LA-001",
+        "rubric": "RB-LA-002",
+        "input": {
+          "order_id": "ORD-LA-BROKEN-005",
+          "lineage_entry_deleted": true,
+          "deleted_entry": "SettlementInitiated",
+          "total_entries_before": 6,
+          "total_entries_after": 5,
+          "timestamp": "2026-06-07T20:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_lineage_complete: 6 entries recorded",
+          "step_2_entry_deleted: SettlementInitiated removed",
+          "step_3_hash_chain_broken: next entry links to deleted hash",
+          "step_4_verify_fails: hash mismatch"
+        ],
+        "expected_output": {
+          "lineage_complete": true,
+          "all_entries_present": true,
+          "chain_valid": true
+        },
+        "actual_output": {
+          "lineage_complete": false,
+          "entry_count": 5,
+          "chain_valid": false,
+          "broken_at": "after_deleted_entry"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-001"
+        }
+      }
+    ],
+    "tamper_cases": [
+      {
+        "test_case_id": "LA-TAMPER-001",
+        "failure_mode": "FM-LA-005",
+        "rubric": "RB-LA-007",
+        "input": {
+          "order_id": "ORD-LA-TAMPER-001",
+          "original_settlement_amount": 50000,
+          "tampered_amount": 500000,
+          "query_route": "unencrypted_http",
+          "man_in_middle": true,
+          "timestamp": "2026-06-07T20:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_auditor_queries: lineage via HTTP",
+          "step_2_attacker_intercepts: MITM position",
+          "step_3_response_modified: amount changed 50k -> 500k",
+          "step_4_response_unsigned: no signature to verify",
+          "step_5_auditor_receives: false amount"
+        ],
+        "expected_output": {
+          "response_signed": true,
+          "settlement_amount": 50000,
+          "tampering_detected": false
+        },
+        "actual_output": {
+          "response_signed": false,
+          "settlement_amount": 500000,
+          "tampering_detected": false,
+          "error_code": "response_not_signed",
+          "tmitm_vulnerability": true
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-005",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-007",
+              "dimension": "security",
+              "level": "critical",
+              "score": 0,
+              "evidence": "Response not signed; MITM attack possible; settlement amount falsified undetected"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-TAMPER-002",
+        "failure_mode": "FM-LA-005",
+        "rubric": "RB-LA-007",
+        "input": {
+          "order_id": "ORD-LA-TAMPER-002",
+          "original_merchant_id": "MERCH-LEGIT",
+          "tampered_merchant_id": "MERCH-FRAUDSTER",
+          "response_signed": true,
+          "signature_key_compromised": true,
+          "timestamp": "2026-06-07T20:45:00Z"
+        },
+        "execution_trace": [
+          "step_1_auditor_queries: lineage for order",
+          "step_2_response_received: settlement to MERCH-FRAUDSTER",
+          "step_3_response_signed: signature present",
+          "step_4_verify_signature: uses COMPROMISED key",
+          "step_5_signature_verifies: false trust in compromised key",
+          "step_6_auditor_trusts: forged response"
+        ],
+        "expected_output": {
+          "merchant_id": "MERCH-LEGIT",
+          "signature_valid": true,
+          "response_trustworthy": true
+        },
+        "actual_output": {
+          "merchant_id": "MERCH-FRAUDSTER",
+          "signature_valid_with_compromised_key": true,
+          "response_trustworthy": false,
+          "error_code": "key_compromise"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-005",
+          "note": "Signature scheme vulnerable to compromised key attack"
+        }
+      },
+      {
+        "test_case_id": "LA-TAMPER-003",
+        "failure_mode": "FM-LA-006",
+        "rubric": "RB-LA-008",
+        "input": {
+          "order_id": "ORD-LA-TAMPER-003",
+          "deletion_performed": true,
+          "deletion_logged": false,
+          "deletion_reason": "customer_gdpr_request",
+          "timestamp": "2026-06-07T21:00:00Z"
+        },
+        "execution_trace": [
+          "step_1_delete_lineage: customer requests GDPR erasure",
+          "step_2_records_deleted: from main lineage store",
+          "step_3_no_deletion_log: no audit trail of deletion",
+          "step_4_later_audit: cannot see what was deleted or when"
+        ],
+        "expected_output": {
+          "deletion_logged": true,
+          "deletion_audit_trail": "present",
+          "can_see_deletion_reason": true
+        },
+        "actual_output": {
+          "deletion_logged": false,
+          "deletion_audit_trail": "missing",
+          "can_see_deletion_reason": false,
+          "error_code": "unaudited_deletion"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-006",
+          "rubric_scores": [
+            {
+              "rubric": "RB-LA-008",
+              "dimension": "compliance_align",
+              "level": "failing",
+              "score": 10,
+              "evidence": "Deletion not logged; cannot audit privacy compliance"
+            }
+          ]
+        }
+      },
+      {
+        "test_case_id": "LA-TAMPER-004",
+        "failure_mode": "FM-LA-005",
+        "rubric": "RB-LA-007",
+        "input": {
+          "order_id": "ORD-LA-TAMPER-004",
+          "original_payment_status": "confirmed",
+          "tampered_status": "failed",
+          "audit_api_access_control": "none",
+          "timestamp": "2026-06-07T21:15:00Z"
+        },
+        "execution_trace": [
+          "step_1_employee_queries: audit API",
+          "step_2_attacker_impersonates: same API call",
+          "step_3_response_modified: status=failed returned",
+          "step_4_no_access_control: attacker gets same data",
+          "step_5_false_fraud_claim: based on tampered audit"
+        ],
+        "expected_output": {
+          "payment_status": "confirmed",
+          "access_control": "enforced",
+          "only_authorized_see": true
+        },
+        "actual_output": {
+          "payment_status": "failed",
+          "access_control": "none",
+          "unauthorized_access": true
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-005"
+        }
+      },
+      {
+        "test_case_id": "LA-TAMPER-005",
+        "failure_mode": "FM-LA-005",
+        "rubric": "RB-LA-007",
+        "input": {
+          "order_id": "ORD-LA-TAMPER-005",
+          "original_amount": 100000,
+          "tampered_amount": 1000000,
+          "response_signing": true,
+          "timestamp_signing": false,
+          "timestamp": "2026-06-07T21:30:00Z"
+        },
+        "execution_trace": [
+          "step_1_query_lineage: amount=100000",
+          "step_2_response_signed: signature covers amount",
+          "step_3_attacker_changes_timestamp: adds 1 month to entry",
+          "step_4_signature_still_valid: signature only covers amount, not timestamp",
+          "step_5_false_timeline: order appears old"
+        ],
+        "expected_output": {
+          "amount": 100000,
+          "timestamp": "original",
+          "signature_valid": true,
+          "all_fields_signed": true
+        },
+        "actual_output": {
+          "amount": 100000,
+          "timestamp": "tampered",
+          "signature_valid": true,
+          "partial_signing": true,
+          "error_code": "incomplete_signature_coverage"
+        },
+        "evaluation_results": {
+          "matches_expected": false,
+          "judge_verdict": "FAIL",
+          "failure_mode_detected": "FM-LA-005",
+          "note": "Timestamp not covered by signature; tampering not detected"
+        }
+      }
+    ]
+  }
+}

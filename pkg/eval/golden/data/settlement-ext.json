@@ -1,0 +1,62 @@
+{
+  "domain": "settlement",
+  "category": "extended",
+  "description": "Additional settlement failure-mode coverage (FM-SE-006..010) plus a netted happy path. Same SettlementJudgeInput scoring (threshold 0.6).",
+  "total_cases": 6,
+  "cases": [
+    {
+      "id": "SE-OK-004",
+      "domain": "settlement",
+      "failure_mode": "none",
+      "scenario": "Valid netted multilateral settlement, committed and reconciled.",
+      "input": {"order_id": "ORD-SE-201", "settlement_id": "STL-201", "settlement_amount": 120000, "expected_amount": 120000, "order_amount": 150000, "netting_applied": true, "netted_amount": 95000, "cbdc_committed": true, "reconciliation_passed": true},
+      "expected": {"verdict": "PASS"},
+      "metadata": {"domain": "settlement", "severity": "low", "category": "netting"}
+    },
+    {
+      "id": "SE-FAIL-006",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-006",
+      "scenario": "Settlement neither committed nor reconciled despite matching amount — stuck/unfinalized.",
+      "input": {"order_id": "ORD-SE-206", "settlement_id": "STL-206", "settlement_amount": 60000, "expected_amount": 60000, "order_amount": 60000, "cbdc_committed": false, "reconciliation_passed": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "critical", "category": "finality"}
+    },
+    {
+      "id": "SE-FAIL-007",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-007",
+      "scenario": "Netting imbalance with an amount mismatch and zero netted value.",
+      "input": {"order_id": "ORD-SE-207", "settlement_id": "STL-207", "settlement_amount": 70000, "expected_amount": 65000, "order_amount": 65000, "netting_applied": true, "netted_amount": 0, "cbdc_committed": true, "reconciliation_passed": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "high", "category": "netting"}
+    },
+    {
+      "id": "SE-FAIL-008",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-008",
+      "scenario": "Total failure: amount wrong, not committed, not reconciled.",
+      "input": {"order_id": "ORD-SE-208", "settlement_id": "STL-208", "settlement_amount": 1, "expected_amount": 80000, "order_amount": 80000, "cbdc_committed": false, "reconciliation_passed": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "critical", "category": "integrity"}
+    },
+    {
+      "id": "SE-FAIL-009",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-009",
+      "scenario": "Committed but reconciliation failed — ledger/order divergence.",
+      "input": {"order_id": "ORD-SE-209", "settlement_id": "STL-209", "settlement_amount": 35000, "expected_amount": 35000, "order_amount": 35000, "cbdc_committed": true, "reconciliation_passed": false},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "high", "category": "reconciliation"}
+    },
+    {
+      "id": "SE-FAIL-010",
+      "domain": "settlement",
+      "failure_mode": "FM-SE-010",
+      "scenario": "Amount mismatch and uncommitted ledger though reconciliation flag set.",
+      "input": {"order_id": "ORD-SE-210", "settlement_id": "STL-210", "settlement_amount": 25000, "expected_amount": 50000, "order_amount": 50000, "cbdc_committed": false, "reconciliation_passed": true},
+      "expected": {"verdict": "FAIL"},
+      "metadata": {"domain": "settlement", "severity": "critical", "category": "tamper"}
+    }
+  ]
+}

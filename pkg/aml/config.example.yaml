@@ -1,0 +1,109 @@
+# AML Risk Scoring Policy Configuration
+# This file allows compliance teams to adjust thresholds and rules without
+# requiring code changes or redeployment.
+#
+# Usage:
+#   - Modify thresholds to match your institution's risk appetite
+#   - Add user overrides for exceptions (e.g., VIP accounts)
+#   - Define escalation rules for special cases (e.g., PEP detection)
+#
+# Managed by: Compliance Team
+# Version: 1.0
+# Last Updated: 2026-05-31
+
+rules:
+  # Approve: Score 0-30
+  # Auto-approve low-risk transactions
+  approve:
+    level: "approve"
+    min_score: 0
+    max_score: 30
+    action: "post"
+    reasoning: "Low risk - transaction auto-approved"
+
+  # Monitor: Score 31-50
+  # Post transaction but flag for monitoring
+  monitor:
+    level: "monitor"
+    min_score: 31
+    max_score: 50
+    action: "post"
+    reasoning: "Moderate risk - post with monitoring enabled"
+
+  # Review: Score 51-70
+  # Hold for manual analyst review
+  review:
+    level: "review"
+    min_score: 51
+    max_score: 70
+    action: "hold"
+    reasoning: "Elevated risk - require analyst review before posting"
+
+  # Escalate: Score 71-100
+  # Escalate to compliance team
+  escalate:
+    level: "escalate"
+    min_score: 71
+    max_score: 100
+    action: "escalate"
+    reasoning: "High risk - escalate to compliance team"
+
+  # Block: Score > 100
+  # Prevent transaction immediately
+  block:
+    level: "block"
+    min_score: 101
+    max_score: 1000
+    action: "block"
+    reasoning: "Critical risk - block transaction immediately"
+
+# User-specific overrides
+# Use to whitelist trusted partners, key customers, or remediated cases
+overrides:
+  # Example: VIP customer override
+  # user_vip_001:
+  #   level: "monitor"
+  #   reason: "VIP customer with enhanced KYC; lower escalation threshold"
+  #   approved_by: "compliance-director@example.com"
+  #   expires_at: "2026-12-31T23:59:59Z"
+
+# Escalation rules for special conditions
+# These are evaluated BEFORE standard scoring to catch edge cases
+escalation_rules:
+  # High-risk jurisdiction always escalates
+  - condition: "jurisdiction && high_risk"
+    level: "escalate"
+    action: "escalate"
+    reasoning: "Transaction to OFAC-sanctioned jurisdiction"
+
+  # Large amount to sanctioned country blocks immediately
+  - condition: "threshold && jurisdiction && sanctioned"
+    level: "block"
+    action: "block"
+    reasoning: "Large transaction to sanctioned state violates law"
+
+  # PEP + beneficiary risk combination escalates
+  - condition: "beneficiary && pep"
+    level: "escalate"
+    action: "escalate"
+    reasoning: "Transaction involving politically exposed person"
+
+# Velocity thresholds (transactions per hour)
+velocity:
+  normal_customer: 10      # Standard customer limit
+  vip_customer: 50         # Trusted customer limit
+  high_risk_customer: 3    # Restricted customer limit
+
+# Beneficiary risk checks
+beneficiary_checks:
+  check_pep: true           # Check Politically Exposed Person lists
+  check_sanctions: true     # Check OFAC/UN sanctions lists
+  check_adverse_media: true # Check adverse media databases
+  new_account_days: 7       # Days to flag new beneficiaries
+
+# Notes for compliance team:
+# 1. All date/times use RFC3339 format (ISO 8601)
+# 2. Weights in scoring rule set must sum to 1.0
+# 3. Thresholds must be in ascending order (approve < monitor < review < escalate)
+# 4. Override approvals should be documented for audit trail
+# 5. Change log should be maintained separately for regulatory review

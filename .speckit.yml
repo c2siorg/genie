@@ -1,0 +1,110 @@
+# Genie Financial Platform — Spec-Kit Configuration
+# Spec-Driven Development for RBI-aligned multi-agent financial services
+
+name: Genie
+description: "AI Financial Assistant | Multi-Agent Reference Architecture | RBI FREE-AI Aligned"
+version: 1.0.0
+
+project:
+  org: c2siorg
+  repo: genie
+  language: go
+  frontend: react-typescript
+  license: MIT
+
+specifications:
+  # Phase 2: Commerce — e-Rupee order management
+  - name: commerce
+    title: "Commerce Workspace"
+    phase: 2
+    status: active
+    file: specs/phase2_commerce.md
+    endpoints: 8
+    types: 6
+    tests: 18
+
+  # Phase 3: Compliance — KYC/AML integration
+  - name: compliance
+    title: "Compliance Workspace"
+    phase: 3
+    status: active
+    file: specs/phase3_compliance.md
+    endpoints: 6
+    types: 8
+    tests: 15
+
+  # Phase 4: Governance — Agent fleet + safety
+  - name: governance
+    title: "Governance Workspace"
+    phase: 4
+    status: active
+    file: specs/phase4_governance.md
+    endpoints: 9
+    types: 12
+    tests: 20
+
+  # Phase 5: Evaluation — Judge calibration + traces
+  - name: evaluation
+    title: "Evaluation Workspace"
+    phase: 5
+    status: active
+    file: specs/phase5_evaluation.md
+    endpoints: 7
+    types: 15
+    tests: 22
+
+  # Phase 6: Assistant — Conversational AI
+  - name: assistant
+    title: "Assistant Workspace"
+    phase: 6
+    status: active
+    file: specs/phase6_assistant.md
+    endpoints: 3
+    types: 10
+    tests: 12
+
+  # Phase 7: Advisor — Personalized recommendations
+  - name: advisor
+    title: "Advisor Workspace"
+    phase: 7
+    status: planned
+    file: specs/phase7_advisor.md
+    endpoints: 6
+    types: 8
+    tests: 16
+
+  # Phase 8: Analytics — Financial dashboards & insights
+  - name: analytics
+    title: "Analytics Workspace"
+    phase: 8
+    status: planned
+    file: specs/phase8_analytics.md
+    endpoints: 8
+    types: 10
+    tests: 18
+
+compliance:
+  frameworks:
+    - RBI FREE-AI
+    - Annexure VI (incident tracking)
+  standards:
+    - OpenAPI 3.1
+    - CloudEvents 1.0
+  testing:
+    - Unit tests (Go + React)
+    - Integration tests (E2E)
+    - Judge calibration (95% CI)
+
+validation:
+  api_contracts: true
+  type_safety: true
+  test_coverage: true
+  judge_accuracy: true
+
+extensions:
+  - name: rbi-compliance
+    description: RBI FREE-AI Sutra validation
+  - name: judge-calibration
+    description: TPR/TNR confidence interval validation
+  - name: golden-datasets
+    description: Failure mode coverage validation
